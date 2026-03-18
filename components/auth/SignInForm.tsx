@@ -25,7 +25,11 @@ export default function SignInForm() {
       const data = await response.json() as { session?: unknown; error?: string }
 
       if (!response.ok) {
-        setError(data.error ?? 'Sign in failed. Please try again.')
+        if (data.error === 'EMAIL_NOT_CONFIRMED') {
+          setError('Please confirm your email address before signing in. Check your inbox for a confirmation link.')
+        } else {
+          setError(data.error ?? 'Sign in failed. Please try again.')
+        }
         return
       }
 

@@ -10,6 +10,7 @@ export default function SignUpForm() {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -30,12 +31,31 @@ export default function SignUpForm() {
         return
       }
 
-      router.push('/sign-in?registered=true')
+      setConfirmed(true)
     } catch {
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (confirmed) {
+    return (
+      <div className="text-center space-y-3">
+        <p className="text-lg font-semibold text-gray-900">Check your email</p>
+        <p className="text-sm text-gray-600">
+          We sent a confirmation link to <span className="font-medium">{email}</span>.
+          Click it to activate your account, then{' '}
+          <button
+            onClick={() => router.push('/sign-in')}
+            className="text-brand underline hover:no-underline"
+          >
+            sign in
+          </button>
+          .
+        </p>
+      </div>
+    )
   }
 
   return (

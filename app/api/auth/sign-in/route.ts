@@ -23,12 +23,17 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) {
       const message = error.message.toLowerCase()
+      if (message.includes('email not confirmed')) {
+        return NextResponse.json(
+          { error: 'EMAIL_NOT_CONFIRMED' },
+          { status: 401 }
+        )
+      }
       if (
         message.includes('invalid') ||
         message.includes('invalid login credentials') ||
         message.includes('wrong password') ||
-        message.includes('not found') ||
-        message.includes('email not confirmed')
+        message.includes('not found')
       ) {
         return NextResponse.json(
           { error: 'Invalid email or password' },
