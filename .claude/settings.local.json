@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(npm run:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(ls \"/Users/brendanstubbs/Personal/Claude-personal/my-song-pal/app/\\(dashboard\\)/\")",
+      "Bash(ls \"/Users/brendanstubbs/Personal/Claude-personal/my-song-pal/app/\\(dashboard\\)/dashboard/\")",
+      "Bash(npx jest:*)",
+      "Bash(node -e \"const { Scale } = require\\(''tonal''\\); console.log\\(Scale.get\\(''C pentatonic major''\\).notes\\); console.log\\(Scale.get\\(''C major pentatonic''\\).notes\\); console.log\\(Scale.get\\(''C blues''\\).notes\\);\")",
+      "Bash(node -e \"const { Scale } = require\\(''tonal''\\); console.log\\(Scale.get\\(''C minor pentatonic''\\).notes\\); console.log\\(Scale.get\\(''C pentatonic minor''\\).notes\\);\")"
     ]
   }
 }
