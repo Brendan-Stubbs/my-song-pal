@@ -201,6 +201,17 @@ describe("TonalAdapter", () => {
       });
     });
 
+    it("C major produces only natural notes (no sharps or flats)", () => {
+      const positions = adapter.getCagedPositions("C", "major", DEFAULT_TUNING);
+      const naturalNotes = ["C", "D", "E", "F", "G", "A", "B"];
+      positions.forEach((p) => {
+        p.notes.forEach((n) => {
+          expect(naturalNotes).toContain(n.note);
+          expect(n.note).not.toMatch(/[#b]/);
+        });
+      });
+    });
+
     it("uses hardcoded patterns: notes match scale degrees for key", () => {
       const positions = adapter.getCagedPositions("G", "major", DEFAULT_TUNING);
       const scaleNotes = ["G", "A", "B", "C", "D", "E", "F#"];
