@@ -11,74 +11,37 @@
  * Degrees + key → notes. Root fret = where the key lies on that string for the tuning.
  */
 
-export type ScalePatternCell = 0 | 'x' | 'R';
-export type ScalePattern = ScalePatternCell[][];
+import { major } from './scales/major'
+import { minor } from './scales/minor'
+import { pentatonicMajor } from './scales/pentatonic-major'
+import { pentatonicMinor } from './scales/pentatonic-minor'
+import { blues } from './scales/blues'
+import { dorian } from './scales/dorian'
+import { phrygian } from './scales/phrygian'
+import { lydian } from './scales/lydian'
+import { mixolydian } from './scales/mixolydian'
+import { locrian } from './scales/locrian'
+import { harmonicMinor } from './scales/harmonic-minor'
+import { melodicMinor } from './scales/melodic-minor'
+
+export type ScalePatternCell = 0 | 'x' | 'R'
+export type ScalePattern = ScalePatternCell[][]
 
 export type ScalePatternSet = {
-  [scale: string]: ScalePattern[];
-};
+  [scale: string]: ScalePattern[]
+}
 
-/**
- * Major scale CAGED positions. Hardcoded as x, 0, R.
- * C, A, G, E, D shapes.
- */
 export const SCALE_PATTERNS: ScalePatternSet = {
-  major: [
-    // Position 1
-    [
-      ['x', 'R', 0, 'x', 0],
-      [0, 'x', 0, 'x', 0],
-      ['x', 0, 'x', 'x', 0],
-      ['x', 0, 'x', 'R', 0],
-      ['x', 'x', 0, 'x', 0],
-      ['x', 'R', 0, 'x', 0],
-    ],
-    // Position 2
-    [
-      [0, 'x', 0, 'x', 'x'],
-      [0, 'x', 0, 'x', 'R'],
-      ['x', 'x', 0, 'x', 0],
-      ['x', 'R', 0, 'x', 0],
-      [0, 'x', 0, 'x', 0],
-      [0, 'x', 0, 'x', 'x'],
-    ],
-    // Position 3
-    [
-      [0, 'x', 'x', 0, 'x', 0, 0],
-      [0, 'x', 'R', 0, 'x', 0, 0],
-      [0, 'x', 0, 'x', 0, 0, 0],
-      [0, 'x', 0, 'x', 'x', 0, 0],
-      [0, 'x', 0, 'x', 'R', 0, 0],
-      [0, 'x', 'x', 0, 'x', 0, 0],
-    ],
-    // Position 4
-    [
-      [0, 0, 'x', 0, 'x', 0, 0],
-      [0, 0, 'x', 0, 'x', 'x', 0],
-      [0, 'x', 0, 'x', 'R', 0, 0],
-      [0, 'x', 'x', 0, 'x', 0, 0],
-      [0, 'R', 'x', 0, 'x', 0, 0],
-      [0, 0, 'x', 0, 'x', 0, 0],
-    ],
-    // Position 5
-    [
-      [0, 0, 'x', 'R', 0, 0, 0],
-      [0, 0, 'x', 'x', 'x', 0, 0],
-      [0, 'R', 'x', 'x', 0, 0, 0],
-      [0, 0, 'x', 'x', 0, 0, 0],
-      [0, 0, 'x', 'x', 'x', 0, 0],
-      [0, 0, 'x', 'R', 0, 0, 0],
-    ],
-  ],
-  minor: [],
-  'pentatonic major': [],
-  'pentatonic minor': [],
-  blues: [],
-  dorian: [],
-  phrygian: [],
-  lydian: [],
-  mixolydian: [],
-  locrian: [],
-  'harmonic minor': [],
-  'melodic minor': [],
-};
+  major,
+  minor,
+  'pentatonic major': pentatonicMajor,
+  'pentatonic minor': pentatonicMinor,
+  blues,
+  dorian,
+  phrygian,
+  lydian,
+  mixolydian,
+  locrian,
+  'harmonic minor': harmonicMinor,
+  'melodic minor': melodicMinor,
+}
