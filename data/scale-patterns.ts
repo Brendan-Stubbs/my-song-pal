@@ -11,7 +11,7 @@
  * Degrees + key → notes. Root fret = where the key lies on that string for the tuning.
  */
 
-export type ScalePatternCell = 0 | "x" | "R";
+export type ScalePatternCell = 0 | 'x' | 'R';
 export type ScalePattern = ScalePatternCell[][];
 
 export type ScalePatternSet = {
@@ -26,59 +26,59 @@ export const SCALE_PATTERNS: ScalePatternSet = {
   major: [
     // Position 1
     [
-      ["x", "R", 0, "x", 0],
-      [0, "x", 0, "x", 0],
-      ["x", 0, "x", "x", 0],
-      ["x", 0, "x", "R", 0],
-      ["x", "x", 0, "x", 0],
-      ["x", "R", 0, "x", 0],
+      ['x', 'R', 0, 'x', 0],
+      [0, 'x', 0, 'x', 0],
+      ['x', 0, 'x', 'x', 0],
+      ['x', 0, 'x', 'R', 0],
+      ['x', 'x', 0, 'x', 0],
+      ['x', 'R', 0, 'x', 0],
     ],
     // Position 2
     [
-      [0, "x", 0, "x", "x"],
-      [0, "x", 0, "x", "R"],
-      ["x", "x", 0, "x", 0],
-      ["x", "R", 0, "x", 0],
-      [0, "x", 0, "x", 0],
-      [0, "x", 0, "x", "x"],
+      [0, 'x', 0, 'x', 'x'],
+      [0, 'x', 0, 'x', 'R'],
+      ['x', 'x', 0, 'x', 0],
+      ['x', 'R', 0, 'x', 0],
+      [0, 'x', 0, 'x', 0],
+      [0, 'x', 0, 'x', 'x'],
     ],
     // Position 3
     [
-      [0, "x", "x", 0, "x", 0, 0],
-      [0, "x", "R", 0, "x", 0, 0],
-      [0, "x", 0, "x", 0, 0, 0],
-      [0, "x", 0, "x", "x", 0, 0],
-      [0, "x", 0, "x", "R", 0, 0],
-      [0, "x", "x", 0, "x", 0, 0],
+      [0, 'x', 'x', 0, 'x', 0, 0],
+      [0, 'x', 'R', 0, 'x', 0, 0],
+      [0, 'x', 0, 'x', 0, 0, 0],
+      [0, 'x', 0, 'x', 'x', 0, 0],
+      [0, 'x', 0, 'x', 'R', 0, 0],
+      [0, 'x', 'x', 0, 'x', 0, 0],
     ],
     // Position 4
     [
-      [0, 0, "x", 0, "x", 0, 0],
-      [0, 0, "x", 0, "x", "x", 0],
-      [0, "x", 0, "x", "R", 0, 0],
-      [0, "x", "x", 0, "x", 0, 0],
-      [0, "R", "x", 0, "x", 0, 0],
-      [0, 0, "x", 0, "x", 0, 0],
+      [0, 0, 'x', 0, 'x', 0, 0],
+      [0, 0, 'x', 0, 'x', 'x', 0],
+      [0, 'x', 0, 'x', 'R', 0, 0],
+      [0, 'x', 'x', 0, 'x', 0, 0],
+      [0, 'R', 'x', 0, 'x', 0, 0],
+      [0, 0, 'x', 0, 'x', 0, 0],
     ],
     // Position 5
     [
-      [0, 0, "x", "R", 0, 0, 0],
-      [0, 0, "x", "x", "x", 0, 0],
-      [0, "R", "x", "x", 0, 0, 0],
-      [0, 0, "x", "x", 0, 0, 0],
-      [0, 0, "x", "x", "x", 0, 0],
-      [0, 0, "x", "R", 0, 0, 0],
+      [0, 0, 'x', 'R', 0, 0, 0],
+      [0, 0, 'x', 'x', 'x', 0, 0],
+      [0, 'R', 'x', 'x', 0, 0, 0],
+      [0, 0, 'x', 'x', 0, 0, 0],
+      [0, 0, 'x', 'x', 'x', 0, 0],
+      [0, 0, 'x', 'R', 0, 0, 0],
     ],
   ],
   minor: [],
-  "pentatonic major": [],
-  "pentatonic minor": [],
+  'pentatonic major': [],
+  'pentatonic minor': [],
   blues: [],
   dorian: [],
   phrygian: [],
   lydian: [],
   mixolydian: [],
   locrian: [],
-  "harmonic minor": [],
-  "melodic minor": [],
+  'harmonic minor': [],
+  'melodic minor': [],
 };
