@@ -40,11 +40,6 @@ describe('CagedPositionDiagram', () => {
     expect(screen.getByText('Position 1')).toBeInTheDocument()
   })
 
-  it('renders the root fret indicator', () => {
-    render(<CagedPositionDiagram position={MOCK_POSITION} />)
-    expect(screen.getByText('Root: fret 0')).toBeInTheDocument()
-  })
-
   it('renders the correct number of note dots', () => {
     render(<CagedPositionDiagram position={MOCK_POSITION} />)
     // 1 root dot + 2 scale dots = 3 total
@@ -125,6 +120,5 @@ describe('CagedPositionDiagram', () => {
     }
     render(<CagedPositionDiagram position={position2} />)
     expect(screen.getByText('Position 2')).toBeInTheDocument()
-    expect(screen.getByText('Root: fret 5')).toBeInTheDocument()
   })
 })

@@ -8,6 +8,29 @@ import type {
 } from '@/types/music'
 import { SCALE_PATTERNS } from '@/data/scale-patterns'
 
+/** Get pitch class at (string, fret) from tuning. tuning[0]=string 6, tuning[5]=string 1 */
+function getNoteAt(stringNumber: number, fret: number, tuning: string[]): string {
+  const openNote = tuning[6 - stringNumber]
+  if (!openNote) return ''
+  const midi = Note.midi(openNote)
+  if (midi == null) return ''
+  return toSharp(pitchClass(Note.fromMidi(midi + fret)))
+}
+
+/** Frets 0–24 that produce the key on this string */
+function fretsForKeyOnString(
+  stringNumber: number,
+  key: string,
+  tuning: string[],
+): number[] {
+  const keyPc = toSharp(pitchClass(key))
+  const out: number[] = []
+  for (let f = 0; f <= 24; f++) {
+    if (getNoteAt(stringNumber, f, tuning) === keyPc) out.push(f)
+  }
+  return out
+}
+
 const AVAILABLE_SCALES = [
   'major',
   'minor',
@@ -153,16 +176,15 @@ export function createTonalAdapter(): IMusicTheoryService {
   function getCagedPositions(
     key: string,
     scale: string,
-    _tuning: string[] = DEFAULT_TUNING,
+    tuning: string[] = DEFAULT_TUNING,
   ): CagedPosition[] {
-    let scaleInfo
+    let scaleInfo: ScaleInfo
     try {
       scaleInfo = getScaleInfo(key, scale)
     } catch {
       return []
     }
 
-    // Only 7-note scales have meaningful CAGED positions.
     if (scaleInfo.notes.length !== 7) {
       return []
     }
@@ -172,46 +194,97 @@ export function createTonalAdapter(): IMusicTheoryService {
       return []
     }
 
-    // Positions come entirely from the hardcoded matrices.
-    // Theory is used only to resolve degree → note name (e.g. degree 2 in C major = D).
-    const positions: CagedPosition[] = patterns.map((pattern, posIndex) => {
-      const notes: FretboardNote[] = []
+    const scaleNotes = scaleInfo.notes
 
+    function buildNotes(
+      pattern: (typeof patterns)[number],
+      rootFret: number,
+    ): FretboardNote[] {
+      const notes: FretboardNote[] = []
       for (let rowIdx = 0; rowIdx < pattern.length; rowIdx++) {
-        const rowData = pattern[rowIdx]
-        for (let fretOffset = 0; fretOffset < rowData.length; fretOffset++) {
-          const degree = rowData[fretOffset]
-          if (degree === 0) continue
+        const row = pattern[rowIdx]
+        for (let fo = 0; fo < row.length; fo++) {
+          const cell = row[fo]
+          if (cell === 0) continue
 
           const stringNumber = rowIdx + 1
-          const note = scaleInfo.notes[degree - 1]
-          const degreeLabel = scaleInfo.degrees[degree - 1] ?? String(degree)
+          const fret = rootFret + fo
+          const note = getNoteAt(stringNumber, fret, tuning)
+
+          const degreeIndex = scaleNotes.indexOf(note)
+          if (degreeIndex === -1) continue
+
+          const degree = degreeIndex + 1
+          const degreeLabel = scaleInfo.degrees[degreeIndex] ?? String(degree)
 
           notes.push({
             string: stringNumber,
-            fret: fretOffset,
-            note: note ?? '',
+            fret,
+            note,
             degree,
             degreeLabel,
-            isRoot: degree === 1,
+            isRoot: cell === 'R',
           })
         }
       }
+      return notes
+    }
 
-      return {
-        position: posIndex + 1,
-        rootFret: 0,
-        notes,
+    // Root fret: where the leftmost column of the pattern sits.
+    // Find it by checking strings in order low E (6), A (5), D (4), G (3), B (2), high e (1).
+    // Use the first string that has an R; rootFret = fretForKey - fretOffset.
+    const STRING_PRIORITY = [6, 5, 4, 3, 2, 1]
+
+    const candidates: { pattern: (typeof patterns)[number]; rootFret: number }[] = []
+
+    for (const pattern of patterns) {
+      const rByString = new Map<number, number[]>()
+      for (let ri = 0; ri < pattern.length; ri++) {
+        const stringNum = ri + 1
+        for (let fi = 0; fi < pattern[ri].length; fi++) {
+          if (pattern[ri][fi] === 'R') {
+            const list = rByString.get(stringNum) ?? []
+            list.push(fi)
+            rByString.set(stringNum, list)
+          }
+        }
       }
-    })
 
-    return positions
+      let best: number | null = null
+      for (const stringNum of STRING_PRIORITY) {
+        const fretOffsets = rByString.get(stringNum)
+        if (!fretOffsets) continue
+
+        for (const fretOffset of fretOffsets) {
+          for (const f of fretsForKeyOnString(stringNum, key, tuning)) {
+            const r = f - fretOffset
+            if (r >= 0 && r <= 15 && (best == null || r < best)) best = r
+          }
+        }
+        if (best != null) break
+      }
+      if (best != null) candidates.push({ pattern, rootFret: best })
+    }
+
+    const seen = new Set<number>()
+    const adjusted = candidates.map(({ pattern, rootFret }) => {
+      let r = rootFret
+      while (seen.has(r)) r += 12
+      seen.add(r)
+      return { rootFret: r, notes: buildNotes(pattern, r) }
+    })
+    // Keep CAGED order (C, A, G, E, D) for position numbering; do not sort by rootFret
+
+    return adjusted.map((p, i) => ({
+      position: i + 1,
+      rootFret: p.rootFret,
+      notes: p.notes,
+    }))
   }
 
   function getChords(key: string, scale: string): ChordInfo[] {
     const scaleInfo = getScaleInfo(key, scale)
     const notes = scaleInfo.notes
-    const intervals = scaleInfo.intervals
     const count = notes.length
 
     if (count < 5) {

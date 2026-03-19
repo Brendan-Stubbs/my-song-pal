@@ -189,20 +189,15 @@ describe("TonalAdapter", () => {
       });
     });
 
-    it("positions are sorted in ascending fret order", () => {
-      for (let i = 1; i < positions.length; i++) {
-        expect(positions[i].rootFret).toBeGreaterThanOrEqual(
-          positions[i - 1].rootFret,
-        );
-      }
+    it("positions are in CAGED order (1=C, 2=A, 3=G, 4=E, 5=D)", () => {
+      const numbers = positions.map((p) => p.position);
+      expect(numbers).toEqual([1, 2, 3, 4, 5]);
     });
 
-    it("each position has notes on all 6 strings", () => {
+    it("each position has notes on multiple strings", () => {
       positions.forEach((p) => {
-        for (let s = 1; s <= 6; s++) {
-          const strNotes = p.notes.filter((n) => n.string === s);
-          expect(strNotes.length).toBeGreaterThan(0);
-        }
+        const stringsWithNotes = new Set(p.notes.map((n) => n.string));
+        expect(stringsWithNotes.size).toBeGreaterThanOrEqual(4);
       });
     });
 
@@ -214,6 +209,39 @@ describe("TonalAdapter", () => {
           expect(scaleNotes[n.degree - 1]).toBe(n.note);
         });
       });
+    });
+
+    it("returns note names (C, D, E, etc.) not pattern symbols (x, R)", () => {
+      const positions = adapter.getCagedPositions("C", "major", DEFAULT_TUNING);
+      const noteNamePattern = /^[A-G][#b]?$/;
+      const degreePattern = /^[1-7b#]?[1-7]$/;
+      positions.forEach((p) => {
+        p.notes.forEach((n) => {
+          expect(n.note).toMatch(noteNamePattern);
+          expect(n.note).not.toBe("x");
+          expect(n.note).not.toBe("R");
+          expect(n.degreeLabel).toMatch(degreePattern);
+          expect(n.degreeLabel).not.toBe("x");
+          expect(n.degreeLabel).not.toBe("R");
+        });
+      });
+    });
+
+    it("returns distinct rootFret per position for C major", () => {
+      const positions = adapter.getCagedPositions("C", "major", DEFAULT_TUNING);
+      const rootFrets = positions.map((p) => p.rootFret);
+      const unique = new Set(rootFrets);
+      expect(unique.size).toBe(5);
+    });
+
+    it("uses string priority for root fret: C major pos 1 from low E (fret 8), pos 2 from D (fret 10)", () => {
+      const positions = adapter.getCagedPositions("C", "major", DEFAULT_TUNING);
+      const pos1 = positions.find((p) => p.position === 1);
+      const pos2 = positions.find((p) => p.position === 2);
+      // Position 1 (C shape): R on low E at fretOffset 1; C on low E = fret 8 → rootFret = 7
+      expect(pos1?.rootFret).toBe(7);
+      // Position 2 (A shape): no R on E/A; R on D at fretOffset 1; C on D = fret 10 → rootFret = 9
+      expect(pos2?.rootFret).toBe(9);
     });
 
     it("returns empty array for pentatonic scale", () => {

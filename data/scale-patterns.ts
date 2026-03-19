@@ -5,67 +5,69 @@
  * - positionIndex: 0-4 for the 5 CAGED positions
  * - stringIndex: 0 = string 1 (high e), 5 = string 6 (low E)
  * - fretIndex: 0-based fret within the position (0 = leftmost fret of pattern)
- * - Value: 0 = unused, 1-7 = scale degree
+ * - Value: 0 = not played, 'x' = played (scale note), 'R' = root note
  *
- * Notes are inferred from the theory layer using scale degrees.
+ * Scale degrees are CALCULATED from these patterns (R = 1, +/-1 per step by direction).
+ * Degrees + key → notes. Root fret = where the key lies on that string for the tuning.
  */
 
-export type ScalePattern = number[][];
+export type ScalePatternCell = 0 | 'x' | 'R'
+export type ScalePattern = ScalePatternCell[][]
 
 export type ScalePatternSet = {
-  [scale: string]: ScalePattern[];
-};
+  [scale: string]: ScalePattern[]
+}
 
 /**
- * Major scale CAGED positions (5 patterns).
- * Other scales use empty arrays until patterns are added.
+ * Major scale CAGED positions. Hardcoded as x, 0, R.
+ * C, A, G, E, D shapes.
  */
 export const SCALE_PATTERNS: ScalePatternSet = {
   major: [
-    // Pattern 1
+    // C shape
     [
-      [7, 1, 0, 2, 0],
-      [0, 5, 0, 6, 0],
-      [2, 0, 3, 4, 0],
-      [6, 0, 7, 1, 0],
-      [3, 4, 0, 5, 0],
-      [7, 1, 0, 2, 0],
+      ['x', 'R', 0, 'x', 0],
+      [0, 'x', 0, 'x', 0],
+      ['x', 0, 'x', 'x', 0],
+      ['x', 0, 'x', 'R', 0],
+      ['x', 'x', 0, 'x', 0],
+      ['x', 'R', 0, 'x', 0],
     ],
-    // Pattern 2
+    // A shape
     [
-      [0, 2, 0, 3, 4],
-      [0, 6, 0, 7, 1],
-      [3, 4, 0, 5, 0],
-      [7, 1, 0, 2, 0],
-      [0, 5, 0, 6, 0],
-      [0, 2, 0, 3, 4],
+      [0, 'x', 0, 'x', 'x'],
+      [0, 'x', 0, 'x', 'R'],
+      ['x', 'x', 0, 'x', 0],
+      ['x', 'R', 0, 'x', 0],
+      [0, 'x', 0, 'x', 0],
+      [0, 'x', 0, 'x', 'x'],
     ],
-    // Pattern 3
+    // G shape
     [
-      [0, 3, 4, 0, 5, 0, 0],
-      [0, 7, 1, 0, 2, 0, 0],
-      [0, 5, 0, 6, 0, 0, 0],
-      [0, 2, 0, 3, 4, 0, 0],
-      [0, 6, 0, 7, 1, 0, 0],
-      [0, 3, 4, 0, 5, 0, 0],
+      [0, 'x', 'x', 0, 'x', 0, 0],
+      [0, 'x', 'R', 0, 'x', 0, 0],
+      [0, 'x', 0, 'x', 0, 0, 0],
+      [0, 'x', 0, 'x', 'x', 0, 0],
+      [0, 'x', 0, 'x', 'R', 0, 0],
+      [0, 'x', 'x', 0, 'x', 0, 0],
     ],
-    // Pattern 4
+    // E shape
     [
-      [0, 0, 5, 0, 6, 0, 0],
-      [0, 0, 2, 0, 3, 4, 0],
-      [0, 6, 0, 7, 1, 0, 0],
-      [0, 3, 4, 0, 5, 0, 0],
-      [0, 7, 1, 0, 2, 0, 0],
-      [0, 0, 5, 0, 6, 0, 0],
+      [0, 0, 'x', 0, 'x', 0, 0],
+      [0, 0, 'x', 0, 'x', 'x', 0],
+      [0, 'x', 0, 'x', 'R', 0, 0],
+      [0, 'x', 'x', 0, 'x', 0, 0],
+      [0, 'R', 'x', 0, 'x', 0, 0],
+      [0, 0, 'x', 0, 'x', 0, 0],
     ],
-    // Pattern 5
+    // D shape
     [
-      [0, 0, 7, 1, 0, 0, 0],
-      [0, 0, 4, 5, 6, 0, 0],
-      [0, 1, 2, 3, 0, 0, 0],
-      [0, 0, 5, 6, 0, 0, 0],
-      [0, 0, 2, 3, 4, 0, 0],
-      [0, 0, 7, 1, 0, 0, 0],
+      [0, 0, 'x', 'R', 0, 0, 0],
+      [0, 0, 'x', 'x', 'x', 0, 0],
+      [0, 'R', 'x', 'x', 0, 0, 0],
+      [0, 0, 'x', 'x', 0, 0, 0],
+      [0, 0, 'x', 'x', 'x', 0, 0],
+      [0, 0, 'x', 'R', 0, 0, 0],
     ],
   ],
   minor: [],
@@ -79,4 +81,4 @@ export const SCALE_PATTERNS: ScalePatternSet = {
   locrian: [],
   "harmonic minor": [],
   "melodic minor": [],
-};
+}
