@@ -1,4 +1,4 @@
-import type { ScalePattern } from '../scale-patterns'
+import type { ScalePattern } from '../scale-patterns';
 
 /**
  * Major scale CAGED positions. C, A, G, E, D shapes.
@@ -33,12 +33,12 @@ export const major: ScalePattern[] = [
   ],
   // E shape
   [
-    [0, 0, 'x', 0, 'x', 0, 0],
-    [0, 0, 'x', 0, 'x', 'x', 0],
-    [0, 'x', 0, 'x', 'R', 0, 0],
-    [0, 'x', 'x', 0, 'x', 0, 0],
-    [0, 'R', 'x', 0, 'x', 0, 0],
-    [0, 0, 'x', 0, 'x', 0, 0],
+    [0, 'x', 0, 'x', 0],
+    [0, 'x', 0, 'x', 'x'],
+    ['x', 0, 'x', 'R', 0],
+    ['x', 'x', 0, 'x', 0],
+    ['x', 'R', 0, 'x', 0],
+    [0, 'x', 0, 'x', 0],
   ],
   // D shape
   [
@@ -49,4 +49,4 @@ export const major: ScalePattern[] = [
     [0, 0, 'x', 'x', 'x', 0, 0],
     [0, 0, 'x', 'R', 0, 0, 0],
   ],
-]
+];
