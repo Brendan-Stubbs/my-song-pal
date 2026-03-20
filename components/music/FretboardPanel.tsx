@@ -25,7 +25,11 @@ const AVAILABLE_SCALES = [
 
 const FRET_COUNT = 12
 
-export default function FretboardPanel() {
+export interface FretboardPanelProps {
+  tuning: string[]
+}
+
+export default function FretboardPanel({ tuning }: FretboardPanelProps) {
   const [selectedKey, setSelectedKey] = useState('C')
   const [selectedScale, setSelectedScale] = useState('major')
   const [showDegrees, setShowDegrees] = useState(false)
@@ -45,6 +49,7 @@ export default function FretboardPanel() {
           key: selectedKey,
           scale: selectedScale,
           fretCount: String(FRET_COUNT),
+          tuning: tuning.join(','),
         })
         const response = await fetch(`/api/music/fretboard?${params.toString()}`)
         const data = await response.json() as { notes?: FretboardNote[]; error?: string }
@@ -74,7 +79,7 @@ export default function FretboardPanel() {
     return () => {
       cancelled = true
     }
-  }, [selectedKey, selectedScale])
+  }, [selectedKey, selectedScale, tuning])
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">

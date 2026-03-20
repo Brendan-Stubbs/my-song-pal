@@ -23,7 +23,11 @@ const AVAILABLE_SCALES = [
   'melodic minor',
 ]
 
-export default function CagedPositionsPanel() {
+export interface CagedPositionsPanelProps {
+  tuning: string[]
+}
+
+export default function CagedPositionsPanel({ tuning }: CagedPositionsPanelProps) {
   const [selectedKey, setSelectedKey] = useState('C')
   const [selectedScale, setSelectedScale] = useState('major')
   const [showDegrees, setShowDegrees] = useState(false)
@@ -42,6 +46,7 @@ export default function CagedPositionsPanel() {
         const params = new URLSearchParams({
           key: selectedKey,
           scale: selectedScale,
+          tuning: tuning.join(','),
         })
         const response = await fetch(`/api/music/positions?${params.toString()}`)
         const data = await response.json() as { positions?: CagedPosition[]; error?: string }
@@ -71,7 +76,7 @@ export default function CagedPositionsPanel() {
     return () => {
       cancelled = true
     }
-  }, [selectedKey, selectedScale])
+  }, [selectedKey, selectedScale, tuning])
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
