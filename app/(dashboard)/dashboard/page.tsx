@@ -1,6 +1,7 @@
 import { createAuthService } from '@/services/auth/auth.service'
 import SignOutButton from '@/components/auth/SignOutButton'
 import CagedPositionsPanel from '@/components/music/CagedPositionsPanel'
+import FretboardPanel from '@/components/music/FretboardPanel'
 
 export default async function DashboardPage() {
   const authService = await createAuthService()
@@ -21,6 +22,8 @@ export default async function DashboardPage() {
             Welcome, {user?.displayName ?? user?.email}
           </h2>
         </div>
+
+        <FretboardPanel />
 
         <CagedPositionsPanel />
       </main>
