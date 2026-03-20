@@ -26,6 +26,13 @@ export interface ChordInfo {
   notes: string[]      // e.g. ["C", "E", "G"]
 }
 
+// A named section in a song (e.g. Verse, Chorus)
+export interface ProgressionSection {
+  id: string
+  name: string
+  chords: ChordInfo[]
+}
+
 // The full scale info for a given key + scale
 export interface ScaleInfo {
   key: string          // e.g. "C"
