@@ -7,6 +7,7 @@ import CagedPositionsPanel from './CagedPositionsPanel'
 import ChordProgressionsPanel from './ChordProgressionsPanel'
 import SongPanel from './SongPanel'
 import OpenChordsPanel from './OpenChordsPanel'
+import ScaleFinderModal from './ScaleFinderModal'
 import {
   DndContext,
   closestCenter,
@@ -137,6 +138,7 @@ export default function MusicDashboard() {
   const [selectedKey, setSelectedKey] = useState('C')
   const [selectedScale, setSelectedScale] = useState('major')
   const [editMode, setEditMode] = useState(false)
+  const [scaleFinderOpen, setScaleFinderOpen] = useState(false)
   const [panels, setPanels] = useState<DashboardPanel[]>(DEFAULT_PANELS)
 
   const [sections, setSections] = useState<ProgressionSection[]>([
@@ -325,8 +327,20 @@ export default function MusicDashboard() {
           {tuning.join(' · ')}
         </span>
 
-        {/* Edit mode button — pushed to the right */}
-        <div className="ml-auto pb-0.5">
+        {/* Scale Finder + Edit Layout — pushed to the right */}
+        <div className="ml-auto flex items-center gap-2 pb-0.5">
+          <button
+            onClick={() => setScaleFinderOpen(true)}
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="6" cy="6" r="4.5" />
+              <path d="M9.5 9.5L13 13" />
+            </svg>
+            Scale Finder
+          </button>
+        </div>
+        <div className="pb-0.5">
           <button
             onClick={() => setEditMode((v) => !v)}
             className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand ${
@@ -374,6 +388,17 @@ export default function MusicDashboard() {
 
       {/* Dashboard panels in user-defined order */}
       {panels.map((panel) => renderPanel(panel))}
+
+      {/* Scale Finder modal — portal-style, outside the panel flow */}
+      <ScaleFinderModal
+        isOpen={scaleFinderOpen}
+        onClose={() => setScaleFinderOpen(false)}
+        tuning={tuning}
+        onApplyScale={(key, scaleName) => {
+          setSelectedKey(key)
+          setSelectedScale(scaleName)
+        }}
+      />
     </div>
   )
 }
