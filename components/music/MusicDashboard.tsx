@@ -6,6 +6,21 @@ import FretboardPanel from './FretboardPanel'
 import CagedPositionsPanel from './CagedPositionsPanel'
 import ChordProgressionsPanel from './ChordProgressionsPanel'
 import SongPanel from './SongPanel'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 export const TUNING_PRESETS = [
   { label: 'Standard (E A D G B E)', tuning: ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'] },
@@ -35,10 +50,92 @@ const AVAILABLE_SCALES = [
   'melodic minor',
 ]
 
+type PanelId = 'fretboard' | 'caged' | 'chordProgressions' | 'song'
+
+interface DashboardPanel {
+  id: PanelId
+  label: string
+  visible: boolean
+}
+
+const DEFAULT_PANELS: DashboardPanel[] = [
+  { id: 'fretboard', label: 'Fretboard', visible: true },
+  { id: 'caged', label: 'CAGED Positions', visible: true },
+  { id: 'chordProgressions', label: 'Chord Progressions', visible: true },
+  { id: 'song', label: 'Song', visible: true },
+]
+
+// ── Sortable row used in edit mode ──────────────────────────────────────────
+interface SortableRowProps {
+  panel: DashboardPanel
+  onToggle: (id: PanelId) => void
+}
+
+function SortableRow({ panel, onToggle }: SortableRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: panel.id,
+  })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 shadow-sm"
+    >
+      {/* Drag handle */}
+      <button
+        {...listeners}
+        {...attributes}
+        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 touch-none"
+        aria-label="Drag to reorder"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="5" cy="4" r="1.5" />
+          <circle cx="11" cy="4" r="1.5" />
+          <circle cx="5" cy="8" r="1.5" />
+          <circle cx="11" cy="8" r="1.5" />
+          <circle cx="5" cy="12" r="1.5" />
+          <circle cx="11" cy="12" r="1.5" />
+        </svg>
+      </button>
+
+      <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+        {panel.label}
+      </span>
+
+      {/* Visibility toggle */}
+      <button
+        onClick={() => onToggle(panel.id)}
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1 ${
+          panel.visible ? 'bg-brand' : 'bg-gray-300 dark:bg-gray-600'
+        }`}
+        role="switch"
+        aria-checked={panel.visible}
+        aria-label={`${panel.visible ? 'Hide' : 'Show'} ${panel.label}`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            panel.visible ? 'translate-x-4' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
+// ── Main dashboard ───────────────────────────────────────────────────────────
 export default function MusicDashboard() {
   const [selectedTuningIndex, setSelectedTuningIndex] = useState(0)
   const [selectedKey, setSelectedKey] = useState('C')
   const [selectedScale, setSelectedScale] = useState('major')
+  const [editMode, setEditMode] = useState(false)
+  const [panels, setPanels] = useState<DashboardPanel[]>(DEFAULT_PANELS)
 
   const [sections, setSections] = useState<ProgressionSection[]>([
     { id: crypto.randomUUID(), name: 'Verse', chords: [] },
@@ -46,6 +143,25 @@ export default function MusicDashboard() {
   const [activeSectionId, setActiveSectionId] = useState(sections[0].id)
 
   const tuning = TUNING_PRESETS[selectedTuningIndex]?.tuning ?? TUNING_PRESETS[0].tuning
+
+  const sensors = useSensors(useSensor(PointerSensor))
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setPanels((prev) => {
+        const oldIndex = prev.findIndex((p) => p.id === active.id)
+        const newIndex = prev.findIndex((p) => p.id === over.id)
+        return arrayMove(prev, oldIndex, newIndex)
+      })
+    }
+  }
+
+  function togglePanelVisibility(id: PanelId) {
+    setPanels((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, visible: !p.visible } : p)),
+    )
+  }
 
   function addSection() {
     const defaultNames = ['Chorus', 'Bridge', 'Outro', 'Pre-chorus', 'Solo', 'Intro']
@@ -101,6 +217,54 @@ export default function MusicDashboard() {
   const selectClass = 'rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand'
   const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300'
 
+  function renderPanel(panel: DashboardPanel) {
+    if (!panel.visible) return null
+    switch (panel.id) {
+      case 'fretboard':
+        return (
+          <FretboardPanel
+            key="fretboard"
+            selectedKey={selectedKey}
+            selectedScale={selectedScale}
+            tuning={tuning}
+          />
+        )
+      case 'caged':
+        return (
+          <CagedPositionsPanel
+            key="caged"
+            selectedKey={selectedKey}
+            selectedScale={selectedScale}
+            tuning={tuning}
+          />
+        )
+      case 'chordProgressions':
+        return (
+          <ChordProgressionsPanel
+            key="chordProgressions"
+            selectedKey={selectedKey}
+            selectedScale={selectedScale}
+            onAddChord={addChordToActive}
+            onApplyPreset={applyPresetToActive}
+          />
+        )
+      case 'song':
+        return (
+          <SongPanel
+            key="song"
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSetActiveSection={setActiveSectionId}
+            onAddSection={addSection}
+            onRemoveSection={removeSection}
+            onRenameSection={renameSection}
+            onRemoveChord={removeChord}
+            onClearSection={clearSection}
+          />
+        )
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Global controls */}
@@ -150,29 +314,56 @@ export default function MusicDashboard() {
         <span className="text-xs text-gray-400 dark:text-gray-500 font-mono pb-1">
           {tuning.join(' · ')}
         </span>
+
+        {/* Edit mode button — pushed to the right */}
+        <div className="ml-auto pb-0.5">
+          <button
+            onClick={() => setEditMode((v) => !v)}
+            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand ${
+              editMode
+                ? 'bg-brand text-white hover:bg-brand/90'
+                : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600'
+            }`}
+          >
+            {editMode ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M1 7l4 4L13 3" />
+                </svg>
+                Done
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" />
+                </svg>
+                Edit Layout
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      <FretboardPanel selectedKey={selectedKey} selectedScale={selectedScale} tuning={tuning} />
+      {/* Edit mode panel */}
+      {editMode && (
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 space-y-3">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Drag to reorder · toggle to show/hide
+          </p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={panels.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {panels.map((panel) => (
+                  <SortableRow key={panel.id} panel={panel} onToggle={togglePanelVisibility} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
 
-      <CagedPositionsPanel selectedKey={selectedKey} selectedScale={selectedScale} tuning={tuning} />
-
-      <ChordProgressionsPanel
-        selectedKey={selectedKey}
-        selectedScale={selectedScale}
-        onAddChord={addChordToActive}
-        onApplyPreset={applyPresetToActive}
-      />
-
-      <SongPanel
-        sections={sections}
-        activeSectionId={activeSectionId}
-        onSetActiveSection={setActiveSectionId}
-        onAddSection={addSection}
-        onRemoveSection={removeSection}
-        onRenameSection={renameSection}
-        onRemoveChord={removeChord}
-        onClearSection={clearSection}
-      />
+      {/* Dashboard panels in user-defined order */}
+      {panels.map((panel) => renderPanel(panel))}
     </div>
   )
 }
