@@ -89,7 +89,7 @@ function SortableRow({ panel, onToggle }: SortableRowProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 shadow-sm"
+      className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-800 px-4 py-3 shadow-sm"
     >
       {/* Drag handle */}
       <button
@@ -218,7 +218,7 @@ export default function MusicDashboard() {
     )
   }
 
-  const selectClass = 'rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand'
+  const selectClass = 'rounded-md border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand'
   const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300'
 
   function renderPanel(panel: DashboardPanel) {
@@ -280,7 +280,7 @@ export default function MusicDashboard() {
   return (
     <div className="space-y-6">
       {/* Global controls */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-wrap items-end gap-6">
+      <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-4 flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-1">
           <label htmlFor="global-key-select" className={labelClass}>Key</label>
           <select
@@ -331,7 +331,7 @@ export default function MusicDashboard() {
         <div className="ml-auto flex items-center gap-2 pb-0.5">
           <button
             onClick={() => setScaleFinderOpen(true)}
-            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-warm-page dark:hover:bg-gray-600"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="6" cy="6" r="4.5" />
@@ -346,7 +346,7 @@ export default function MusicDashboard() {
             className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand ${
               editMode
                 ? 'bg-brand text-white hover:bg-brand/90'
-                : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600'
+                : 'border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-warm-page dark:hover:bg-gray-600'
             }`}
           >
             {editMode ? (

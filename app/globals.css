@@ -11,6 +11,9 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-brand: #ff9933;
+  /* Warm light-mode palette — Option B */
+  --color-warm-page: #f0ede8;
+  --color-warm-panel: #faf9f7;
 }
 
 @media (prefers-color-scheme: dark) {

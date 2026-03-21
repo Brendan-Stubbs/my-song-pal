@@ -58,7 +58,7 @@ export default function CagedPositionDiagram({
         aria-label={`Position ${positionNumber} at fret ${rootFret}`}
       >
         {/* Background */}
-        <rect width={svgWidth} height={svgHeight} fill="white" className="dark:hidden" />
+        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
         <rect width={svgWidth} height={svgHeight} fill="#1f2937" className="hidden dark:block" />
 
         {/* Position title */}

@@ -258,7 +258,7 @@ export default function ChordDiagramCard({
         isClickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default',
         isSelected
           ? 'border-brand bg-brand/5 shadow-md ring-2 ring-brand/40'
-          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-brand/60',
+          : 'border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-800 hover:border-brand/60',
       ].join(' ')}
     >
       {/* Chord symbol */}

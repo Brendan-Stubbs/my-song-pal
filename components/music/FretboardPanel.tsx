@@ -69,7 +69,7 @@ export default function FretboardPanel({
   }, [selectedKey, selectedScale, tuning]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Scale Fretboard

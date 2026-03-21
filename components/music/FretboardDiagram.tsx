@@ -49,7 +49,7 @@ export default function FretboardDiagram({
         role="img"
         aria-label={`Fretboard showing scale notes for ${numFrets} frets`}
       >
-        <rect width={svgWidth} height={svgHeight} fill="white" className="dark:hidden" />
+        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
         <rect width={svgWidth} height={svgHeight} fill="#1f2937" className="hidden dark:block" />
 
         {/* Open fret column (nut area) - visually distinct */}
@@ -58,7 +58,7 @@ export default function FretboardDiagram({
           y={PAD_TOP}
           width={CELL_WIDTH}
           height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-          fill={OPEN_FRET_FILL_LIGHT}
+          fill="#e8e3db"
           className="dark:hidden"
         />
         <rect

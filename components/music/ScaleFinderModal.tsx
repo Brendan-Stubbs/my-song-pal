@@ -86,7 +86,7 @@ function InteractiveFretboard({ tuning, selectedPcs, onToggle }: FretboardProps)
         style={{ display: 'block' }}
       >
         {/* Light/dark backgrounds */}
-        <rect width={svgWidth} height={svgHeight} fill="white" className="dark:hidden" />
+        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
         <rect width={svgWidth} height={svgHeight} fill="#1f2937" className="hidden dark:block" />
 
         {/* Open string column shading */}
@@ -95,7 +95,7 @@ function InteractiveFretboard({ tuning, selectedPcs, onToggle }: FretboardProps)
           y={PAD_T}
           width={CELL_W}
           height={(NUM_STRINGS - 1) * CELL_H}
-          fill="#e5e7eb"
+          fill="#e8e3db"
           className="dark:hidden"
           opacity={0.6}
         />
@@ -228,7 +228,7 @@ function InteractiveFretboard({ tuning, selectedPcs, onToggle }: FretboardProps)
                 fill="transparent"
               />
               {/* Background circle — covers string/fret lines so dot looks clean */}
-              <circle cx={cx} cy={cy} r={DOT_R} fill="white" className="dark:hidden" />
+              <circle cx={cx} cy={cy} r={DOT_R} fill="#faf9f7" className="dark:hidden" />
               <circle cx={cx} cy={cy} r={DOT_R} fill="#1f2937" className="hidden dark:block" />
               {/* Visible dot */}
               {selected ? (
@@ -266,7 +266,7 @@ function ScaleResultCard({
   onApply?: () => void
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 hover:border-brand/40 transition-colors">
+    <div className="flex items-center gap-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-800 px-4 py-3 hover:border-brand/40 transition-colors">
       <div className="flex-1 min-w-0">
         {/* Scale name */}
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
@@ -471,7 +471,7 @@ export default function ScaleFinderModal({
 
       {/* Dialog */}
       <div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-3xl max-h-[90vh] flex flex-col bg-warm-panel dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Scale Finder"

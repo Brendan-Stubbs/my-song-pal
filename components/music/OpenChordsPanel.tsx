@@ -113,7 +113,7 @@ export default function OpenChordsPanel({
     'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
