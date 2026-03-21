@@ -6,6 +6,7 @@ import FretboardPanel from './FretboardPanel'
 import CagedPositionsPanel from './CagedPositionsPanel'
 import ChordProgressionsPanel from './ChordProgressionsPanel'
 import SongPanel from './SongPanel'
+import OpenChordsPanel from './OpenChordsPanel'
 import {
   DndContext,
   closestCenter,
@@ -50,7 +51,7 @@ const AVAILABLE_SCALES = [
   'melodic minor',
 ]
 
-type PanelId = 'fretboard' | 'caged' | 'chordProgressions' | 'song'
+type PanelId = 'fretboard' | 'caged' | 'openChords' | 'chordProgressions' | 'song'
 
 interface DashboardPanel {
   id: PanelId
@@ -61,6 +62,7 @@ interface DashboardPanel {
 const DEFAULT_PANELS: DashboardPanel[] = [
   { id: 'fretboard', label: 'Fretboard', visible: true },
   { id: 'caged', label: 'CAGED Positions', visible: true },
+  { id: 'openChords', label: 'Open Chords', visible: true },
   { id: 'chordProgressions', label: 'Chord Progressions', visible: true },
   { id: 'song', label: 'Song', visible: true },
 ]
@@ -236,6 +238,14 @@ export default function MusicDashboard() {
             selectedKey={selectedKey}
             selectedScale={selectedScale}
             tuning={tuning}
+          />
+        )
+      case 'openChords':
+        return (
+          <OpenChordsPanel
+            key="openChords"
+            selectedKey={selectedKey}
+            selectedScale={selectedScale}
           />
         )
       case 'chordProgressions':

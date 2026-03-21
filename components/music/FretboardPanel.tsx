@@ -1,29 +1,33 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import type { FretboardNote } from '@/types/music'
-import FretboardDiagram from './FretboardDiagram'
+import { useEffect, useState } from 'react';
+import type { FretboardNote } from '@/types/music';
+import FretboardDiagram from './FretboardDiagram';
 
-const FRET_COUNT = 12
+const FRET_COUNT = 12;
 
 export interface FretboardPanelProps {
-  selectedKey: string
-  selectedScale: string
-  tuning: string[]
+  selectedKey: string;
+  selectedScale: string;
+  tuning: string[];
 }
 
-export default function FretboardPanel({ selectedKey, selectedScale, tuning }: FretboardPanelProps) {
-  const [showDegrees, setShowDegrees] = useState(false)
-  const [notes, setNotes] = useState<FretboardNote[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function FretboardPanel({
+  selectedKey,
+  selectedScale,
+  tuning,
+}: FretboardPanelProps) {
+  const [showDegrees, setShowDegrees] = useState(false);
+  const [notes, setNotes] = useState<FretboardNote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     async function fetchNotes() {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
       try {
         const params = new URLSearchParams({
@@ -31,31 +35,38 @@ export default function FretboardPanel({ selectedKey, selectedScale, tuning }: F
           scale: selectedScale,
           fretCount: String(FRET_COUNT),
           tuning: tuning.join(','),
-        })
-        const response = await fetch(`/api/music/fretboard?${params.toString()}`)
-        const data = await response.json() as { notes?: FretboardNote[]; error?: string }
+        });
+        const response = await fetch(
+          `/api/music/fretboard?${params.toString()}`,
+        );
+        const data = (await response.json()) as {
+          notes?: FretboardNote[];
+          error?: string;
+        };
 
-        if (cancelled) return
+        if (cancelled) return;
 
         if (!response.ok) {
-          setError(data.error ?? 'Failed to load fretboard')
-          setNotes([])
+          setError(data.error ?? 'Failed to load fretboard');
+          setNotes([]);
         } else {
-          setNotes(data.notes ?? [])
+          setNotes(data.notes ?? []);
         }
       } catch {
         if (!cancelled) {
-          setError('Failed to load fretboard. Please try again.')
-          setNotes([])
+          setError('Failed to load fretboard. Please try again.');
+          setNotes([]);
         }
       } finally {
-        if (!cancelled) setIsLoading(false)
+        if (!cancelled) setIsLoading(false);
       }
     }
 
-    void fetchNotes()
-    return () => { cancelled = true }
-  }, [selectedKey, selectedScale, tuning])
+    void fetchNotes();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedKey, selectedScale, tuning]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -70,7 +81,7 @@ export default function FretboardPanel({ selectedKey, selectedScale, tuning }: F
             onChange={(e) => setShowDegrees(e.target.checked)}
             className="rounded border-gray-300 text-brand focus:ring-brand"
           />
-          Show degrees
+          Show scale degrees
         </label>
       </div>
 
@@ -94,5 +105,5 @@ export default function FretboardPanel({ selectedKey, selectedScale, tuning }: F
         />
       )}
     </div>
-  )
+  );
 }

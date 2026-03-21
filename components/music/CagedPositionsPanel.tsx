@@ -1,58 +1,69 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import type { CagedPosition } from '@/types/music'
-import CagedPositionDiagram from './CagedPositionDiagram'
+import { useEffect, useState } from 'react';
+import type { CagedPosition } from '@/types/music';
+import CagedPositionDiagram from './CagedPositionDiagram';
 
 export interface CagedPositionsPanelProps {
-  selectedKey: string
-  selectedScale: string
-  tuning: string[]
+  selectedKey: string;
+  selectedScale: string;
+  tuning: string[];
 }
 
-export default function CagedPositionsPanel({ selectedKey, selectedScale, tuning }: CagedPositionsPanelProps) {
-  const [showDegrees, setShowDegrees] = useState(false)
-  const [positions, setPositions] = useState<CagedPosition[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export default function CagedPositionsPanel({
+  selectedKey,
+  selectedScale,
+  tuning,
+}: CagedPositionsPanelProps) {
+  const [showDegrees, setShowDegrees] = useState(false);
+  const [positions, setPositions] = useState<CagedPosition[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     async function fetchPositions() {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
       try {
         const params = new URLSearchParams({
           key: selectedKey,
           scale: selectedScale,
           tuning: tuning.join(','),
-        })
-        const response = await fetch(`/api/music/positions?${params.toString()}`)
-        const data = await response.json() as { positions?: CagedPosition[]; error?: string }
+        });
+        const response = await fetch(
+          `/api/music/positions?${params.toString()}`,
+        );
+        const data = (await response.json()) as {
+          positions?: CagedPosition[];
+          error?: string;
+        };
 
-        if (cancelled) return
+        if (cancelled) return;
 
         if (!response.ok) {
-          setError(data.error ?? 'Failed to load positions')
-          setPositions([])
+          setError(data.error ?? 'Failed to load positions');
+          setPositions([]);
         } else {
-          setPositions(data.positions ?? [])
+          setPositions(data.positions ?? []);
         }
       } catch {
         if (!cancelled) {
-          setError('Failed to load positions. Please try again.')
-          setPositions([])
+          setError('Failed to load positions. Please try again.');
+          setPositions([]);
         }
       } finally {
-        if (!cancelled) setIsLoading(false)
+        if (!cancelled) setIsLoading(false);
       }
     }
 
-    void fetchPositions()
-    return () => { cancelled = true }
-  }, [selectedKey, selectedScale, tuning])
+    void fetchPositions();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedKey, selectedScale, tuning]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -67,7 +78,7 @@ export default function CagedPositionsPanel({ selectedKey, selectedScale, tuning
             onChange={(e) => setShowDegrees(e.target.checked)}
             className="rounded border-gray-300 text-brand focus:ring-brand"
           />
-          Show degrees
+          Show scale degrees
         </label>
       </div>
 
@@ -85,7 +96,9 @@ export default function CagedPositionsPanel({ selectedKey, selectedScale, tuning
 
       {!isLoading && !error && positions.length === 0 && (
         <div className="flex items-center justify-center py-12">
-          <p className="text-gray-500 dark:text-gray-400">No positions found.</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            No positions found.
+          </p>
         </div>
       )}
 
@@ -101,5 +114,5 @@ export default function CagedPositionsPanel({ selectedKey, selectedScale, tuning
         </div>
       )}
     </div>
-  )
+  );
 }
