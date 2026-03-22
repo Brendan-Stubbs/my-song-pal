@@ -38,7 +38,7 @@ export default function CagedPositionsPanel({
     <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          CAGED Scale Positions
+          Scale Positions
         </h2>
         {isStandardTuning && (
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
@@ -61,7 +61,7 @@ export default function CagedPositionsPanel({
             <circle cx="9" cy="13.5" r="0.5" fill="currentColor" />
           </svg>
           <p className="text-sm text-amber-800 dark:text-amber-300">
-            CAGED scale positions are only available in standard tunings.
+            Scale positions are only available in standard tunings.
           </p>
         </div>
       )}

@@ -94,7 +94,7 @@ interface DashboardPanel {
 
 const DEFAULT_PANELS: DashboardPanel[] = [
   { id: 'fretboard', label: 'Fretboard', visible: true },
-  { id: 'caged', label: 'CAGED Positions', visible: true },
+  { id: 'caged', label: 'Scale Positions', visible: true },
   { id: 'openChords', label: 'Open Chords', visible: true },
   { id: 'chordProgressions', label: 'Chord Progressions', visible: true },
   { id: 'song', label: 'Song', visible: true },
