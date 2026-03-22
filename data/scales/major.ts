@@ -1,10 +1,6 @@
 import type { ScalePattern } from '../scale-patterns';
 
-/**
- * Major scale CAGED positions. C, A, G, E, D shapes.
- */
 export const major: ScalePattern[] = [
-  // C shape
   [
     ['x', 'R', 0, 'x', 0],
     [0, 'x', 0, 'x', 0],
@@ -13,7 +9,6 @@ export const major: ScalePattern[] = [
     ['x', 'x', 0, 'x', 0],
     ['x', 'R', 0, 'x', 0],
   ],
-  // A shape
   [
     [0, 'x', 0, 'x', 'x'],
     [0, 'x', 0, 'x', 'R'],
@@ -22,16 +17,14 @@ export const major: ScalePattern[] = [
     [0, 'x', 0, 'x', 0],
     [0, 'x', 0, 'x', 'x'],
   ],
-  // G shape
   [
-    [0, 'x', 'x', 0, 'x', 0, 0],
-    [0, 'x', 'R', 0, 'x', 0, 0],
-    [0, 'x', 0, 'x', 0, 0, 0],
-    [0, 'x', 0, 'x', 'x', 0, 0],
-    [0, 'x', 0, 'x', 'R', 0, 0],
-    [0, 'x', 'x', 0, 'x', 0, 0],
+    ['x', 'x', 0, 'x', 0, 0],
+    ['x', 'R', 0, 'x', 0, 0],
+    ['x', 0, 'x', 0, 0, 0],
+    ['x', 0, 'x', 'x', 0, 0],
+    ['x', 0, 'x', 'R', 0, 0],
+    ['x', 'x', 0, 'x', 0, 0],
   ],
-  // E shape
   [
     [0, 'x', 0, 'x', 0],
     [0, 'x', 0, 'x', 'x'],
@@ -40,7 +33,6 @@ export const major: ScalePattern[] = [
     ['x', 'R', 0, 'x', 0],
     [0, 'x', 0, 'x', 0],
   ],
-  // D shape
   [
     [0, 'x', 0, 'x', 'R'],
     [0, 'x', 'x', 0, 'x'],

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Note } from 'tonal'
 import type { ChordInfo, ProgressionSection } from '@/types/music'
 import FretboardPanel from './FretboardPanel'
 import CagedPositionsPanel from './CagedPositionsPanel'
@@ -24,14 +25,45 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-export const TUNING_PRESETS = [
-  { label: 'Standard (E A D G B E)', tuning: ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'] },
-  { label: 'Eb Standard (Eb Ab Db Gb Bb Eb)', tuning: ['Eb2', 'Ab2', 'Db3', 'Gb3', 'Bb3', 'Eb4'] },
-  { label: 'D Standard (D G C F A D)', tuning: ['D2', 'G2', 'C3', 'F3', 'A3', 'D4'] },
-  { label: 'C# Standard (C# F# B E G# C#)', tuning: ['C#2', 'F#2', 'B2', 'E3', 'G#3', 'C#4'] },
-  { label: 'C Standard (C F Bb Eb G C)', tuning: ['C2', 'F2', 'Bb2', 'Eb3', 'G3', 'C4'] },
-  { label: 'B Standard (B E A D F# B)', tuning: ['B1', 'E2', 'A2', 'D3', 'F#3', 'B3'] },
+export interface TuningPreset {
+  label: string
+  tuning: string[]
+  isStandard: boolean
+}
+
+export const TUNING_PRESETS: TuningPreset[] = [
+  // ── Standard tunings ───────────────────────────────────────────────────────
+  { label: 'Standard (E A D G B E)',            tuning: ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],  isStandard: true  },
+  { label: 'Eb Standard (Eb Ab Db Gb Bb Eb)',   tuning: ['Eb2', 'Ab2', 'Db3', 'Gb3', 'Bb3', 'Eb4'], isStandard: true },
+  { label: 'D Standard (D G C F A D)',          tuning: ['D2', 'G2', 'C3', 'F3', 'A3', 'D4'],  isStandard: true  },
+  { label: 'C# Standard (C# F# B E G# C#)',     tuning: ['C#2', 'F#2', 'B2', 'E3', 'G#3', 'C#4'], isStandard: true },
+  { label: 'C Standard (C F Bb Eb G C)',        tuning: ['C2', 'F2', 'Bb2', 'Eb3', 'G3', 'C4'],  isStandard: true  },
+  { label: 'B Standard (B E A D F# B)',         tuning: ['B1', 'E2', 'A2', 'D3', 'F#3', 'B3'],  isStandard: true  },
+  // ── Drop tunings ───────────────────────────────────────────────────────────
+  { label: 'Drop D (D A D G B E)',              tuning: ['D2', 'A2', 'D3', 'G3', 'B3', 'E4'],  isStandard: false },
+  { label: 'Drop C# (C# G# C# F# A# D#)',       tuning: ['C#2', 'G#2', 'C#3', 'F#3', 'A#3', 'D#4'], isStandard: false },
+  { label: 'Drop C (C G C F A D)',              tuning: ['C2', 'G2', 'C3', 'F3', 'A3', 'D4'],  isStandard: false },
+  { label: 'Drop B (B F# B E G# C#)',           tuning: ['B1', 'F#2', 'B2', 'E3', 'G#3', 'C#4'], isStandard: false },
+  { label: 'Drop A (A E A D F# B)',             tuning: ['A1', 'E2', 'A2', 'D3', 'F#3', 'B3'],  isStandard: false },
 ]
+
+// Sentinel value for the custom-tuning option in the <select>
+const CUSTOM_TUNING_INDEX = -1
+
+const CHROMATIC_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+// Standard open-string MIDI values (E2=40, A2=45, D3=50, G3=55, B3=59, E4=64)
+const STRING_CENTERS = [40, 45, 50, 55, 59, 64]
+
+/** Assigns a sensible octave to a pitch class for the given string index (0=low E string, 5=high e string). */
+function assignOctave(pitchClass: string, stringIndex: number): string {
+  const center = STRING_CENTERS[stringIndex] ?? 50
+  const ref = Note.midi(`${pitchClass}4`) ?? 60
+  const pcOffset = ref % 12
+  const bestOctavePlusOne = Math.round((center - pcOffset) / 12)
+  const resultMidi = bestOctavePlusOne * 12 + pcOffset
+  return Note.fromMidi(resultMidi) ?? `${pitchClass}4`
+}
 
 const AVAILABLE_KEYS = [
   'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
@@ -135,6 +167,7 @@ function SortableRow({ panel, onToggle }: SortableRowProps) {
 // ── Main dashboard ───────────────────────────────────────────────────────────
 export default function MusicDashboard() {
   const [selectedTuningIndex, setSelectedTuningIndex] = useState(0)
+  const [customTuningPcs, setCustomTuningPcs] = useState(['E', 'A', 'D', 'G', 'B', 'E'])
   const [selectedKey, setSelectedKey] = useState('C')
   const [selectedScale, setSelectedScale] = useState('major')
   const [editMode, setEditMode] = useState(false)
@@ -146,7 +179,15 @@ export default function MusicDashboard() {
   ])
   const [activeSectionId, setActiveSectionId] = useState(sections[0].id)
 
-  const tuning = TUNING_PRESETS[selectedTuningIndex]?.tuning ?? TUNING_PRESETS[0].tuning
+  const isCustomTuning = selectedTuningIndex === CUSTOM_TUNING_INDEX
+  const tuning = isCustomTuning
+    ? customTuningPcs.map((pc, i) => assignOctave(pc, i))
+    : (TUNING_PRESETS[selectedTuningIndex]?.tuning ?? TUNING_PRESETS[0].tuning)
+  const isStandardTuning = !isCustomTuning && (TUNING_PRESETS[selectedTuningIndex]?.isStandard ?? false)
+
+  function updateCustomTuningPc(stringIndex: number, pc: string) {
+    setCustomTuningPcs((prev) => prev.map((v, i) => i === stringIndex ? pc : v))
+  }
 
   const sensors = useSensors(useSensor(PointerSensor))
 
@@ -240,6 +281,7 @@ export default function MusicDashboard() {
             selectedKey={selectedKey}
             selectedScale={selectedScale}
             tuning={tuning}
+            isStandardTuning={isStandardTuning}
           />
         )
       case 'openChords':
@@ -317,9 +359,20 @@ export default function MusicDashboard() {
             onChange={(e) => setSelectedTuningIndex(Number(e.target.value))}
             className={selectClass}
           >
-            {TUNING_PRESETS.map((preset, i) => (
-              <option key={preset.label} value={i}>{preset.label}</option>
-            ))}
+            <optgroup label="Standard">
+              {TUNING_PRESETS.filter((p) => p.isStandard).map((preset, i) => (
+                <option key={preset.label} value={i}>{preset.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Drop">
+              {TUNING_PRESETS.filter((p) => !p.isStandard).map((preset) => {
+                const i = TUNING_PRESETS.indexOf(preset)
+                return <option key={preset.label} value={i}>{preset.label}</option>
+              })}
+            </optgroup>
+            <optgroup label="Other">
+              <option value={CUSTOM_TUNING_INDEX}>Custom…</option>
+            </optgroup>
           </select>
         </div>
 
@@ -367,6 +420,35 @@ export default function MusicDashboard() {
           </button>
         </div>
       </div>
+
+      {/* Custom tuning inputs */}
+      {isCustomTuning && (
+        <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-4">
+          <p className={`${labelClass} mb-3`}>Custom tuning — string notes (low → high)</p>
+          <div className="flex flex-wrap gap-3">
+            {customTuningPcs.map((pc, i) => {
+              const stringNum = 6 - i
+              return (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    {stringNum === 6 ? '6 (low)' : stringNum === 1 ? '1 (high)' : String(stringNum)}
+                  </span>
+                  <select
+                    value={pc}
+                    onChange={(e) => updateCustomTuningPc(i, e.target.value)}
+                    className={`${selectClass} w-16`}
+                    aria-label={`String ${stringNum} note`}
+                  >
+                    {CHROMATIC_NOTES.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Edit mode panel */}
       {editMode && (
