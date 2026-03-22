@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { ProgressionSection } from '@/types/music'
 import { QUALITY_STYLES } from './ChordProgressionsPanel'
+import ChordHoverTooltip from './ChordHoverTooltip'
 
 export interface SongPanelProps {
   sections: ProgressionSection[]
@@ -139,17 +140,19 @@ export default function SongPanel({
                         {i > 0 && (
                           <span className="text-gray-300 dark:text-gray-600 select-none">–</span>
                         )}
-                        <div className={`relative group flex flex-col items-center px-4 py-2 rounded-lg border ${QUALITY_STYLES[chord.quality]}`}>
-                          <span className="text-xs font-medium opacity-60">{chord.degreeLabel}</span>
-                          <span className="text-lg font-bold leading-tight">{chord.symbol}</span>
-                          <button
-                            onClick={() => onRemoveChord(section.id, i)}
-                            aria-label={`Remove ${chord.symbol}`}
-                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-red-500 dark:hover:bg-red-500 text-white text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                          >
-                            ×
-                          </button>
-                        </div>
+                        <ChordHoverTooltip chord={chord}>
+                          <div className={`relative group flex flex-col items-center px-4 py-2 rounded-lg border ${QUALITY_STYLES[chord.quality]}`}>
+                            <span className="text-xs font-medium opacity-60">{chord.degreeLabel}</span>
+                            <span className="text-lg font-bold leading-tight">{chord.symbol}</span>
+                            <button
+                              onClick={() => onRemoveChord(section.id, i)}
+                              aria-label={`Remove ${chord.symbol}`}
+                              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-red-500 dark:hover:bg-red-500 text-white text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </ChordHoverTooltip>
                       </div>
                     ))}
                   </div>

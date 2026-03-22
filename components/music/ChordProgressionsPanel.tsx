@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { ChordInfo } from '@/types/music'
+import ChordHoverTooltip from './ChordHoverTooltip'
 
 const COMMON_PROGRESSIONS = [
   { name: 'I – IV – V', degrees: [1, 4, 5] },
@@ -101,15 +102,16 @@ export default function ChordProgressionsPanel({ selectedKey, selectedScale, onA
             </h3>
             <div className="flex flex-wrap gap-2">
               {chords.map((chord) => (
-                <button
-                  key={chord.degree}
-                  onClick={() => onAddChord(chord)}
-                  className={`flex flex-col items-center px-4 py-2 rounded-lg border cursor-pointer transition-opacity hover:opacity-75 ${QUALITY_STYLES[chord.quality]}`}
-                >
-                  <span className="text-xs font-medium opacity-60">{chord.degreeLabel}</span>
-                  <span className="text-lg font-bold leading-tight">{chord.symbol}</span>
-                  <span className="text-xs opacity-60">{chord.notes.join(' ')}</span>
-                </button>
+                <ChordHoverTooltip key={chord.degree} chord={chord}>
+                  <button
+                    onClick={() => onAddChord(chord)}
+                    className={`flex flex-col items-center px-4 py-2 rounded-lg border cursor-pointer transition-opacity hover:opacity-75 ${QUALITY_STYLES[chord.quality]}`}
+                  >
+                    <span className="text-xs font-medium opacity-60">{chord.degreeLabel}</span>
+                    <span className="text-lg font-bold leading-tight">{chord.symbol}</span>
+                    <span className="text-xs opacity-60">{chord.notes.join(' ')}</span>
+                  </button>
+                </ChordHoverTooltip>
               ))}
             </div>
           </div>
