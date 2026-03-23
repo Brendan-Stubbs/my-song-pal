@@ -1,33 +1,60 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { ProgressionSection } from '@/types/music'
 import { QUALITY_STYLES } from './ChordProgressionsPanel'
 import ChordHoverTooltip from './ChordHoverTooltip'
+import {
+  getAvailableVariants,
+  getVariantSymbol,
+  VARIANT_LABELS,
+  BASE_LABELS,
+} from '@/lib/chord-variants'
+import type { ChordVariant } from '@/lib/chord-variants'
 
 export interface SongPanelProps {
   sections: ProgressionSection[]
   activeSectionId: string
+  selectedKey: string
+  selectedScale: string
   onSetActiveSection: (id: string) => void
   onAddSection: () => void
   onRemoveSection: (id: string) => void
   onRenameSection: (id: string, name: string) => void
   onRemoveChord: (sectionId: string, chordIndex: number) => void
   onClearSection: (sectionId: string) => void
+  onChangeChordVariant: (sectionId: string, chordIndex: number, variant: ChordVariant | null) => void
 }
 
 export default function SongPanel({
   sections,
   activeSectionId,
+  selectedKey,
+  selectedScale,
   onSetActiveSection,
   onAddSection,
   onRemoveSection,
   onRenameSection,
   onRemoveChord,
   onClearSection,
+  onChangeChordVariant,
 }: SongPanelProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [variantPicker, setVariantPicker] = useState<{ sectionId: string; chordIndex: number } | null>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  // Close the variant picker on any click outside it
+  useEffect(() => {
+    if (!variantPicker) return
+    function handleMouseDown(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setVariantPicker(null)
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [variantPicker])
 
   function startRename(id: string, currentName: string) {
     setEditingId(id)
@@ -135,26 +162,115 @@ export default function SongPanel({
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-2 items-center" onClick={(e) => e.stopPropagation()}>
-                    {section.chords.map((chord, i) => (
-                      <div key={i} className="flex items-center gap-1.5">
-                        {i > 0 && (
-                          <span className="text-gray-300 dark:text-gray-600 select-none">–</span>
-                        )}
-                        <ChordHoverTooltip chord={chord}>
-                          <div className={`relative group flex flex-col items-center px-4 py-2 rounded-lg border ${QUALITY_STYLES[chord.quality]}`}>
-                            <span className="text-xs font-medium opacity-60">{chord.degreeLabel}</span>
-                            <span className="text-lg font-bold leading-tight">{chord.symbol}</span>
-                            <button
-                              onClick={() => onRemoveChord(section.id, i)}
-                              aria-label={`Remove ${chord.symbol}`}
-                              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-red-500 dark:hover:bg-red-500 text-white text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              ×
-                            </button>
+                    {section.chords.map((chord, i) => {
+                      const isPickerOpen =
+                        variantPicker?.sectionId === section.id && variantPicker?.chordIndex === i
+                      const displaySymbol = getVariantSymbol(chord)
+                      const availableVariants = isPickerOpen
+                        ? getAvailableVariants(chord, selectedKey, selectedScale)
+                        : []
+
+                      return (
+                        <div key={i} className="flex items-center gap-1.5">
+                          {i > 0 && (
+                            <span className="text-gray-300 dark:text-gray-600 select-none">–</span>
+                          )}
+
+                          {/* Chord chip + variant picker anchored together */}
+                          <div
+                            ref={isPickerOpen ? pickerRef : undefined}
+                            className="relative"
+                          >
+                            <ChordHoverTooltip chord={chord}>
+                              <div
+                                className={`relative group flex flex-col items-center px-4 py-2 rounded-lg border cursor-pointer select-none transition-all ${
+                                  QUALITY_STYLES[chord.quality]
+                                } ${isPickerOpen ? 'ring-2 ring-brand ring-offset-1' : ''}`}
+                                onClick={() =>
+                                  setVariantPicker(
+                                    isPickerOpen ? null : { sectionId: section.id, chordIndex: i },
+                                  )
+                                }
+                              >
+                                <span className="text-xs font-medium opacity-60">{chord.degreeLabel}</span>
+                                <span className="text-lg font-bold leading-tight">{displaySymbol}</span>
+                                {chord.variant && (
+                                  <span className="text-xs opacity-50 leading-tight">
+                                    {VARIANT_LABELS[chord.variant as ChordVariant] ?? chord.variant}
+                                  </span>
+                                )}
+                                {/* Remove button */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setVariantPicker(null)
+                                    onRemoveChord(section.id, i)
+                                  }}
+                                  aria-label={`Remove ${displaySymbol}`}
+                                  className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-red-500 dark:hover:bg-red-500 text-white text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </ChordHoverTooltip>
+
+                            {/* Variant picker popover */}
+                            {isPickerOpen && (
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-3 min-w-[10rem]">
+                                {/* Small arrow */}
+                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-900 border-l border-t border-gray-200 dark:border-gray-600 rotate-45" />
+
+                                <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+                                  Chord variant
+                                </p>
+
+                                <div className="flex flex-wrap gap-1.5">
+                                  {/* Base triad button */}
+                                  <button
+                                    onClick={() => {
+                                      onChangeChordVariant(section.id, i, null)
+                                      setVariantPicker(null)
+                                    }}
+                                    className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                                      !chord.variant
+                                        ? 'bg-brand text-white border-brand'
+                                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand'
+                                    }`}
+                                  >
+                                    {BASE_LABELS[chord.quality]}
+                                  </button>
+
+                                  {/* In-key variant buttons */}
+                                  {availableVariants.map((v) => (
+                                    <button
+                                      key={v}
+                                      onClick={() => {
+                                        onChangeChordVariant(section.id, i, v)
+                                        setVariantPicker(null)
+                                      }}
+                                      className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                                        chord.variant === v
+                                          ? 'bg-brand text-white border-brand'
+                                          : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand'
+                                      }`}
+                                    >
+                                      {VARIANT_LABELS[v]}
+                                    </button>
+                                  ))}
+
+                                  {/* Edge case: no variants available in this key */}
+                                  {availableVariants.length === 0 && (
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5">
+                                      No other variants in this key
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </ChordHoverTooltip>
-                      </div>
-                    ))}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>

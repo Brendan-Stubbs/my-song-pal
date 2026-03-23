@@ -259,6 +259,21 @@ export default function MusicDashboard() {
     )
   }
 
+  function changeChordVariant(sectionId: string, chordIndex: number, variant: string | null) {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? {
+              ...s,
+              chords: s.chords.map((c, i) =>
+                i === chordIndex ? { ...c, variant: variant ?? undefined } : c,
+              ),
+            }
+          : s,
+      ),
+    )
+  }
+
   const selectClass = 'rounded-md border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand'
   const labelClass = 'text-sm font-medium text-gray-700 dark:text-gray-300'
 
@@ -308,12 +323,15 @@ export default function MusicDashboard() {
             key="song"
             sections={sections}
             activeSectionId={activeSectionId}
+            selectedKey={selectedKey}
+            selectedScale={selectedScale}
             onSetActiveSection={setActiveSectionId}
             onAddSection={addSection}
             onRemoveSection={removeSection}
             onRenameSection={renameSection}
             onRemoveChord={removeChord}
             onClearSection={clearSection}
+            onChangeChordVariant={changeChordVariant}
           />
         )
     }

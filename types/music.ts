@@ -24,6 +24,7 @@ export interface ChordInfo {
   degreeLabel: string  // "I", "II", "III" etc (roman numerals)
   quality: 'major' | 'minor' | 'diminished'
   notes: string[]      // e.g. ["C", "E", "G"]
+  variant?: string     // optional in-key variant, e.g. "sus2", "maj7", "min7", "m7b5"
 }
 
 // A named section in a song (e.g. Verse, Chorus)
