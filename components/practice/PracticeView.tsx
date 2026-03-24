@@ -26,17 +26,47 @@ interface SessionCardProps {
   onEdit: () => void
   onStart: () => void
   onDelete: () => void
+  onRename: (name: string) => void
 }
 
-function SessionCard({ session, onEdit, onStart, onDelete }: SessionCardProps) {
+function SessionCard({ session, onEdit, onStart, onDelete, onRename }: SessionCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState(session.name)
   const total = totalMinutes(session)
+
+  function commitRename() {
+    const trimmed = renameValue.trim()
+    if (trimmed && trimmed !== session.name) onRename(trimmed)
+    else setRenameValue(session.name)
+    setIsRenaming(false)
+  }
 
   return (
     <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow flex flex-col gap-4 p-5">
       {/* Name + meta */}
       <div>
-        <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-snug">{session.name}</h3>
+        {isRenaming ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename()
+              if (e.key === 'Escape') { setRenameValue(session.name); setIsRenaming(false) }
+            }}
+            className="w-full text-lg font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-brand outline-none leading-snug"
+          />
+        ) : (
+          <h3
+            className="font-bold text-gray-900 dark:text-white text-lg leading-snug cursor-text hover:text-brand dark:hover:text-brand transition-colors"
+            title="Click to rename"
+            onClick={() => { setRenameValue(session.name); setIsRenaming(true) }}
+          >
+            {session.name}
+          </h3>
+        )}
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
           {session.blocks.length} block{session.blocks.length !== 1 ? 's' : ''} · {formatDuration(total)}
         </p>
@@ -146,6 +176,10 @@ export default function PracticeView() {
     updateSessions(sessions.map((s) => (s.id === updated.id ? updated : s)))
   }
 
+  function handleRenameSession(id: string, name: string) {
+    updateSessions(sessions.map((s) => s.id === id ? { ...s, name, updatedAt: Date.now() } : s))
+  }
+
   if (!loaded) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -244,6 +278,7 @@ export default function PracticeView() {
               onEdit={() => setView({ type: 'edit', sessionId: session.id })}
               onStart={() => setView({ type: 'play', sessionId: session.id, startBlockIndex: 0 })}
               onDelete={() => handleDeleteSession(session.id)}
+              onRename={(name) => handleRenameSession(session.id, name)}
             />
           ))}
         </div>
