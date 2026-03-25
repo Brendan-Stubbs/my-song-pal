@@ -4,8 +4,9 @@ import { useState } from 'react'
 import MusicDashboard from './music/MusicDashboard'
 import PracticeView from './practice/PracticeView'
 import ChordsView from './chords/ChordsView'
+import MetronomeView from './metronome/MetronomeView'
 
-type Tab = 'music' | 'chords' | 'practice'
+type Tab = 'music' | 'chords' | 'metronome' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -29,6 +30,17 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
         <line x1="5" y1="2.5" x2="5" y2="12.5" />
         <line x1="10" y1="2.5" x2="10" y2="12.5" />
         <line x1="1.5" y1="7.5" x2="13.5" y2="7.5" />
+      </svg>
+    ),
+  },
+  {
+    id: 'metronome',
+    label: 'Metronome',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="2.5,13.5 12.5,13.5 9.5,1.5 5.5,1.5" />
+        <line x1="7.5" y1="1.5" x2="7.5" y2="13.5" />
+        <line x1="7.5" y1="8" x2="10.5" y2="5" strokeWidth="2" />
       </svg>
     ),
   },
@@ -89,6 +101,7 @@ export default function DashboardContent({ userName }: DashboardContentProps) {
           </>
         )}
         {activeTab === 'chords' && <ChordsView />}
+        {activeTab === 'metronome' && <MetronomeView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>
     </>
