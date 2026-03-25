@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import MusicDashboard from './music/MusicDashboard'
 import PracticeView from './practice/PracticeView'
+import ChordsView from './chords/ChordsView'
 
-type Tab = 'music' | 'practice'
+type Tab = 'music' | 'chords' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -16,6 +17,18 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
         <path d="M10 2l-7 1.5v7.5" />
         <circle cx="3" cy="11" r="1.5" />
         <circle cx="10" cy="9.5" r="1.5" />
+      </svg>
+    ),
+  },
+  {
+    id: 'chords',
+    label: 'Chords',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1.5" y="2.5" width="12" height="10" rx="1.5" />
+        <line x1="5" y1="2.5" x2="5" y2="12.5" />
+        <line x1="10" y1="2.5" x2="10" y2="12.5" />
+        <line x1="1.5" y1="7.5" x2="13.5" y2="7.5" />
       </svg>
     ),
   },
@@ -65,7 +78,7 @@ export default function DashboardContent({ userName }: DashboardContentProps) {
 
       {/* Page content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {activeTab === 'music' ? (
+        {activeTab === 'music' && (
           <>
             <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -74,9 +87,9 @@ export default function DashboardContent({ userName }: DashboardContentProps) {
             </div>
             <MusicDashboard />
           </>
-        ) : (
-          <PracticeView />
         )}
+        {activeTab === 'chords' && <ChordsView />}
+        {activeTab === 'practice' && <PracticeView />}
       </main>
     </>
   )
