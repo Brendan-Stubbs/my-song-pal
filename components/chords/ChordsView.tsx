@@ -5,46 +5,44 @@ import type { ChordQuality } from '@/data/open-chord-voicings'
 import {
   type SavedChord,
   loadChordBook,
-  saveChordBook,
-  addChord,
-  removeChord,
+  addChordToBook,
+  removeChordFromBook,
 } from '@/lib/chord-book-storage'
 import ExploreTab from './ExploreTab'
 import ChordBookTab from './ChordBookTab'
+import PremiumGate, { PremiumBadge } from '@/components/premium/PremiumGate'
+import { PREMIUM_FEATURES } from '@/types/subscription'
+import ChordFormulasTab from '@/components/theory/ChordFormulasTab'
 
 // ── Sub-tab type ──────────────────────────────────────────────────────────────
 
-type SubTab = 'explore' | 'book'
-
-const SUB_TABS: { id: SubTab; label: string }[] = [
-  { id: 'explore', label: 'Explore' },
-  { id: 'book',    label: 'Chord Book' },
-]
+type SubTab = 'explore' | 'book' | 'formulas'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ChordsView() {
+interface ChordsViewProps {
+  isPremium: boolean
+}
+
+export default function ChordsView({ isPremium }: ChordsViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('explore')
   const [chordBook, setChordBook] = useState<SavedChord[]>([])
 
-  // Load from localStorage on mount
   useEffect(() => {
-    setChordBook(loadChordBook())
+    loadChordBook().then(setChordBook).catch(() => setChordBook([]))
   }, [])
 
-  // Persist on every change
-  function updateChordBook(next: SavedChord[]) {
-    setChordBook(next)
-    saveChordBook(next)
+  async function handleAdd(root: string, quality: ChordQuality) {
+    const updated = await addChordToBook(chordBook, root, quality)
+    setChordBook(updated)
   }
 
-  function handleAdd(root: string, quality: ChordQuality) {
-    updateChordBook(addChord(chordBook, root, quality))
+  async function handleRemove(id: string) {
+    const updated = await removeChordFromBook(chordBook, id)
+    setChordBook(updated)
   }
 
-  function handleRemove(id: string) {
-    updateChordBook(removeChord(chordBook, id))
-  }
+  const chordBookFeature = PREMIUM_FEATURES.find((f) => f.key === 'chord_book')!
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -60,44 +58,73 @@ export default function ChordsView() {
 
       {/* Sub-tab bar */}
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-1 inline-flex gap-1">
-        {SUB_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setSubTab(tab.id)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
-              subTab === tab.id
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            {tab.label}
-            {tab.id === 'book' && chordBook.length > 0 && (
-              <span className={`ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
-                subTab === 'book'
-                  ? 'bg-brand text-white'
-                  : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-              }`}>
-                {chordBook.length}
-              </span>
-            )}
-          </button>
-        ))}
+        <button
+          onClick={() => setSubTab('explore')}
+          className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            subTab === 'explore'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          Explore
+        </button>
+
+        <button
+          onClick={() => setSubTab('book')}
+          className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            subTab === 'book'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          Chord Book
+          {isPremium && chordBook.length > 0 ? (
+            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+              subTab === 'book'
+                ? 'bg-brand text-white'
+                : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+            }`}>
+              {chordBook.length}
+            </span>
+          ) : !isPremium ? (
+            <PremiumBadge />
+          ) : null}
+        </button>
+
+        <button
+          onClick={() => setSubTab('formulas')}
+          className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
+            subTab === 'formulas'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          Formulas
+        </button>
       </div>
 
       {/* Tab content */}
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-6">
-        {subTab === 'explore' ? (
+        {subTab === 'explore' && (
           <ExploreTab
-            chordBook={chordBook}
-            onAdd={handleAdd}
-          />
-        ) : (
-          <ChordBookTab
-            chordBook={chordBook}
-            onRemove={handleRemove}
-            onGoExplore={() => setSubTab('explore')}
+            chordBook={isPremium ? chordBook : []}
+            onAdd={isPremium ? handleAdd : () => setSubTab('book')}
           />
         )}
+        {subTab === 'book' && (
+          <PremiumGate
+            isPremium={isPremium}
+            featureName={chordBookFeature.name}
+            featureDescription={chordBookFeature.description}
+          >
+            <ChordBookTab
+              chordBook={chordBook}
+              onRemove={handleRemove}
+              onGoExplore={() => setSubTab('explore')}
+            />
+          </PremiumGate>
+        )}
+        {subTab === 'formulas' && <ChordFormulasTab />}
       </div>
     </div>
   )

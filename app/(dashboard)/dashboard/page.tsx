@@ -1,10 +1,12 @@
 import { createAuthService } from '@/services/auth/auth.service'
 import SignOutButton from '@/components/auth/SignOutButton'
 import DashboardContent from '@/components/DashboardContent'
+import { getUserPlan } from '@/lib/subscription'
 
 export default async function DashboardPage() {
   const authService = await createAuthService()
   const user = await authService.getUser()
+  const plan = user ? await getUserPlan(user.id) : 'free'
 
   return (
     <div className="min-h-screen bg-warm-page dark:bg-gray-900">
@@ -15,7 +17,10 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <DashboardContent userName={user?.displayName ?? user?.email ?? 'Musician'} />
+      <DashboardContent
+        userName={user?.displayName ?? user?.email ?? 'Musician'}
+        isPremium={plan === 'premium'}
+      />
     </div>
   )
 }

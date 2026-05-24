@@ -31,17 +31,15 @@ const DOT_FILLED_TEXT = '#ffffff'
 const FRET_MARKERS: number[] = [3, 5, 7, 9]
 const DOUBLE_MARKERS: number[] = [12]
 
-// Standard tuning string names (string 1 = high e at top, string 6 = low E at bottom)
-const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E']
+// String names indexed by guitar string number (1 = high e, 6 = low E)
+const STRING_NAMES: Record<number, string> = {
+  1: 'e', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'E',
+}
 
 // ─── Fretboard geometry helpers ──────────────────────────────────────────────
 
 function fretX(fret: number): number {
   return PAD_L + fret * CELL_W + CELL_W / 2
-}
-
-function stringY(stringNum: number): number {
-  return PAD_T + (stringNum - 1) * CELL_H
 }
 
 const svgWidth = PAD_L + (FRET_COUNT + 1) * CELL_W + PAD_R
@@ -64,9 +62,16 @@ interface FretboardProps {
   tuning: string[]
   selectedPcs: Set<string>
   onToggle: (pc: string) => void
+  highEAtTop: boolean
 }
 
-function InteractiveFretboard({ tuning, selectedPcs, onToggle }: FretboardProps) {
+function InteractiveFretboard({ tuning, selectedPcs, onToggle, highEAtTop }: FretboardProps) {
+  function stringY(stringNum: number): number {
+    return highEAtTop
+      ? PAD_T + (stringNum - 1) * CELL_H
+      : PAD_T + (NUM_STRINGS - stringNum) * CELL_H
+  }
+
   // Pre-compute pitch class for every (string, fret) position
   const grid: { stringNum: number; fret: number; pc: string }[] = []
   for (let s = 1; s <= NUM_STRINGS; s++) {
@@ -169,7 +174,7 @@ function InteractiveFretboard({ tuning, selectedPcs, onToggle }: FretboardProps)
         ))}
 
         {/* String name labels (left) */}
-        {STRING_NAMES.map((name, i) => {
+        {Array.from({ length: NUM_STRINGS }, (_, i) => {
           const s = i + 1
           return (
             <text
@@ -182,7 +187,7 @@ function InteractiveFretboard({ tuning, selectedPcs, onToggle }: FretboardProps)
               fontWeight="600"
               fill="#6b7280"
             >
-              {name}
+              {STRING_NAMES[s]}
             </text>
           )
         })}
@@ -404,6 +409,7 @@ export default function ScaleFinderModal({
   const [selectedPcs, setSelectedPcs] = useState<Set<string>>(new Set())
   const [results, setResults] = useState<ScaleMatch[] | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
+  const [highEAtTop, setHighEAtTop] = useState(false)
 
   // Close on Escape
   useEffect(() => {
@@ -505,20 +511,32 @@ export default function ScaleFinderModal({
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Fretboard — click to select notes
               </p>
-              {selectedPcs.size > 0 && (
-                <button
-                  type="button"
-                  onClick={handleClearAll}
-                  className="text-xs text-gray-400 hover:text-red-500 transition-colors focus:outline-none"
-                >
-                  Clear all
-                </button>
-              )}
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={highEAtTop}
+                    onChange={(e) => setHighEAtTop(e.target.checked)}
+                    className="rounded border-gray-300 text-brand focus:ring-brand"
+                  />
+                  High e at top
+                </label>
+                {selectedPcs.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors focus:outline-none"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
             <InteractiveFretboard
               tuning={tuning}
               selectedPcs={selectedPcs}
               onToggle={handleToggle}
+              highEAtTop={highEAtTop}
             />
           </div>
 

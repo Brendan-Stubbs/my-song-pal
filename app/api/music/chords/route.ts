@@ -1,29 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createMusicTheoryService } from '@/services/music/music-theory.service'
+import { chordsQuerySchema } from '@/lib/validation/music-schemas'
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const parsed = chordsQuerySchema.safeParse({
+    key: searchParams.get('key'),
+    scale: searchParams.get('scale'),
+  })
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? 'Invalid request' },
+      { status: 400 },
+    )
+  }
+
   try {
-    const { searchParams } = new URL(request.url)
-    const key = searchParams.get('key')
-    const scale = searchParams.get('scale')
-
-    if (!key || key.trim() === '') {
-      return NextResponse.json(
-        { error: 'Missing required query parameter: key' },
-        { status: 400 },
-      )
-    }
-
-    if (!scale || scale.trim() === '') {
-      return NextResponse.json(
-        { error: 'Missing required query parameter: scale' },
-        { status: 400 },
-      )
-    }
-
     const service = createMusicTheoryService()
-    const chords = service.getChords(key, scale)
-
+    const chords = service.getChords(parsed.data.key, parsed.data.scale)
     return NextResponse.json({ chords })
   } catch (error) {
     if (error instanceof Error) {

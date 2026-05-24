@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createAuthService } from '@/services/auth/auth.service'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default async function DashboardLayout({
   children,
@@ -13,5 +14,5 @@ export default async function DashboardLayout({
     redirect('/sign-in')
   }
 
-  return <>{children}</>
+  return <ErrorBoundary>{children}</ErrorBoundary>
 }

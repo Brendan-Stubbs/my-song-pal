@@ -58,9 +58,10 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 
 interface DashboardContentProps {
   userName: string
+  isPremium: boolean
 }
 
-export default function DashboardContent({ userName }: DashboardContentProps) {
+export default function DashboardContent({ userName, isPremium }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState<Tab>('music')
 
   return (
@@ -100,7 +101,7 @@ export default function DashboardContent({ userName }: DashboardContentProps) {
             <MusicDashboard />
           </>
         )}
-        {activeTab === 'chords' && <ChordsView />}
+        {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
         {activeTab === 'metronome' && <MetronomeView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>

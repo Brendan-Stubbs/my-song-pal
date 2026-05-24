@@ -49,31 +49,11 @@ const mockChords: ChordInfo[] = [
 ]
 
 const mockCagedPositions: CagedPosition[] = [
-  {
-    shape: 'E',
-    rootFret: 0,
-    notes: mockFretboardNotes,
-  },
-  {
-    shape: 'D',
-    rootFret: 2,
-    notes: mockFretboardNotes,
-  },
-  {
-    shape: 'C',
-    rootFret: 3,
-    notes: mockFretboardNotes,
-  },
-  {
-    shape: 'A',
-    rootFret: 5,
-    notes: mockFretboardNotes,
-  },
-  {
-    shape: 'G',
-    rootFret: 7,
-    notes: mockFretboardNotes,
-  },
+  { position: 1, rootFret: 0, notes: mockFretboardNotes },
+  { position: 2, rootFret: 2, notes: mockFretboardNotes },
+  { position: 3, rootFret: 3, notes: mockFretboardNotes },
+  { position: 4, rootFret: 5, notes: mockFretboardNotes },
+  { position: 5, rootFret: 7, notes: mockFretboardNotes },
 ]
 
 const mockAdapter: IMusicTheoryService = {

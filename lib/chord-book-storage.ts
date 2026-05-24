@@ -1,3 +1,13 @@
+/**
+ * Chord book persistence.
+ *
+ * Strategy:
+ *  - When a user is authenticated, all reads/writes go to Supabase.
+ *  - When there is no session (unauthenticated preview), fall back to
+ *    localStorage so guests can still explore the feature.
+ */
+
+import { createClient } from '@/lib/supabase/client'
 import type { ChordQuality } from '@/data/open-chord-voicings'
 import { buildChordSymbol } from '@/data/open-chord-voicings'
 
@@ -12,49 +22,130 @@ export interface SavedChord {
   addedAt: number
 }
 
-// ── Persistence ───────────────────────────────────────────────────────────────
+// ── localStorage fallback (unauthenticated / SSR guard) ───────────────────────
 
-const STORAGE_KEY = 'mysongpal_chord_book'
+const LS_KEY = 'mysongpal_chord_book'
 
-export function loadChordBook(): SavedChord[] {
+function lsLoad(): SavedChord[] {
   if (typeof window === 'undefined') return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw) as SavedChord[]
+    const raw = localStorage.getItem(LS_KEY)
+    return raw ? (JSON.parse(raw) as SavedChord[]) : []
   } catch {
     return []
   }
 }
 
-export function saveChordBook(chords: SavedChord[]): void {
+function lsSave(chords: SavedChord[]): void {
   if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chords))
-  } catch {
-    // ignore quota errors
-  }
+  try { localStorage.setItem(LS_KEY, JSON.stringify(chords)) } catch { /* quota */ }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Session helper ────────────────────────────────────────────────────────────
 
-export function addChord(book: SavedChord[], root: string, quality: ChordQuality): SavedChord[] {
-  const key = `${root}-${quality}`
-  if (book.some((c) => `${c.root}-${c.quality}` === key)) return book
+async function getSession() {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
+}
+
+// ── Public async API ──────────────────────────────────────────────────────────
+
+export async function loadChordBook(): Promise<SavedChord[]> {
+  const session = await getSession()
+  if (!session) return lsLoad()
+
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('chord_book')
+    .select('id, root, quality, symbol, added_at')
+    .order('added_at', { ascending: true })
+
+  if (error || !data) return lsLoad()
+
+  return data.map((row) => ({
+    id: row.id as string,
+    root: row.root as string,
+    quality: row.quality as ChordQuality,
+    symbol: row.symbol as string,
+    addedAt: new Date(row.added_at as string).getTime(),
+  }))
+}
+
+export async function addChordToBook(
+  book: SavedChord[],
+  root: string,
+  quality: ChordQuality,
+): Promise<SavedChord[]> {
+  if (book.some((c) => c.root === root && c.quality === quality)) return book
+
+  const session = await getSession()
+  const symbol = buildChordSymbol(root, quality)
+
+  if (!session) {
+    const entry: SavedChord = { id: crypto.randomUUID(), root, quality, symbol, addedAt: Date.now() }
+    const updated = [...book, entry]
+    lsSave(updated)
+    return updated
+  }
+
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('chord_book')
+    .insert({ root, quality, symbol })
+    .select('id, root, quality, symbol, added_at')
+    .single()
+
+  if (error || !data) return book
+
   const entry: SavedChord = {
-    id: crypto.randomUUID(),
-    root,
-    quality,
-    symbol: buildChordSymbol(root, quality),
-    addedAt: Date.now(),
+    id: data.id as string,
+    root: data.root as string,
+    quality: data.quality as ChordQuality,
+    symbol: data.symbol as string,
+    addedAt: new Date(data.added_at as string).getTime(),
   }
   return [...book, entry]
 }
 
-export function removeChord(book: SavedChord[], id: string): SavedChord[] {
+export async function removeChordFromBook(
+  book: SavedChord[],
+  id: string,
+): Promise<SavedChord[]> {
+  const session = await getSession()
+
+  if (!session) {
+    const updated = book.filter((c) => c.id !== id)
+    lsSave(updated)
+    return updated
+  }
+
+  const supabase = createClient()
+  await supabase.from('chord_book').delete().eq('id', id)
   return book.filter((c) => c.id !== id)
 }
 
 export function isInBook(book: SavedChord[], root: string, quality: ChordQuality): boolean {
   return book.some((c) => c.root === root && c.quality === quality)
 }
+
+// ── Legacy sync exports (kept so existing callers don't break) ────────────────
+// These write to localStorage only. Swap call-sites to the async versions above.
+
+/** @deprecated Use loadChordBook() (async) */
+export function loadChordBookSync(): SavedChord[] { return lsLoad() }
+
+/** @deprecated Use addChordToBook() (async) */
+export function addChord(book: SavedChord[], root: string, quality: ChordQuality): SavedChord[] {
+  if (book.some((c) => c.root === root && c.quality === quality)) return book
+  const entry: SavedChord = { id: crypto.randomUUID(), root, quality, symbol: buildChordSymbol(root, quality), addedAt: Date.now() }
+  return [...book, entry]
+}
+
+/** @deprecated Use removeChordFromBook() (async) */
+export function removeChord(book: SavedChord[], id: string): SavedChord[] {
+  return book.filter((c) => c.id !== id)
+}
+
+/** @deprecated Use addChordToBook() / removeChordFromBook() (async) */
+export function saveChordBook(chords: SavedChord[]): void { lsSave(chords) }

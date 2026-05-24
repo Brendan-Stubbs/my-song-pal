@@ -19,6 +19,7 @@ export default function FretboardPanel({
   tuning,
 }: FretboardPanelProps) {
   const [showDegrees, setShowDegrees] = useState(false);
+  const [highEAtTop, setHighEAtTop] = useState(false);
 
   const { notes, error } = useMemo(() => {
     try {
@@ -36,19 +37,32 @@ export default function FretboardPanel({
 
   return (
     <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Scale Fretboard
         </h2>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showDegrees}
-            onChange={(e) => setShowDegrees(e.target.checked)}
-            className="rounded border-gray-300 text-brand focus:ring-brand"
-          />
-          Show scale degrees
-        </label>
+
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showDegrees}
+              onChange={(e) => setShowDegrees(e.target.checked)}
+              className="rounded border-gray-300 text-brand focus:ring-brand"
+            />
+            Show scale degrees
+          </label>
+
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={highEAtTop}
+              onChange={(e) => setHighEAtTop(e.target.checked)}
+              className="rounded border-gray-300 text-brand focus:ring-brand"
+            />
+            High e at top
+          </label>
+        </div>
       </div>
 
       {error && (
@@ -62,6 +76,7 @@ export default function FretboardPanel({
           notes={notes}
           fretCount={FRET_COUNT}
           showDegrees={showDegrees}
+          highEAtTop={highEAtTop}
         />
       )}
     </div>
