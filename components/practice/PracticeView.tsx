@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import type { PracticeSession } from '@/lib/practice-storage'
 import {
   loadSessions,
-  saveSessions,
+  upsertSession,
+  deleteSession,
   createSession,
   totalMinutes,
   formatDuration,
@@ -150,34 +151,37 @@ export default function PracticeView() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    setSessions(loadSessions())
-    setLoaded(true)
+    loadSessions()
+      .then((data) => { setSessions(data); setLoaded(true) })
+      .catch(() => { setSessions([]); setLoaded(true) })
   }, [])
 
-  function updateSessions(next: PracticeSession[]) {
-    setSessions(next)
-    saveSessions(next)
-  }
-
-  function handleNewSession() {
+  async function handleNewSession() {
     const session = createSession()
-    updateSessions([...sessions, session])
+    setSessions((prev) => [...prev, session])
+    await upsertSession(session)
     setView({ type: 'edit', sessionId: session.id })
   }
 
-  function handleDeleteSession(id: string) {
-    updateSessions(sessions.filter((s) => s.id !== id))
+  async function handleDeleteSession(id: string) {
+    setSessions((prev) => prev.filter((s) => s.id !== id))
+    await deleteSession(id)
     if (view.type !== 'list' && 'sessionId' in view && view.sessionId === id) {
       setView({ type: 'list' })
     }
   }
 
-  function handleUpdateSession(updated: PracticeSession) {
-    updateSessions(sessions.map((s) => (s.id === updated.id ? updated : s)))
+  async function handleUpdateSession(updated: PracticeSession) {
+    setSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+    await upsertSession(updated)
   }
 
-  function handleRenameSession(id: string, name: string) {
-    updateSessions(sessions.map((s) => s.id === id ? { ...s, name, updatedAt: Date.now() } : s))
+  async function handleRenameSession(id: string, name: string) {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, name, updatedAt: Date.now() } : s)),
+    )
+    const target = sessions.find((s) => s.id === id)
+    if (target) await upsertSession({ ...target, name, updatedAt: Date.now() })
   }
 
   if (!loaded) {

@@ -107,17 +107,27 @@ describe('GET /api/music/positions', () => {
     expect(response.status).toBe(400)
   })
 
-  it('returns 500 if the service throws an Error', async () => {
-    mockGetCagedPositions.mockImplementation(() => {
-      throw new Error('Unknown scale: "C unknown"')
-    })
-
+  it('returns 400 if the scale is not a recognised value', async () => {
+    // Zod validation now rejects unknown scales before reaching the service
     const request = makeRequest({ key: 'C', scale: 'unknown' })
     const response = await GET(request)
     const data = await response.json() as { error: string }
 
+    expect(response.status).toBe(400)
+    expect(data.error).toBeTruthy()
+  })
+
+  it('returns 500 if the service throws an Error', async () => {
+    mockGetCagedPositions.mockImplementation(() => {
+      throw new Error('Service failure')
+    })
+
+    const request = makeRequest({ key: 'C', scale: 'major' })
+    const response = await GET(request)
+    const data = await response.json() as { error: string }
+
     expect(response.status).toBe(500)
-    expect(data.error).toContain('Unknown scale')
+    expect(data.error).toContain('Service failure')
   })
 
   it('returns 500 with a generic message if the service throws a non-Error', async () => {

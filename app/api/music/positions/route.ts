@@ -1,36 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createMusicTheoryService } from '@/services/music/music-theory.service'
+import { positionsQuerySchema } from '@/lib/validation/music-schemas'
 
 const DEFAULT_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4']
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const parsed = positionsQuerySchema.safeParse({
+    key: searchParams.get('key'),
+    scale: searchParams.get('scale'),
+    tuning: searchParams.get('tuning') ?? undefined,
+  })
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? 'Invalid request' },
+      { status: 400 },
+    )
+  }
+
   try {
-    const { searchParams } = new URL(request.url)
-    const key = searchParams.get('key')
-    const scale = searchParams.get('scale')
-    const tuningParam = searchParams.get('tuning')
-
-    if (!key || key.trim() === '') {
-      return NextResponse.json(
-        { error: 'Missing required query parameter: key' },
-        { status: 400 },
-      )
-    }
-
-    if (!scale || scale.trim() === '') {
-      return NextResponse.json(
-        { error: 'Missing required query parameter: scale' },
-        { status: 400 },
-      )
-    }
-
-    const tuning = tuningParam
-      ? tuningParam.split(',').map((s) => s.trim())
-      : DEFAULT_TUNING
+    const tuning = parsed.data.tuning ?? DEFAULT_TUNING
 
     const service = createMusicTheoryService()
-    const positions = service.getCagedPositions(key, scale, tuning)
-
+    const positions = service.getCagedPositions(parsed.data.key, parsed.data.scale, tuning)
     return NextResponse.json({ positions })
   } catch (error) {
     if (error instanceof Error) {

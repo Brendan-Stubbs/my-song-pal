@@ -52,7 +52,7 @@ describe('POST /api/auth/sign-up', () => {
 
     const request = createRequest({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Password123',
       displayName: 'Test User',
     })
 
@@ -64,7 +64,7 @@ describe('POST /api/auth/sign-up', () => {
   })
 
   it('returns 400 when email is missing', async () => {
-    const request = createRequest({ password: 'password123' })
+    const request = createRequest({ password: 'Password123' })
 
     const response = await POST(request)
     const data = await response.json() as { error: string }
@@ -88,7 +88,7 @@ describe('POST /api/auth/sign-up', () => {
 
     const request = createRequest({
       email: 'existing@example.com',
-      password: 'password123',
+      password: 'Password123',
     })
 
     const response = await POST(request)
@@ -103,7 +103,7 @@ describe('POST /api/auth/sign-up', () => {
 
     const request = createRequest({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Password123',
     })
 
     const response = await POST(request)

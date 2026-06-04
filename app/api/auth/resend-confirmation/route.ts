@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { createAuthService } from '@/services/auth/auth.service'
+import { createClient } from '@/lib/supabase/server'
 import { signInLimiter } from '@/lib/rate-limiter'
 
-const signInSchema = z.object({
+const schema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
 })
 
 export async function POST(request: NextRequest) {
-  // Rate limit by IP address
+  // Reuse the sign-in rate limiter to prevent abuse
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     request.headers.get('x-real-ip') ??
@@ -28,42 +27,28 @@ export async function POST(request: NextRequest) {
 
   try {
     const rawBody = await request.json()
-    const parsed = signInSchema.safeParse(rawBody)
+    const parsed = schema.safeParse(rawBody)
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message ?? 'Invalid request' },
         { status: 400 }
       )
     }
-    const body = parsed.data
 
-    const authService = await createAuthService()
-    const session = await authService.signIn({
-      email: body.email,
-      password: body.password,
+    const supabase = await createClient()
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: parsed.data.email,
     })
 
-    return NextResponse.json({ session }, { status: 200 })
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Always return 200 even if the email doesn't exist — avoids email enumeration
+    return NextResponse.json({ message: 'Confirmation email sent' }, { status: 200 })
   } catch (error) {
     if (error instanceof Error) {
-      const message = error.message.toLowerCase()
-      if (message.includes('email not confirmed')) {
-        return NextResponse.json(
-          { error: 'EMAIL_NOT_CONFIRMED' },
-          { status: 401 }
-        )
-      }
-      if (
-        message.includes('invalid') ||
-        message.includes('invalid login credentials') ||
-        message.includes('wrong password') ||
-        message.includes('not found')
-      ) {
-        return NextResponse.json(
-          { error: 'Invalid email or password' },
-          { status: 401 }
-        )
-      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     return NextResponse.json(

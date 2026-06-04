@@ -31,9 +31,10 @@ describe('FretboardDiagram', () => {
 
   it('shows note names by default', () => {
     render(<FretboardDiagram notes={MOCK_NOTES} fretCount={12} />)
-    expect(screen.getByText('C')).toBeInTheDocument()
-    expect(screen.getByText('E')).toBeInTheDocument()
-    expect(screen.getByText('G')).toBeInTheDocument()
+    // Use getAllByText because single letters (E, G) also appear as string labels in the SVG
+    expect(screen.getAllByText('C').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('E').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('G').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows degree labels when showDegrees is true', () => {

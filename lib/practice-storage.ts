@@ -1,4 +1,14 @@
-// Types and localStorage persistence for practice sessions
+/**
+ * Practice session persistence.
+ *
+ * Strategy:
+ *  - Authenticated users: reads/writes go to Supabase.
+ *  - Unauthenticated users: falls back to localStorage.
+ */
+
+import { createClient } from '@/lib/supabase/client'
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface PracticeBlock {
   id: string
@@ -15,27 +25,97 @@ export interface PracticeSession {
   updatedAt: number
 }
 
-const STORAGE_KEY = 'mysongpal_practice_sessions'
+// ── localStorage fallback ─────────────────────────────────────────────────────
 
-// ── Persistence ───────────────────────────────────────────────────────────────
+const LS_KEY = 'mysongpal_practice_sessions'
 
-export function loadSessions(): PracticeSession[] {
+function lsLoad(): PracticeSession[] {
   if (typeof window === 'undefined') return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw) as PracticeSession[]
+    const raw = localStorage.getItem(LS_KEY)
+    return raw ? (JSON.parse(raw) as PracticeSession[]) : []
   } catch {
     return []
   }
 }
 
-export function saveSessions(sessions: PracticeSession[]): void {
+function lsSave(sessions: PracticeSession[]): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+  try { localStorage.setItem(LS_KEY, JSON.stringify(sessions)) } catch { /* quota */ }
 }
 
-// ── Factories ─────────────────────────────────────────────────────────────────
+// ── Session helper ────────────────────────────────────────────────────────────
+
+async function getSession() {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
+}
+
+// ── DB row ↔ domain type mappers ──────────────────────────────────────────────
+
+function rowToSession(row: Record<string, unknown>): PracticeSession {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    blocks: row.blocks as PracticeBlock[],
+    createdAt: new Date(row.created_at as string).getTime(),
+    updatedAt: new Date(row.updated_at as string).getTime(),
+  }
+}
+
+// ── Public async API ──────────────────────────────────────────────────────────
+
+export async function loadSessions(): Promise<PracticeSession[]> {
+  const session = await getSession()
+  if (!session) return lsLoad()
+
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('practice_sessions')
+    .select('id, name, blocks, created_at, updated_at')
+    .order('created_at', { ascending: true })
+
+  if (error || !data) return lsLoad()
+  return data.map(rowToSession)
+}
+
+export async function upsertSession(practiceSession: PracticeSession): Promise<void> {
+  const session = await getSession()
+
+  if (!session) {
+    const all = lsLoad()
+    const idx = all.findIndex((s) => s.id === practiceSession.id)
+    if (idx >= 0) {
+      all[idx] = practiceSession
+    } else {
+      all.push(practiceSession)
+    }
+    lsSave(all)
+    return
+  }
+
+  const supabase = createClient()
+  await supabase.from('practice_sessions').upsert({
+    id: practiceSession.id,
+    name: practiceSession.name,
+    blocks: practiceSession.blocks,
+  })
+}
+
+export async function deleteSession(id: string): Promise<void> {
+  const session = await getSession()
+
+  if (!session) {
+    lsSave(lsLoad().filter((s) => s.id !== id))
+    return
+  }
+
+  const supabase = createClient()
+  await supabase.from('practice_sessions').delete().eq('id', id)
+}
+
+// ── Factories (unchanged) ─────────────────────────────────────────────────────
 
 export function createSession(name = 'New Session'): PracticeSession {
   const now = Date.now()
@@ -57,7 +137,7 @@ export function createBlock(name = 'New Block', durationMinutes = 10): PracticeB
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Pure helpers (unchanged) ──────────────────────────────────────────────────
 
 export function totalMinutes(session: PracticeSession): number {
   return session.blocks.reduce((sum, b) => sum + b.durationMinutes, 0)
@@ -75,3 +155,11 @@ export function formatTime(totalSeconds: number): string {
   const s = totalSeconds % 60
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
+
+// ── Legacy sync exports (kept so existing callers don't break) ────────────────
+
+/** @deprecated Use loadSessions() (async) */
+export function loadSessionsSync(): PracticeSession[] { return lsLoad() }
+
+/** @deprecated Use upsertSession() (async) */
+export function saveSessions(sessions: PracticeSession[]): void { lsSave(sessions) }
