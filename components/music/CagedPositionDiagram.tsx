@@ -30,7 +30,7 @@ export default function CagedPositionDiagram({
   const fretRange = notes.length > 0
     ? Math.max(...notes.map((n) => n.fret)) - rootFret + 1
     : 5
-  const numFrets = Math.max(5, Math.min(7, fretRange))
+  const numFrets = Math.max(5, Math.min(8, fretRange))
 
   const svgWidth = PAD_LEFT + numFrets * CELL_WIDTH + PAD_RIGHT
   const svgHeight = PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT + PAD_BOTTOM

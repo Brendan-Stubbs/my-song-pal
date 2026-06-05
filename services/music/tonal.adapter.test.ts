@@ -268,6 +268,22 @@ describe("TonalAdapter", () => {
       const blues = adapter.getCagedPositions("C", "blues", DEFAULT_TUNING);
       expect(blues).toEqual([]);
     });
+
+    it("3nps C major position 2 renders 3 notes on every string", () => {
+      const positions = adapter.getCagedPositions(
+        "C",
+        "major",
+        DEFAULT_TUNING,
+        "3nps",
+      );
+      const pos2 = positions[1];
+      expect(pos2.rootFret).toBe(3);
+      for (let stringNum = 1; stringNum <= 6; stringNum++) {
+        const stringNotes = pos2.notes.filter((n) => n.string === stringNum);
+        expect(stringNotes).toHaveLength(3);
+      }
+      expect(pos2.notes).toHaveLength(18);
+    });
   });
 
   // ── getAvailableScales ────────────────────────────────────────────────────
