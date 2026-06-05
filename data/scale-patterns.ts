@@ -12,6 +12,7 @@
  */
 
 import { major } from './scales/major'
+import { major3NotesPerString } from './scales/major-3-notes-per-string'
 import { minor } from './scales/minor'
 import { pentatonicMajor } from './scales/pentatonic-major'
 import { pentatonicMinor } from './scales/pentatonic-minor'
@@ -44,4 +45,20 @@ export const SCALE_PATTERNS: ScalePatternSet = {
   locrian,
   'harmonic minor': harmonicMinor,
   'melodic minor': melodicMinor,
+}
+
+/**
+ * Alternate "3 notes per string" fingerings, keyed by the same scale name used
+ * in SCALE_PATTERNS. A scale only appears here if a 3nps fingering exists for
+ * it; the Scale Positions view shows a Default / 3 notes per string toggle
+ * exactly when the selected scale has an entry below.
+ */
+export const SCALE_PATTERNS_3NPS: ScalePatternSet = {
+  major: major3NotesPerString,
+}
+
+/** Whether the given scale has an alternate 3-notes-per-string fingering. */
+export function hasThreeNotesPerString(scale: string): boolean {
+  const patterns = SCALE_PATTERNS_3NPS[scale]
+  return Array.isArray(patterns) && patterns.length > 0
 }

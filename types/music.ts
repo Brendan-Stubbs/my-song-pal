@@ -43,11 +43,14 @@ export interface ScaleInfo {
   degrees: string[]    // e.g. ["1", "2", "3", "4", "5", "6", "7"]
 }
 
+/** Fingering variant for scale positions: standard CAGED or 3 notes per string. */
+export type ScalePatternVariant = 'default' | '3nps'
+
 export interface IMusicTheoryService {
   getScaleInfo(key: string, scale: string): ScaleInfo
   getAvailableScales(): string[]
   getAvailableKeys(): string[]
   getFretboardNotes(key: string, scale: string, tuning: string[], fretCount: number): FretboardNote[]
-  getCagedPositions(key: string, scale: string, tuning: string[]): CagedPosition[]
+  getCagedPositions(key: string, scale: string, tuning: string[], variant?: ScalePatternVariant): CagedPosition[]
   getChords(key: string, scale: string): ChordInfo[]
 }

@@ -5,8 +5,9 @@ import type {
   FretboardNote,
   CagedPosition,
   ChordInfo,
+  ScalePatternVariant,
 } from '@/types/music'
-import { SCALE_PATTERNS } from '@/data/scale-patterns'
+import { SCALE_PATTERNS, SCALE_PATTERNS_3NPS } from '@/data/scale-patterns'
 
 /** Get pitch class at (string, fret) from tuning. tuning[0]=string 6, tuning[5]=string 1 */
 function getNoteAt(stringNumber: number, fret: number, tuning: string[]): string {
@@ -177,6 +178,7 @@ export function createTonalAdapter(): IMusicTheoryService {
     key: string,
     scale: string,
     tuning: string[] = DEFAULT_TUNING,
+    variant: ScalePatternVariant = 'default',
   ): CagedPosition[] {
     let scaleInfo: ScaleInfo
     try {
@@ -189,7 +191,8 @@ export function createTonalAdapter(): IMusicTheoryService {
       return []
     }
 
-    const patterns = SCALE_PATTERNS[scale]
+    const patterns =
+      variant === '3nps' ? SCALE_PATTERNS_3NPS[scale] : SCALE_PATTERNS[scale]
     if (!patterns || patterns.length === 0) {
       return []
     }
