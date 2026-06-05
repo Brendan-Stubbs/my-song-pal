@@ -92,7 +92,7 @@ export async function addChordToBook(
   const supabase = createClient()
   const { data, error } = await supabase
     .from('chord_book')
-    .insert({ root, quality, symbol })
+    .insert({ user_id: session.user.id, root, quality, symbol })
     .select('id, root, quality, symbol, added_at')
     .single()
 

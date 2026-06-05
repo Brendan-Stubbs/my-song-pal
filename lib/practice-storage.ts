@@ -98,6 +98,7 @@ export async function upsertSession(practiceSession: PracticeSession): Promise<v
   const supabase = createClient()
   await supabase.from('practice_sessions').upsert({
     id: practiceSession.id,
+    user_id: session.user.id,
     name: practiceSession.name,
     blocks: practiceSession.blocks,
   })
