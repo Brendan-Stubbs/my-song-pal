@@ -1,33 +1,82 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { PracticeSession } from '@/lib/practice-storage'
-import { formatTime } from '@/lib/practice-storage'
+import type { PracticeSession, PracticeBlock } from '@/lib/practice-storage'
+import { exerciseDisplayName, formatTime } from '@/lib/practice-storage'
 import MetronomePanel from './MetronomePanel'
 
-// ── Block-end sound cue ───────────────────────────────────────────────────────
+// ── Sound cues ────────────────────────────────────────────────────────────────
 
-function playBlockEndCue() {
+function playToneSequence(frequencies: number[], step = 0.22, duration = 0.18) {
   try {
     const ctx = new AudioContext()
-    // Three descending tones — distinct from the metronome click
-    const notes = [880, 660, 440]
-    notes.forEach((freq, i) => {
+    frequencies.forEach((freq, i) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain)
       gain.connect(ctx.destination)
       osc.type = 'sine'
       osc.frequency.value = freq
-      const t = ctx.currentTime + i * 0.22
+      const t = ctx.currentTime + i * step
       gain.gain.setValueAtTime(0.55, t)
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + duration)
       osc.start(t)
-      osc.stop(t + 0.2)
+      osc.stop(t + duration + 0.02)
     })
-    setTimeout(() => ctx.close(), 1200)
+    setTimeout(() => ctx.close(), frequencies.length * step * 1000 + 400)
   } catch {
     // ignore audio errors (e.g. in SSR or restricted environments)
+  }
+}
+
+function playSessionStartCue() {
+  playToneSequence([440, 660, 880])
+}
+
+function playExerciseTransitionCue() {
+  playToneSequence([550, 880], 0.18, 0.16)
+}
+
+function playBlockEndCue() {
+  playToneSequence([880, 660, 440])
+}
+
+// ── Timer helpers ─────────────────────────────────────────────────────────────
+
+function hasExercises(block: PracticeBlock | undefined): boolean {
+  return (block?.exercises?.length ?? 0) > 0
+}
+
+function getSegmentDurationSeconds(block: PracticeBlock, exerciseIndex: number): number {
+  if (hasExercises(block) && exerciseIndex >= 0) {
+    return block.exercises![exerciseIndex].durationMinutes * 60
+  }
+  return block.durationMinutes * 60
+}
+
+function getSegmentDisplayName(block: PracticeBlock, exerciseIndex: number): string {
+  if (hasExercises(block) && exerciseIndex >= 0) {
+    return exerciseDisplayName(block.exercises![exerciseIndex], exerciseIndex)
+  }
+  return block.name
+}
+
+function createInitialState(session: PracticeSession, startBlockIndex: number): TimerState {
+  const block = session.blocks[startBlockIndex] ?? session.blocks[0]
+  const exercises = block?.exercises
+  const useExercises = (exercises?.length ?? 0) > 0
+  const exerciseIndex = useExercises ? 0 : -1
+  const durationMinutes = useExercises ? exercises![0].durationMinutes : (block?.durationMinutes ?? 1)
+
+  return {
+    blockIndex: startBlockIndex,
+    exerciseIndex,
+    secondsRemaining: durationMinutes * 60,
+    isPaused: false,
+    isComplete: false,
+    blockEnded: false,
+    exerciseTransitioning: false,
+    exerciseTransitionName: undefined,
   }
 }
 
@@ -42,14 +91,12 @@ function CircularTimer({ progress, size = 220 }: { progress: number; size?: numb
 
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden>
-      {/* Track */}
       <circle
         cx={cx} cy={cx} r={r}
         fill="none"
         strokeWidth={strokeWidth}
         className="stroke-gray-200 dark:stroke-gray-700"
       />
-      {/* Countdown arc */}
       <circle
         cx={cx} cy={cx} r={r}
         fill="none"
@@ -68,11 +115,13 @@ function CircularTimer({ progress, size = 220 }: { progress: number; size?: numb
 
 interface TimerState {
   blockIndex: number
+  exerciseIndex: number
   secondsRemaining: number
   isPaused: boolean
   isComplete: boolean
-  /** Block timer hit zero — waiting for user to start next block */
   blockEnded: boolean
+  exerciseTransitioning: boolean
+  exerciseTransitionName?: string
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -84,42 +133,84 @@ interface PracticePlayerProps {
 }
 
 export default function PracticePlayer({ session, startBlockIndex, onEnd }: PracticePlayerProps) {
-  const startBlock = session.blocks[startBlockIndex] ?? session.blocks[0]
-
-  const [state, setState] = useState<TimerState>({
-    blockIndex: startBlockIndex,
-    secondsRemaining: (startBlock?.durationMinutes ?? 1) * 60,
-    isPaused: false,
-    isComplete: false,
-    blockEnded: false,
-  })
-
-  // Metronome on/off — controlled here so we can stop it on block end
+  const [state, setState] = useState<TimerState>(() => createInitialState(session, startBlockIndex))
   const [metronomeOn, setMetronomeOn] = useState(false)
 
-  // Ref to track whether we've already fired the end cue for the current block
   const endCueFiredRef = useRef(false)
+  const exerciseTransitionRef = useRef(false)
+  const sessionStartCueFiredRef = useRef(false)
 
-  // One-second tick — stops when paused, complete, or block has ended
   useEffect(() => {
-    if (state.isPaused || state.isComplete || state.blockEnded) return
+    if (sessionStartCueFiredRef.current) return
+    sessionStartCueFiredRef.current = true
+    playSessionStartCue()
+  }, [])
+
+  useEffect(() => {
+    if (state.isPaused || state.isComplete || state.blockEnded || state.exerciseTransitioning) return
 
     const id = setInterval(() => {
       setState((prev) => {
-        if (prev.isPaused || prev.isComplete || prev.blockEnded) return prev
+        if (prev.isPaused || prev.isComplete || prev.blockEnded || prev.exerciseTransitioning) return prev
 
         if (prev.secondsRemaining <= 1) {
-          // Trigger end-of-block behaviour (sound + metronome stop happen outside setState)
+          const block = session.blocks[prev.blockIndex]
+          const exercises = block?.exercises ?? []
+          const onExercise = exercises.length > 0 && prev.exerciseIndex >= 0
+          const hasNextExercise = onExercise && prev.exerciseIndex < exercises.length - 1
+
+          if (hasNextExercise) {
+            const nextIndex = prev.exerciseIndex + 1
+            const nextExercise = exercises[nextIndex]
+            return {
+              ...prev,
+              secondsRemaining: 0,
+              exerciseTransitioning: true,
+              exerciseTransitionName: exerciseDisplayName(nextExercise, nextIndex),
+            }
+          }
+
           return { ...prev, secondsRemaining: 0, blockEnded: true }
         }
+
         return { ...prev, secondsRemaining: prev.secondsRemaining - 1 }
       })
     }, 1000)
 
     return () => clearInterval(id)
-  }, [state.isPaused, state.isComplete, state.blockEnded])
+  }, [state.isPaused, state.isComplete, state.blockEnded, state.exerciseTransitioning, session.blocks])
 
-  // When blockEnded flips to true: play cue and stop metronome
+  useEffect(() => {
+    if (!state.exerciseTransitioning || !state.exerciseTransitionName) {
+      exerciseTransitionRef.current = false
+      return
+    }
+    if (exerciseTransitionRef.current) return
+    exerciseTransitionRef.current = true
+
+    playExerciseTransitionCue()
+
+    const id = setTimeout(() => {
+      setState((prev) => {
+        const block = session.blocks[prev.blockIndex]
+        const nextIndex = prev.exerciseIndex + 1
+        const nextExercise = block?.exercises?.[nextIndex]
+        if (!nextExercise) return prev
+
+        return {
+          ...prev,
+          exerciseIndex: nextIndex,
+          secondsRemaining: nextExercise.durationMinutes * 60,
+          exerciseTransitioning: false,
+          exerciseTransitionName: undefined,
+        }
+      })
+      exerciseTransitionRef.current = false
+    }, 1500)
+
+    return () => clearTimeout(id)
+  }, [state.exerciseTransitioning, state.exerciseTransitionName, session.blocks])
+
   useEffect(() => {
     if (!state.blockEnded) {
       endCueFiredRef.current = false
@@ -138,32 +229,50 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
 
   function goToBlock(index: number) {
     if (index < 0 || index >= session.blocks.length) return
+    const block = session.blocks[index]
+    const useExercises = hasExercises(block)
     endCueFiredRef.current = false
+    exerciseTransitionRef.current = false
+
     setState({
       blockIndex: index,
-      secondsRemaining: session.blocks[index].durationMinutes * 60,
+      exerciseIndex: useExercises ? 0 : -1,
+      secondsRemaining: getSegmentDurationSeconds(block, useExercises ? 0 : -1),
       isPaused: false,
       isComplete: false,
       blockEnded: false,
+      exerciseTransitioning: false,
+      exerciseTransitionName: undefined,
     })
   }
 
-  /** Start the next block after a block-end pause, or complete the session. */
   function advanceFromBlockEnd() {
     const next = state.blockIndex + 1
     if (next < session.blocks.length) {
       goToBlock(next)
     } else {
-      setState((prev) => ({ ...prev, secondsRemaining: 0, blockEnded: false, isComplete: true }))
+      setState((prev) => ({
+        ...prev,
+        secondsRemaining: 0,
+        blockEnded: false,
+        isComplete: true,
+        exerciseTransitioning: false,
+        exerciseTransitionName: undefined,
+      }))
     }
   }
 
   const currentBlock = session.blocks[state.blockIndex]
   const nextBlock = session.blocks[state.blockIndex + 1]
-  const totalSeconds = (currentBlock?.durationMinutes ?? 1) * 60
-  const progress = state.blockEnded ? 0 : state.secondsRemaining / totalSeconds
-
-  // ── Completion screen ─────────────────────────────────────────────────────
+  const currentExercises = currentBlock?.exercises ?? []
+  const onExercise = currentExercises.length > 0 && state.exerciseIndex >= 0
+  const totalSeconds = getSegmentDurationSeconds(currentBlock, state.exerciseIndex)
+  const progress = state.blockEnded || state.exerciseTransitioning
+    ? 0
+    : state.secondsRemaining / totalSeconds
+  const displayName = onExercise
+    ? getSegmentDisplayName(currentBlock, state.exerciseIndex)
+    : currentBlock?.name
 
   if (state.isComplete) {
     return (
@@ -183,11 +292,8 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
     )
   }
 
-  // ── Player ────────────────────────────────────────────────────────────────
-
   return (
     <div className="space-y-4">
-      {/* Top bar */}
       <div className="flex items-center justify-between">
         <button
           onClick={onEnd}
@@ -204,15 +310,19 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
         </span>
       </div>
 
-      {/* Main player card */}
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-8 flex flex-col items-center gap-7">
-        {/* Circular timer */}
         <div className="relative">
           <CircularTimer progress={progress} size={220} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {state.blockEnded ? (
+            {state.exerciseTransitioning ? (
               <>
-                {/* Green check */}
+                <span className="text-sm font-semibold text-brand uppercase tracking-wide">Starting</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white mt-1 text-center px-4">
+                  {state.exerciseTransitionName}
+                </span>
+              </>
+            ) : state.blockEnded ? (
+              <>
                 <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="22" cy="22" r="19" />
                   <polyline points="12,22 19,30 32,15" />
@@ -234,19 +344,31 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
           </div>
         </div>
 
-        {/* Block name + next */}
         <div className="text-center">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{currentBlock?.name}</h3>
-          {state.blockEnded ? null : nextBlock ? (
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-              Next: <span className="text-gray-600 dark:text-gray-300 font-medium">{nextBlock.name}</span>
-            </p>
+          {onExercise && !state.blockEnded ? (
+            <>
+              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">
+                Exercise {state.exerciseIndex + 1} of {currentExercises.length}
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{displayName}</h3>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{currentBlock?.name}</p>
+            </>
           ) : (
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Last block</p>
+            <>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{currentBlock?.name}</h3>
+              {!state.blockEnded && (
+                nextBlock ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    Next: <span className="text-gray-600 dark:text-gray-300 font-medium">{nextBlock.name}</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Last block</p>
+                )
+              )}
+            </>
           )}
         </div>
 
-        {/* Controls — differ when block has ended */}
         {state.blockEnded ? (
           <div className="flex flex-col items-center gap-3">
             {nextBlock ? (
@@ -279,10 +401,9 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
           </div>
         ) : (
           <div className="flex items-center gap-5">
-            {/* Previous */}
             <button
               onClick={() => goToBlock(state.blockIndex - 1)}
-              disabled={state.blockIndex === 0}
+              disabled={state.blockIndex === 0 || state.exerciseTransitioning}
               aria-label="Previous block"
               className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-colors disabled:opacity-25 disabled:pointer-events-none"
             >
@@ -292,11 +413,11 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
               </svg>
             </button>
 
-            {/* Play / Pause */}
             <button
               onClick={togglePause}
+              disabled={state.exerciseTransitioning}
               aria-label={state.isPaused ? 'Resume' : 'Pause'}
-              className="w-16 h-16 rounded-full bg-brand text-white flex items-center justify-center hover:bg-brand/90 transition-colors shadow-lg"
+              className="w-16 h-16 rounded-full bg-brand text-white flex items-center justify-center hover:bg-brand/90 transition-colors shadow-lg disabled:opacity-50"
             >
               {state.isPaused ? (
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
@@ -310,10 +431,9 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
               )}
             </button>
 
-            {/* Next */}
             <button
               onClick={() => goToBlock(state.blockIndex + 1)}
-              disabled={state.blockIndex >= session.blocks.length - 1}
+              disabled={state.blockIndex >= session.blocks.length - 1 || state.exerciseTransitioning}
               aria-label="Next block"
               className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-colors disabled:opacity-25 disabled:pointer-events-none"
             >
@@ -325,7 +445,6 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
           </div>
         )}
 
-        {/* Notes for current block */}
         {currentBlock?.notes && (
           <div className="w-full max-w-lg rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-800/30 p-4">
             <p className="text-xs font-semibold text-brand uppercase tracking-wide mb-2">Notes</p>
@@ -336,7 +455,6 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
         )}
       </div>
 
-      {/* Session timeline */}
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-4">
         <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
           Session timeline
@@ -345,6 +463,7 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
           {session.blocks.map((block, i) => {
             const isActive = i === state.blockIndex
             const isPast = i < state.blockIndex
+            const exerciseCount = block.exercises?.length ?? 0
             return (
               <button
                 key={block.id}
@@ -365,6 +484,13 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
                   {block.durationMinutes}m
                 </span>
                 <span className="text-xs font-medium truncate max-w-[72px]">{block.name}</span>
+                {exerciseCount > 0 && (
+                  <span className={`text-[10px] ${
+                    isActive && !state.blockEnded ? 'text-orange-100' : 'text-gray-400 dark:text-gray-500'
+                  }`}>
+                    {exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}
+                  </span>
+                )}
                 {(isPast || (isActive && state.blockEnded)) && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none" stroke="#22c55e" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="1,4 3.5,7 9,1" />
@@ -376,7 +502,6 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
         </div>
       </div>
 
-      {/* Metronome — off by default, user-controlled */}
       <MetronomePanel isOn={metronomeOn} onToggle={setMetronomeOn} />
     </div>
   )

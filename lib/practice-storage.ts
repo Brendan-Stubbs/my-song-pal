@@ -10,11 +10,18 @@ import { createClient } from '@/lib/supabase/client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export interface PracticeExercise {
+  id: string
+  name: string
+  durationMinutes: number
+}
+
 export interface PracticeBlock {
   id: string
   name: string
   durationMinutes: number
   notes: string
+  exercises?: PracticeExercise[]
 }
 
 export interface PracticeSession {
@@ -25,15 +32,49 @@ export interface PracticeSession {
   updatedAt: number
 }
 
+/** @deprecated Use PracticeExercise */
+export type PracticeActivity = PracticeExercise
+
+/** @deprecated Use PracticeExercise */
+export type SubBlock = PracticeExercise
+
 // ── localStorage fallback ─────────────────────────────────────────────────────
 
 const LS_KEY = 'mysongpal_practice_sessions'
+
+type StoredBlock = PracticeBlock & {
+  subBlocks?: PracticeExercise[]
+  activities?: PracticeExercise[]
+}
+
+function normalizeBlock(block: StoredBlock): PracticeBlock {
+  const exercises = block.exercises ?? block.activities ?? block.subBlocks
+  if (!exercises?.length) {
+    const { subBlocks: _, activities: __, exercises: ___, ...rest } = block
+    return rest
+  }
+  return {
+    id: block.id,
+    name: block.name,
+    durationMinutes: block.durationMinutes,
+    notes: block.notes,
+    exercises,
+  }
+}
+
+function normalizeSession(session: PracticeSession): PracticeSession {
+  return {
+    ...session,
+    blocks: session.blocks.map((b) => normalizeBlock(b as StoredBlock)),
+  }
+}
 
 function lsLoad(): PracticeSession[] {
   if (typeof window === 'undefined') return []
   try {
     const raw = localStorage.getItem(LS_KEY)
-    return raw ? (JSON.parse(raw) as PracticeSession[]) : []
+    const sessions = raw ? (JSON.parse(raw) as PracticeSession[]) : []
+    return sessions.map(normalizeSession)
   } catch {
     return []
   }
@@ -55,13 +96,13 @@ async function getSession() {
 // ── DB row ↔ domain type mappers ──────────────────────────────────────────────
 
 function rowToSession(row: Record<string, unknown>): PracticeSession {
-  return {
+  return normalizeSession({
     id: row.id as string,
     name: row.name as string,
     blocks: row.blocks as PracticeBlock[],
     createdAt: new Date(row.created_at as string).getTime(),
     updatedAt: new Date(row.updated_at as string).getTime(),
-  }
+  })
 }
 
 // ── Public async API ──────────────────────────────────────────────────────────
@@ -116,7 +157,7 @@ export async function deleteSession(id: string): Promise<void> {
   await supabase.from('practice_sessions').delete().eq('id', id)
 }
 
-// ── Factories (unchanged) ─────────────────────────────────────────────────────
+// ── Factories ─────────────────────────────────────────────────────────────────
 
 export function createSession(name = 'New Session'): PracticeSession {
   const now = Date.now()
@@ -138,7 +179,38 @@ export function createBlock(name = 'New Block', durationMinutes = 10): PracticeB
   }
 }
 
-// ── Pure helpers (unchanged) ──────────────────────────────────────────────────
+export function createExercise(name = '', durationMinutes = 5): PracticeExercise {
+  return {
+    id: crypto.randomUUID(),
+    name,
+    durationMinutes,
+  }
+}
+
+/** @deprecated Use createExercise */
+export const createActivity = createExercise
+
+/** @deprecated Use createExercise */
+export const createSubBlock = createExercise
+
+export function exerciseTotalMinutes(exercises: PracticeExercise[]): number {
+  return exercises.reduce((sum, e) => sum + e.durationMinutes, 0)
+}
+
+/** @deprecated Use exerciseTotalMinutes */
+export const activityTotalMinutes = exerciseTotalMinutes
+
+/** @deprecated Use exerciseTotalMinutes */
+export const subBlockTotalMinutes = exerciseTotalMinutes
+
+export function exerciseDisplayName(exercise: PracticeExercise, index: number): string {
+  return exercise.name.trim() || `Exercise ${index + 1}`
+}
+
+/** @deprecated Use exerciseDisplayName */
+export const activityDisplayName = exerciseDisplayName
+
+// ── Pure helpers ──────────────────────────────────────────────────────────────
 
 export function totalMinutes(session: PracticeSession): number {
   return session.blocks.reduce((sum, b) => sum + b.durationMinutes, 0)

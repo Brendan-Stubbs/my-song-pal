@@ -18,7 +18,7 @@ import PracticePlayer from './PracticePlayer'
 type View =
   | { type: 'list' }
   | { type: 'edit'; sessionId: string }
-  | { type: 'play'; sessionId: string; startBlockIndex: number }
+  | { type: 'play'; session: PracticeSession; startBlockIndex: number }
 
 // ── Session card ──────────────────────────────────────────────────────────────
 
@@ -147,41 +147,65 @@ function SessionCard({ session, onEdit, onStart, onDelete, onRename }: SessionCa
 
 export default function PracticeView() {
   const [sessions, setSessions] = useState<PracticeSession[]>([])
+  const [persistedIds, setPersistedIds] = useState<Set<string>>(new Set())
   const [view, setView] = useState<View>({ type: 'list' })
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     loadSessions()
-      .then((data) => { setSessions(data); setLoaded(true) })
+      .then((data) => {
+        setSessions(data)
+        setPersistedIds(new Set(data.map((s) => s.id)))
+        setLoaded(true)
+      })
       .catch(() => { setSessions([]); setLoaded(true) })
   }, [])
 
-  async function handleNewSession() {
+  function handleNewSession() {
     const session = createSession()
     setSessions((prev) => [...prev, session])
-    await upsertSession(session)
     setView({ type: 'edit', sessionId: session.id })
   }
 
   async function handleDeleteSession(id: string) {
     setSessions((prev) => prev.filter((s) => s.id !== id))
+    setPersistedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
     await deleteSession(id)
-    if (view.type !== 'list' && 'sessionId' in view && view.sessionId === id) {
+    if (view.type !== 'list' && view.type === 'edit' && view.sessionId === id) {
+      setView({ type: 'list' })
+    }
+    if (view.type === 'play' && view.session.id === id) {
       setView({ type: 'list' })
     }
   }
 
-  async function handleUpdateSession(updated: PracticeSession) {
+  async function handleSaveSession(updated: PracticeSession) {
     setSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
     await upsertSession(updated)
+    setPersistedIds((prev) => new Set(prev).add(updated.id))
+  }
+
+  function handleEditorBack(sessionId: string) {
+    if (!persistedIds.has(sessionId)) {
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId))
+    }
+    setView({ type: 'list' })
   }
 
   async function handleRenameSession(id: string, name: string) {
-    setSessions((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, name, updatedAt: Date.now() } : s)),
-    )
     const target = sessions.find((s) => s.id === id)
-    if (target) await upsertSession({ ...target, name, updatedAt: Date.now() })
+    if (!target) return
+    const updated = { ...target, name, updatedAt: Date.now() }
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? updated : s)),
+    )
+    if (persistedIds.has(id)) {
+      await upsertSession(updated)
+    }
   }
 
   if (!loaded) {
@@ -195,14 +219,9 @@ export default function PracticeView() {
   // ── Player ──────────────────────────────────────────────────────────────────
 
   if (view.type === 'play') {
-    const session = sessions.find((s) => s.id === view.sessionId)
-    if (!session) {
-      setView({ type: 'list' })
-      return null
-    }
     return (
       <PracticePlayer
-        session={session}
+        session={view.session}
         startBlockIndex={view.startBlockIndex}
         onEnd={() => setView({ type: 'list' })}
       />
@@ -220,10 +239,10 @@ export default function PracticeView() {
     return (
       <PracticeSessionEditor
         session={session}
-        onChange={handleUpdateSession}
-        onBack={() => setView({ type: 'list' })}
-        onStart={(blockIndex) =>
-          setView({ type: 'play', sessionId: session.id, startBlockIndex: blockIndex })
+        onSave={handleSaveSession}
+        onBack={() => handleEditorBack(session.id)}
+        onStart={(playSession, blockIndex) =>
+          setView({ type: 'play', session: playSession, startBlockIndex: blockIndex })
         }
       />
     )
@@ -280,7 +299,10 @@ export default function PracticeView() {
               key={session.id}
               session={session}
               onEdit={() => setView({ type: 'edit', sessionId: session.id })}
-              onStart={() => setView({ type: 'play', sessionId: session.id, startBlockIndex: 0 })}
+              onStart={() => {
+                const s = sessions.find((x) => x.id === session.id)
+                if (s) setView({ type: 'play', session: s, startBlockIndex: 0 })
+              }}
               onDelete={() => handleDeleteSession(session.id)}
               onRename={(name) => handleRenameSession(session.id, name)}
             />

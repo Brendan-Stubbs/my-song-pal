@@ -153,7 +153,7 @@ export function createTonalAdapter(): IMusicTheoryService {
         const noteWithOctave = Note.fromMidi(midi)
         const pc = toSharp(pitchClass(noteWithOctave))
 
-        const degreeIndex = scaleNotes.indexOf(pc)
+        const degreeIndex = scaleNotes.findIndex((n) => Note.chroma(n) === Note.chroma(pc))
         if (degreeIndex === -1) continue
 
         const degree = degreeIndex + 1
@@ -214,7 +214,7 @@ export function createTonalAdapter(): IMusicTheoryService {
           const fret = rootFret + fo
           const note = getNoteAt(stringNumber, fret, tuning)
 
-          const degreeIndex = scaleNotes.indexOf(note)
+          const degreeIndex = scaleNotes.findIndex((n) => Note.chroma(n) === Note.chroma(note))
           if (degreeIndex === -1) continue
 
           const degree = degreeIndex + 1
