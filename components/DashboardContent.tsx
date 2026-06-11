@@ -5,8 +5,9 @@ import MusicDashboard from './music/MusicDashboard'
 import PracticeView from './practice/PracticeView'
 import ChordsView from './chords/ChordsView'
 import MetronomeView from './metronome/MetronomeView'
+import EarTrainingView from './ear-training/EarTrainingView'
 
-type Tab = 'music' | 'chords' | 'metronome' | 'practice'
+type Tab = 'music' | 'chords' | 'metronome' | 'ear-training' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -41,6 +42,16 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
         <polygon points="2.5,13.5 12.5,13.5 9.5,1.5 5.5,1.5" />
         <line x1="7.5" y1="1.5" x2="7.5" y2="13.5" />
         <line x1="7.5" y1="8" x2="10.5" y2="5" strokeWidth="2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'ear-training',
+    label: 'Ear Training',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.5 7a4 4 0 0 1 8 0c0 2-1.5 2.5-1.5 4a1.75 1.75 0 0 1-3.5 0" />
+        <path d="M6 7a1.5 1.5 0 0 1 3 0" />
       </svg>
     ),
   },
@@ -103,6 +114,7 @@ export default function DashboardContent({ userName, isPremium }: DashboardConte
         )}
         {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
         {activeTab === 'metronome' && <MetronomeView />}
+        {activeTab === 'ear-training' && <EarTrainingView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>
     </>

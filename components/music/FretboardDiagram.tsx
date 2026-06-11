@@ -23,6 +23,9 @@ const TEXT_COLOR = '#ffffff'
 const OPEN_FRET_FILL_LIGHT = '#e8e3db'
 const OPEN_FRET_FILL_DARK = '#4b5563'
 
+// Frets that mark an octave — highlighted subtly so they're easy to locate
+const OCTAVE_FRETS = [12, 24]
+
 // String name labels (index = stringNumber - 1, so index 0 = string 1 = high e)
 const STRING_NAMES: Record<number, string> = {
   6: 'E', 5: 'A', 4: 'D', 3: 'G', 2: 'B', 1: 'e',
@@ -70,6 +73,19 @@ export default function FretboardDiagram({
         {/* Open fret column (nut area) */}
         <rect x={PAD_LEFT} y={PAD_TOP} width={CELL_WIDTH} height={(NUM_STRINGS - 1) * CELL_HEIGHT} fill={OPEN_FRET_FILL_LIGHT} className="dark:hidden" />
         <rect x={PAD_LEFT} y={PAD_TOP} width={CELL_WIDTH} height={(NUM_STRINGS - 1) * CELL_HEIGHT} fill={OPEN_FRET_FILL_DARK} className="hidden dark:block" />
+
+        {/* Octave fret highlight (12 / 24) — subtle band so the octave is easy to spot */}
+        {OCTAVE_FRETS.filter((f) => f <= fretCount).map((f) => (
+          <rect
+            key={`octave-${f}`}
+            x={PAD_LEFT + f * CELL_WIDTH}
+            y={PAD_TOP}
+            width={CELL_WIDTH}
+            height={(NUM_STRINGS - 1) * CELL_HEIGHT}
+            fill={BRAND_COLOR}
+            opacity={0.12}
+          />
+        ))}
 
         {/* String lines with varying thickness */}
         {Array.from({ length: NUM_STRINGS }, (_, i) => {
@@ -134,19 +150,23 @@ export default function FretboardDiagram({
           )
         })}
 
-        {/* Fret number labels */}
-        {Array.from({ length: numFrets }, (_, i) => (
-          <text
-            key={`fret-label-${i}`}
-            x={PAD_LEFT + i * CELL_WIDTH + CELL_WIDTH / 2}
-            y={svgHeight - 8}
-            textAnchor="middle"
-            fontSize={10}
-            fill="#6b7280"
-          >
-            {i}
-          </text>
-        ))}
+        {/* Fret number labels — octave frets emphasised */}
+        {Array.from({ length: numFrets }, (_, i) => {
+          const isOctave = OCTAVE_FRETS.includes(i)
+          return (
+            <text
+              key={`fret-label-${i}`}
+              x={PAD_LEFT + i * CELL_WIDTH + CELL_WIDTH / 2}
+              y={svgHeight - 8}
+              textAnchor="middle"
+              fontSize={10}
+              fontWeight={isOctave ? 700 : 400}
+              fill={isOctave ? BRAND_COLOR : '#6b7280'}
+            >
+              {i}
+            </text>
+          )
+        })}
       </svg>
     </div>
   )
