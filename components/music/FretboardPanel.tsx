@@ -5,7 +5,8 @@ import type { FretboardNote } from '@/types/music';
 import FretboardDiagram from './FretboardDiagram';
 import { getFretboardNotes } from '@/lib/fretboard';
 
-const FRET_COUNT = 12;
+const DEFAULT_FRET_COUNT = 12;
+const EXTENDED_FRET_COUNT = 24;
 
 export interface FretboardPanelProps {
   selectedKey: string;
@@ -20,11 +21,14 @@ export default function FretboardPanel({
 }: FretboardPanelProps) {
   const [showDegrees, setShowDegrees] = useState(false);
   const [highEAtTop, setHighEAtTop] = useState(false);
+  const [showExtendedFrets, setShowExtendedFrets] = useState(false);
+
+  const fretCount = showExtendedFrets ? EXTENDED_FRET_COUNT : DEFAULT_FRET_COUNT;
 
   const { notes, error } = useMemo(() => {
     try {
       return {
-        notes: getFretboardNotes(selectedKey, selectedScale, tuning, FRET_COUNT),
+        notes: getFretboardNotes(selectedKey, selectedScale, tuning, fretCount),
         error: null,
       };
     } catch (err) {
@@ -33,7 +37,7 @@ export default function FretboardPanel({
         error: err instanceof Error ? err.message : 'Failed to load fretboard',
       };
     }
-  }, [selectedKey, selectedScale, tuning]);
+  }, [selectedKey, selectedScale, tuning, fretCount]);
 
   return (
     <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
@@ -62,6 +66,16 @@ export default function FretboardPanel({
             />
             High e at top
           </label>
+
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showExtendedFrets}
+              onChange={(e) => setShowExtendedFrets(e.target.checked)}
+              className="rounded border-gray-300 text-brand focus:ring-brand"
+            />
+            Show frets 13–24
+          </label>
         </div>
       </div>
 
@@ -74,7 +88,7 @@ export default function FretboardPanel({
       {!error && (
         <FretboardDiagram
           notes={notes}
-          fretCount={FRET_COUNT}
+          fretCount={fretCount}
           showDegrees={showDegrees}
           highEAtTop={highEAtTop}
         />
