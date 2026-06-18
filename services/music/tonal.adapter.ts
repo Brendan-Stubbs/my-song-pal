@@ -53,6 +53,21 @@ const AVAILABLE_KEYS = [
 
 const DEFAULT_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4']
 
+/**
+ * Map the app's scale identifiers to the canonical names Tonal expects.
+ * Most names match Tonal directly; only the pentatonics use a different
+ * word order in the app's UI/storage ("pentatonic major" vs Tonal's
+ * "major pentatonic").
+ */
+const TONAL_SCALE_NAMES: Record<string, string> = {
+  'pentatonic major': 'major pentatonic',
+  'pentatonic minor': 'minor pentatonic',
+}
+
+function toTonalScaleName(scale: string): string {
+  return TONAL_SCALE_NAMES[scale] ?? scale
+}
+
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 
@@ -104,7 +119,7 @@ function degreeLabel(index: number, intervals: string[]): string {
 
 export function createTonalAdapter(): IMusicTheoryService {
   function getScaleInfo(key: string, scale: string): ScaleInfo {
-    const scaleResult = Scale.get(`${key} ${scale}`)
+    const scaleResult = Scale.get(`${key} ${toTonalScaleName(scale)}`)
 
     if (!scaleResult || scaleResult.empty || scaleResult.notes.length === 0) {
       throw new Error(`Unknown scale: "${key} ${scale}"`)

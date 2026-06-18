@@ -1,8 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Note } from 'tonal'
 import type { ChordInfo, ProgressionSection } from '@/types/music'
+import {
+  loadDashboardState,
+  saveDashboardState,
+  type PanelId,
+  type StoredPanel,
+} from '@/lib/dashboard-storage'
 import FretboardPanel from './FretboardPanel'
 import CagedPositionsPanel from './CagedPositionsPanel'
 import ChordProgressionsPanel from './ChordProgressionsPanel'
@@ -84,10 +90,10 @@ const AVAILABLE_SCALES = [
   'melodic minor',
 ]
 
-type PanelId = 'fretboard' | 'caged' | 'openChords' | 'chordProgressions' | 'song'
+type PanelIdLocal = PanelId
 
 interface DashboardPanel {
-  id: PanelId
+  id: PanelIdLocal
   label: string
   visible: boolean
 }
@@ -100,10 +106,29 @@ const DEFAULT_PANELS: DashboardPanel[] = [
   { id: 'song', label: 'Song', visible: true },
 ]
 
+function reconcilePanels(stored: StoredPanel[], defaults: DashboardPanel[]): DashboardPanel[] {
+  const defaultById = new Map(defaults.map((p) => [p.id, p]))
+  const result: DashboardPanel[] = []
+
+  for (const sp of stored) {
+    const def = defaultById.get(sp.id)
+    if (def) {
+      result.push({ ...def, visible: sp.visible })
+      defaultById.delete(sp.id)
+    }
+  }
+
+  for (const def of defaults) {
+    if (defaultById.has(def.id)) result.push(def)
+  }
+
+  return result.length > 0 ? result : defaults
+}
+
 // ── Sortable row used in edit mode ──────────────────────────────────────────
 interface SortableRowProps {
   panel: DashboardPanel
-  onToggle: (id: PanelId) => void
+  onToggle: (id: PanelIdLocal) => void
 }
 
 function SortableRow({ panel, onToggle }: SortableRowProps) {
@@ -166,6 +191,7 @@ function SortableRow({ panel, onToggle }: SortableRowProps) {
 
 // ── Main dashboard ───────────────────────────────────────────────────────────
 export default function MusicDashboard() {
+  const hydratedRef = useRef(false)
   const [selectedTuningIndex, setSelectedTuningIndex] = useState(0)
   const [customTuningPcs, setCustomTuningPcs] = useState(['E', 'A', 'D', 'G', 'B', 'E'])
   const [selectedKey, setSelectedKey] = useState('C')
@@ -178,6 +204,62 @@ export default function MusicDashboard() {
     { id: crypto.randomUUID(), name: 'Verse', chords: [] },
   ])
   const [activeSectionId, setActiveSectionId] = useState(sections[0].id)
+
+  // Hydrate persisted dashboard state on mount
+  useEffect(() => {
+    let cancelled = false
+    void loadDashboardState().then((saved) => {
+      if (cancelled || !saved) {
+        hydratedRef.current = true
+        return
+      }
+
+      setPanels(reconcilePanels(saved.panels, DEFAULT_PANELS))
+      setSelectedKey(saved.selectedKey)
+      setSelectedScale(saved.selectedScale)
+      setSelectedTuningIndex(saved.selectedTuningIndex)
+      setCustomTuningPcs(saved.customTuningPcs)
+
+      if (saved.sections.length > 0) {
+        setSections(saved.sections)
+        const activeExists = saved.sections.some((s) => s.id === saved.activeSectionId)
+        setActiveSectionId(activeExists ? saved.activeSectionId : saved.sections[0].id)
+      }
+
+      hydratedRef.current = true
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Debounced save when dashboard state changes
+  useEffect(() => {
+    if (!hydratedRef.current) return
+
+    const timeout = setTimeout(() => {
+      void saveDashboardState({
+        panels: panels.map((p) => ({ id: p.id, visible: p.visible })),
+        selectedKey,
+        selectedScale,
+        selectedTuningIndex,
+        customTuningPcs,
+        sections,
+        activeSectionId,
+      })
+    }, 600)
+
+    return () => clearTimeout(timeout)
+  }, [
+    panels,
+    selectedKey,
+    selectedScale,
+    selectedTuningIndex,
+    customTuningPcs,
+    sections,
+    activeSectionId,
+  ])
 
   const isCustomTuning = selectedTuningIndex === CUSTOM_TUNING_INDEX
   const tuning = isCustomTuning
@@ -202,7 +284,7 @@ export default function MusicDashboard() {
     }
   }
 
-  function togglePanelVisibility(id: PanelId) {
+  function togglePanelVisibility(id: PanelIdLocal) {
     setPanels((prev) =>
       prev.map((p) => (p.id === id ? { ...p, visible: !p.visible } : p)),
     )

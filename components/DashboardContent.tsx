@@ -6,8 +6,11 @@ import PracticeView from './practice/PracticeView'
 import ChordsView from './chords/ChordsView'
 import MetronomeView from './metronome/MetronomeView'
 import EarTrainingView from './ear-training/EarTrainingView'
+import FretboardTrainerView from './trainers/FretboardTrainerView'
+import TrialBanner from './premium/TrialBanner'
+import type { AccessLevel } from '@/types/subscription'
 
-type Tab = 'music' | 'chords' | 'metronome' | 'ear-training' | 'practice'
+type Tab = 'music' | 'chords' | 'metronome' | 'ear-training' | 'fretboard-trainer' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -56,6 +59,21 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'fretboard-trainer',
+    label: 'Fretboard',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="2" y1="3" x2="13" y2="3" />
+        <line x1="2" y1="6" x2="13" y2="6" />
+        <line x1="2" y1="9" x2="13" y2="9" />
+        <line x1="2" y1="12" x2="13" y2="12" />
+        <line x1="5" y1="2" x2="5" y2="13" />
+        <line x1="10" y1="2" x2="10" y2="13" />
+        <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
     id: 'practice',
     label: 'Practice',
     icon: (
@@ -70,9 +88,16 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 interface DashboardContentProps {
   userName: string
   isPremium: boolean
+  accessLevel: AccessLevel
+  trialDaysLeft: number | null
 }
 
-export default function DashboardContent({ userName, isPremium }: DashboardContentProps) {
+export default function DashboardContent({
+  userName,
+  isPremium,
+  accessLevel,
+  trialDaysLeft,
+}: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState<Tab>('music')
 
   return (
@@ -102,6 +127,7 @@ export default function DashboardContent({ userName, isPremium }: DashboardConte
 
       {/* Page content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <TrialBanner accessLevel={accessLevel} trialDaysLeft={trialDaysLeft} />
         {activeTab === 'music' && (
           <>
             <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
@@ -115,6 +141,7 @@ export default function DashboardContent({ userName, isPremium }: DashboardConte
         {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
         {activeTab === 'metronome' && <MetronomeView />}
         {activeTab === 'ear-training' && <EarTrainingView />}
+        {activeTab === 'fretboard-trainer' && <FretboardTrainerView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>
     </>

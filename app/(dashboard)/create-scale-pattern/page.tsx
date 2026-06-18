@@ -1,14 +1,16 @@
 import { redirect } from 'next/navigation'
 import { createAuthService } from '@/services/auth/auth.service'
-import { getUserPlan } from '@/lib/subscription'
+import { getUserAccess } from '@/lib/subscription'
 import ScalePatternEditor from '@/components/tools/ScalePatternEditor'
 
 export default async function CreateScalePatternPage() {
   const authService = await createAuthService()
   const user = await authService.getUser()
-  const plan = user ? await getUserPlan(user.id) : 'free'
+  const access = user
+    ? await getUserAccess(user.id)
+    : { hasPremiumAccess: false }
 
-  if (plan !== 'premium') redirect('/dashboard')
+  if (!access.hasPremiumAccess) redirect('/dashboard')
 
   return (
     <div className="min-h-screen bg-warm-page dark:bg-gray-900">
