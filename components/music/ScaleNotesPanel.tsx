@@ -65,18 +65,22 @@ export default function ScaleNotesPanel({
     }
   }, [selectedKey, selectedScale])
 
-  // Assign each scale note an octave so the sequence ascends from the root,
-  // then append the root an octave up so the run resolves back home.
+  // Build an ascending line: spell each note in octave 4, then bump it up by
+  // octaves until it sits above the previous note. Comparing actual pitch
+  // (rather than pitch-class chroma) keeps enharmonic spellings like B#, E# or
+  // Cb in the correct octave — e.g. B# is the leading tone just below the
+  // octave root, not an octave above it. Finally append the root an octave up
+  // so the run resolves back home.
   const midis = useMemo(() => {
     if (!scale) return [] as number[]
-    let octave = 4
-    let prevChroma = -1
-    const arr = scale.notes.map((pc) => {
-      const chroma = Note.chroma(pc) ?? 0
-      if (prevChroma !== -1 && chroma <= prevChroma) octave += 1
-      prevChroma = chroma
-      return Note.midi(`${pc}${octave}`) ?? 60
-    })
+    const arr: number[] = []
+    let prevMidi = Number.NEGATIVE_INFINITY
+    for (const pc of scale.notes) {
+      let m = Note.midi(`${pc}4`) ?? 60 + (Note.chroma(pc) ?? 0)
+      while (m <= prevMidi) m += 12
+      prevMidi = m
+      arr.push(m)
+    }
     if (arr.length > 0) arr.push(arr[0] + 12)
     return arr
   }, [scale])
