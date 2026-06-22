@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "db:push": "export SUPABASE_DB_PASSWORD=\"$(grep -E '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)\" && npx supabase db push",
+    "db:push:dry": "export SUPABASE_DB_PASSWORD=\"$(grep -E '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)\" && npx supabase db push --dry-run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint",
@@ -22,7 +24,9 @@
     "next": "16.1.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "smplr": "^1.0.0",
     "tonal": "^6.4.3",
+    "tone": "^15.1.22",
     "zod": "^4.4.3"
   },
   "devDependencies": {
