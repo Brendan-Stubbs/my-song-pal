@@ -6,6 +6,29 @@ export type Plan = 'free' | 'premium'
 /** How often a premium subscriber is billed. */
 export type BillingCadence = 'monthly' | 'biannual' | 'annual'
 
+// ── Access / trial ──────────────────────────────────────────────────────────
+
+/** Length of the no-strings-attached free trial granted at sign-up. */
+export const TRIAL_DURATION_DAYS = 30
+
+/**
+ * The effective access level a user has right now:
+ *  - `premium`: an active paid subscription
+ *  - `trial`:   inside the free-trial window (full access, not paying)
+ *  - `free`:    no subscription and the trial has lapsed (paid features locked)
+ */
+export type AccessLevel = 'free' | 'trial' | 'premium'
+
+export interface UserAccess {
+  level: AccessLevel
+  /** True when paid features should be unlocked (premium OR active trial). */
+  hasPremiumAccess: boolean
+  /** ISO timestamp the trial ends, when known. */
+  trialEndsAt: string | null
+  /** Whole days left in the trial (>= 0), or null when not on a trial. */
+  trialDaysLeft: number | null
+}
+
 // ── Pricing config ────────────────────────────────────────────────────────────
 
 export interface PricingOption {

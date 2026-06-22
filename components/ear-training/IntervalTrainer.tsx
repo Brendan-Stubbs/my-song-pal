@@ -8,6 +8,13 @@ import {
   type IntervalDirection,
 } from '@/lib/intervals'
 import { midiToNoteName, playMidiSequence } from '@/lib/audio'
+import {
+  loadTrainerStats,
+  recordTrainerGame,
+  lifetimeAccuracy,
+  type CategoryStats,
+  type TrainerStats,
+} from '@/lib/training-stats'
 
 // Root notes are drawn from a comfortable mid range (C3–C4) so that even an
 // ascending octave stays within an easy-to-hear register.
@@ -74,12 +81,20 @@ export default function IntervalTrainer() {
   const [score, setScore] = useState(0)
   const [attempts, setAttempts] = useState(0)
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
+  const [lifetimeStats, setLifetimeStats] = useState<TrainerStats | null>(null)
 
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sessionCategoryRef = useRef<Record<string, CategoryStats>>({})
+  const scoreRef = useRef(0)
+  const attemptsRef = useRef(0)
   const enabledRef = useRef(enabled)
   const directionRef = useRef(direction)
   useEffect(() => { enabledRef.current = enabled }, [enabled])
   useEffect(() => { directionRef.current = direction }, [direction])
+
+  useEffect(() => {
+    void loadTrainerStats('intervals').then(setLifetimeStats)
+  }, [])
 
   const enabledIntervals = INTERVALS.filter((i) => enabled.has(i.semitones))
 
@@ -116,6 +131,9 @@ export default function IntervalTrainer() {
 
   const startGame = useCallback(() => {
     if (enabledRef.current.size < 2) return
+    sessionCategoryRef.current = {}
+    scoreRef.current = 0
+    attemptsRef.current = 0
     setScore(0)
     setAttempts(0)
     setTimeLeft(timerSeconds)
@@ -125,11 +143,23 @@ export default function IntervalTrainer() {
     void playMidiSequence(sequenceForRound(r))
   }, [buildRound, timerSeconds])
 
+  const persistSession = useCallback(async () => {
+    const updated = await recordTrainerGame('intervals', {
+      score: scoreRef.current,
+      correct: scoreRef.current,
+      attempts: attemptsRef.current,
+      perCategory: sessionCategoryRef.current,
+    })
+    setLifetimeStats(updated)
+    sessionCategoryRef.current = {}
+  }, [])
+
   const endGame = useCallback(() => {
     clearAdvanceTimer()
     setPhase('finished')
     setRound(null)
-  }, [clearAdvanceTimer])
+    if (attemptsRef.current > 0) void persistSession()
+  }, [clearAdvanceTimer, persistSession])
 
   // Countdown timer — the tick (and end-of-time) is handled inside the timeout
   // callback so we never call setState synchronously in the effect body.
@@ -150,8 +180,26 @@ export default function IntervalTrainer() {
       if (!round || round.answered !== null) return
       const isCorrect = semitones === round.interval.semitones
       setRound({ ...round, answered: semitones, isCorrect })
-      setAttempts((a) => a + 1)
-      if (isCorrect) setScore((s) => s + 1)
+
+      const key = String(round.interval.semitones)
+      const prev = sessionCategoryRef.current[key] ?? { correct: 0, attempts: 0 }
+      sessionCategoryRef.current[key] = {
+        correct: prev.correct + (isCorrect ? 1 : 0),
+        attempts: prev.attempts + 1,
+      }
+
+      setAttempts((a) => {
+        const next = a + 1
+        attemptsRef.current = next
+        return next
+      })
+      if (isCorrect) {
+        setScore((s) => {
+          const next = s + 1
+          scoreRef.current = next
+          return next
+        })
+      }
 
       advanceTimerRef.current = setTimeout(
         () => nextRound(),
@@ -176,10 +224,21 @@ export default function IntervalTrainer() {
 
   const accuracy = attempts > 0 ? Math.round((score / attempts) * 100) : 0
 
+  const statsBanner =
+    lifetimeStats && lifetimeStats.gamesPlayed > 0 ? (
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Best score: <span className="font-semibold text-brand">{lifetimeStats.bestScore}</span>
+        {' · '}
+        Lifetime accuracy:{' '}
+        <span className="font-semibold">{lifetimeAccuracy(lifetimeStats)}%</span>
+      </p>
+    ) : null
+
   // ── Idle / settings screen ───────────────────────────────────────────────
   if (phase === 'idle') {
     return (
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-6 space-y-6">
+        {statsBanner}
         <div>
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
             Intervals to include
@@ -280,6 +339,12 @@ export default function IntervalTrainer() {
         <p className="text-gray-600 dark:text-gray-300">
           {score} correct out of {attempts} ({accuracy}% accuracy)
         </p>
+        {lifetimeStats && lifetimeStats.gamesPlayed > 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Best score: {lifetimeStats.bestScore} · Lifetime:{' '}
+            {lifetimeAccuracy(lifetimeStats)}%
+          </p>
+        )}
         <div className="flex justify-center gap-3 pt-2">
           <button
             onClick={startGame}
