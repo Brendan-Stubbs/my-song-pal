@@ -9,7 +9,14 @@ import {
   type PanelId,
   type StoredPanel,
 } from '@/lib/dashboard-storage'
+import {
+  AUDIO_ENGINES,
+  DEFAULT_AUDIO_ENGINE,
+  coerceAudioEngineId,
+  type AudioEngineId,
+} from '@/lib/instrument'
 import FretboardPanel from './FretboardPanel'
+import ScaleNotesPanel from './ScaleNotesPanel'
 import CagedPositionsPanel from './CagedPositionsPanel'
 import ChordProgressionsPanel from './ChordProgressionsPanel'
 import SongPanel from './SongPanel'
@@ -107,19 +114,36 @@ const DEFAULT_PANELS: DashboardPanel[] = [
 ]
 
 function reconcilePanels(stored: StoredPanel[], defaults: DashboardPanel[]): DashboardPanel[] {
-  const defaultById = new Map(defaults.map((p) => [p.id, p]))
+  const defaultIndex = new Map(defaults.map((p, i) => [p.id, i]))
   const result: DashboardPanel[] = []
+  const seen = new Set<PanelIdLocal>()
 
+  // Keep the user's saved order for panels they've already arranged.
   for (const sp of stored) {
-    const def = defaultById.get(sp.id)
+    if (seen.has(sp.id)) continue
+    const def = defaults.find((d) => d.id === sp.id)
     if (def) {
       result.push({ ...def, visible: sp.visible })
-      defaultById.delete(sp.id)
+      seen.add(sp.id)
     }
   }
 
+  // Insert any newly-added default panels at their natural position rather than
+  // tacking them on at the end — otherwise a new top panel flashes in first and
+  // then jumps to the bottom once saved state hydrates.
   for (const def of defaults) {
-    if (defaultById.has(def.id)) result.push(def)
+    if (seen.has(def.id)) continue
+    const di = defaultIndex.get(def.id) ?? result.length
+    let insertAt = result.length
+    for (let i = 0; i < result.length; i += 1) {
+      const ri = defaultIndex.get(result[i].id) ?? Number.POSITIVE_INFINITY
+      if (ri > di) {
+        insertAt = i
+        break
+      }
+    }
+    result.splice(insertAt, 0, def)
+    seen.add(def.id)
   }
 
   return result.length > 0 ? result : defaults
@@ -198,6 +222,8 @@ export default function MusicDashboard() {
   const [selectedScale, setSelectedScale] = useState('major')
   const [editMode, setEditMode] = useState(false)
   const [scaleFinderOpen, setScaleFinderOpen] = useState(false)
+  const [showScaleNotes, setShowScaleNotes] = useState(false)
+  const [audioEngine, setAudioEngine] = useState<AudioEngineId>(DEFAULT_AUDIO_ENGINE)
   const [panels, setPanels] = useState<DashboardPanel[]>(DEFAULT_PANELS)
 
   const [sections, setSections] = useState<ProgressionSection[]>([
@@ -219,6 +245,7 @@ export default function MusicDashboard() {
       setSelectedScale(saved.selectedScale)
       setSelectedTuningIndex(saved.selectedTuningIndex)
       setCustomTuningPcs(saved.customTuningPcs)
+      setAudioEngine(coerceAudioEngineId(saved.audioEngine))
 
       if (saved.sections.length > 0) {
         setSections(saved.sections)
@@ -247,6 +274,7 @@ export default function MusicDashboard() {
         customTuningPcs,
         sections,
         activeSectionId,
+        audioEngine,
       })
     }, 600)
 
@@ -259,6 +287,7 @@ export default function MusicDashboard() {
     customTuningPcs,
     sections,
     activeSectionId,
+    audioEngine,
   ])
 
   const isCustomTuning = selectedTuningIndex === CUSTOM_TUNING_INDEX
@@ -422,7 +451,8 @@ export default function MusicDashboard() {
   return (
     <div className="space-y-6">
       {/* Global controls */}
-      <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-4 flex flex-wrap items-end gap-6">
+      <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-1">
           <label htmlFor="global-key-select" className={labelClass}>Key</label>
           <select
@@ -480,8 +510,32 @@ export default function MusicDashboard() {
           {tuning.join(' · ')}
         </span>
 
-        {/* Scale Finder + Edit Layout — pushed to the right */}
+        {/* Show scale notes + Scale Finder + Edit Layout — pushed to the right */}
         <div className="ml-auto flex items-center gap-2 pb-0.5">
+          <button
+            onClick={() => setShowScaleNotes((v) => !v)}
+            aria-expanded={showScaleNotes}
+            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand ${
+              showScaleNotes
+                ? 'bg-brand text-white hover:bg-brand/90'
+                : 'border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-warm-page dark:hover:bg-gray-600'
+            }`}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform ${showScaleNotes ? 'rotate-180' : ''}`}
+            >
+              <path d="M3 5l4 4 4-4" />
+            </svg>
+            {showScaleNotes ? 'Hide scale notes' : 'Show scale notes'}
+          </button>
           <button
             onClick={() => setScaleFinderOpen(true)}
             className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-warm-page dark:hover:bg-gray-600"
@@ -519,6 +573,18 @@ export default function MusicDashboard() {
             )}
           </button>
         </div>
+        </div>
+
+        {/* Linear scale notes — tucked into the selector block, toggled open */}
+        {showScaleNotes && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <ScaleNotesPanel
+              selectedKey={selectedKey}
+              selectedScale={selectedScale}
+              engineId={audioEngine}
+            />
+          </div>
+        )}
       </div>
 
       {/* Custom tuning inputs */}
@@ -552,19 +618,56 @@ export default function MusicDashboard() {
 
       {/* Edit mode panel */}
       {editMode && (
-        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 space-y-3">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            Drag to reorder · toggle to show/hide
-          </p>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={panels.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
-                {panels.map((panel) => (
-                  <SortableRow key={panel.id} panel={panel} onToggle={togglePanelVisibility} />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 space-y-4">
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Drag to reorder · toggle to show/hide
+            </p>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={panels.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {panels.map((panel) => (
+                    <SortableRow key={panel.id} panel={panel} onToggle={togglePanelVisibility} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
+
+          {/* Sound engine */}
+          <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Sound
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {AUDIO_ENGINES.map((engine) => {
+                const selected = engine.id === audioEngine
+                return (
+                  <label
+                    key={engine.id}
+                    title={engine.description}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
+                      selected
+                        ? 'border-brand bg-brand/10 text-gray-900 dark:text-white'
+                        : 'border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-brand'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="audio-engine"
+                      className="accent-brand"
+                      checked={selected}
+                      onChange={() => setAudioEngine(engine.id)}
+                    />
+                    <span className="flex flex-col">
+                      <span className="font-medium">{engine.label}</span>
+                      <span className="text-[11px] opacity-70">{engine.description}</span>
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 

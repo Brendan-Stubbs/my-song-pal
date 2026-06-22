@@ -8,10 +8,17 @@
 
 import { createClient } from '@/lib/supabase/client'
 import type { ProgressionSection } from '@/types/music'
+import type { AudioEngineId } from '@/lib/instrument'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type PanelId = 'fretboard' | 'caged' | 'openChords' | 'chordProgressions' | 'song'
+export type PanelId =
+  | 'scaleNotes'
+  | 'fretboard'
+  | 'caged'
+  | 'openChords'
+  | 'chordProgressions'
+  | 'song'
 
 export interface StoredPanel {
   id: PanelId
@@ -26,6 +33,8 @@ export interface DashboardState {
   customTuningPcs: string[]
   sections: ProgressionSection[]
   activeSectionId: string
+  /** Selected sound engine for the scale-notes player. */
+  audioEngine?: AudioEngineId
 }
 
 // ── localStorage fallback ───────────────────────────────────────────────────────

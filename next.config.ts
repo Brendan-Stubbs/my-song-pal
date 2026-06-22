@@ -36,9 +36,10 @@ const securityHeaders = [
       // production you can tighten this with a nonce-based approach.
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      // Supabase API calls
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      // Supabase API calls + audio sample CDNs (smplr soundfonts, Tone.js samples)
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://gleitz.github.io https://cdn.jsdelivr.net",
       "img-src 'self' data: blob:",
+      "media-src 'self' data: blob: https://gleitz.github.io https://cdn.jsdelivr.net",
       "font-src 'self'",
       "frame-ancestors 'none'",
     ].join("; "),
