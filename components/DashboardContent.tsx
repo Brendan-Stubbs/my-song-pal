@@ -8,6 +8,8 @@ import MetronomeView from './metronome/MetronomeView'
 import EarTrainingView from './ear-training/EarTrainingView'
 import FretboardTrainerView from './trainers/FretboardTrainerView'
 import TrialBanner from './premium/TrialBanner'
+import { SuperUserProvider } from '@/contexts/SuperUserContext'
+import SuperUserBadge from './superuser/SuperUserBadge'
 import type { AccessLevel } from '@/types/subscription'
 
 type Tab = 'music' | 'chords' | 'metronome' | 'ear-training' | 'fretboard-trainer' | 'practice'
@@ -101,7 +103,10 @@ export default function DashboardContent({
   const [activeTab, setActiveTab] = useState<Tab>('music')
 
   return (
-    <>
+    <SuperUserProvider>
+      {/* Floating super-user role toggle — only renders for super users */}
+      <SuperUserBadge />
+
       {/* Tab bar */}
       <div className="bg-warm-panel dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -144,6 +149,6 @@ export default function DashboardContent({
         {activeTab === 'fretboard-trainer' && <FretboardTrainerView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>
-    </>
+    </SuperUserProvider>
   )
 }

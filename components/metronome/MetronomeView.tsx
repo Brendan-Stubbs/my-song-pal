@@ -8,12 +8,14 @@ import LoopPlayer from './LoopPlayer'
 import { loadLoops, saveLoop, deleteLoop, createLoop } from '@/lib/metronome-loop-storage'
 import { loadDashboardState } from '@/lib/dashboard-storage'
 import { DEFAULT_AUDIO_ENGINE, coerceAudioEngineId, type AudioEngineId } from '@/lib/instrument'
+import { useSuperUser } from '@/contexts/SuperUserContext'
 import type { MetronomeLoop } from '@/types/metronome-loop'
 
 type Mode = 'metronome' | 'loop'
 type LoopView = 'player' | 'editor'
 
 export default function MetronomeView() {
+  const { canSeeSuperUserFeatures } = useSuperUser()
   const [mode, setMode] = useState<Mode>('metronome')
   const [metronomeOn, setMetronomeOn] = useState(false)
 
@@ -41,7 +43,11 @@ export default function MetronomeView() {
     })
   }, [])
 
-  // Stop metronome when switching to loop mode
+  // If super user switches to standard view while in loop mode, snap back
+  useEffect(() => {
+    if (!canSeeSuperUserFeatures && mode === 'loop') setMode('metronome')
+  }, [canSeeSuperUserFeatures, mode])
+
   function switchMode(next: Mode) {
     if (next === 'loop') setMetronomeOn(false)
     setMode(next)
@@ -89,21 +95,43 @@ export default function MetronomeView() {
           </p>
         </div>
 
-        {/* Two-way toggle */}
+        {/* Mode toggle — Guided Metronome is a super-user feature */}
         <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden text-sm font-semibold">
-          {(['metronome', 'loop'] as const).map((m) => (
+          <button
+            onClick={() => switchMode('metronome')}
+            className={`px-4 py-2 transition-colors ${
+              mode === 'metronome'
+                ? 'bg-brand text-white'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            Metronome
+          </button>
+
+          {canSeeSuperUserFeatures && (
             <button
-              key={m}
-              onClick={() => switchMode(m)}
-              className={`px-4 py-2 capitalize transition-colors ${
-                mode === m
+              onClick={() => switchMode('loop')}
+              className={`flex items-center gap-1.5 px-4 py-2 transition-colors ${
+                mode === 'loop'
                   ? 'bg-brand text-white'
                   : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
-              {m === 'metronome' ? 'Metronome' : 'Guided Metronome'}
+              Guided Metronome
+              {/* Super-user star indicator */}
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 10 10"
+                fill="currentColor"
+                title="Super user feature"
+                className="opacity-60"
+                aria-hidden
+              >
+                <polygon points="5,1 6.5,4 10,4.5 7.5,7 8,10.5 5,9 2,10.5 2.5,7 0,4.5 3.5,4" />
+              </svg>
             </button>
-          ))}
+          )}
         </div>
       </div>
 
