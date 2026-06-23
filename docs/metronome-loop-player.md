@@ -35,10 +35,11 @@ New file [`types/metronome-loop.ts`](../types/metronome-loop.ts):
 
 ```typescript
 export interface GuideNote {
-  bar: number     // 1-indexed
-  beat: number    // 1-indexed
-  note: string    // e.g. "C4", "G#3"
-  enabled: boolean
+  id: string       // stable id for React keys / future tab import linking
+  bar: number      // 1-indexed
+  beat: number     // 1-indexed
+  note: string     // e.g. "C4", "G#3" — one note per entry
+  enabled: boolean // lets the user mute individual notes without deleting them
 }
 
 export interface MetronomeLoop {
@@ -49,11 +50,15 @@ export interface MetronomeLoop {
   noteValue: 4 | 8
   bars: number         // 1–8
   countInBars: number  // 1–2
-  guideNotes: GuideNote[]
+  guideNotes: GuideNote[]   // multiple entries can share the same (bar, beat)
   createdAt: number
   updatedAt: number
 }
 ```
+
+**Multiple notes per beat:** any number of `GuideNote` entries can share the same `(bar, beat)` — a chord is just three entries at the same position. The scheduler collects all enabled entries for the current position and fires them together.
+
+**Individual `enabled` flag:** this is the key design decision for future tab support. When tab import is eventually built, it will populate `guideNotes` with all notes from the tab (potentially all 6 strings at every beat). The `enabled` flag then lets the user pick which of those notes to actually hear as guide notes — "play just the root of each chord" or "play everything" — without losing the full tab data.
 
 `targetBpm` is the saved full-speed tempo. The percentage is a **playback-time value** — not persisted — so the loop always reopens at 100% each session.
 
@@ -64,6 +69,7 @@ export interface MetronomeLoop {
 New file [`lib/metronome-loop-storage.ts`](../lib/metronome-loop-storage.ts) — same localStorage + Supabase pattern as practice sessions:
 - `loadLoops() / saveLoop() / deleteLoop()`
 - Falls back to `localStorage` for unauthenticated users
+- **Loop player only** — the simple metronome has no saved configurations (its Simple/Practice mode preference is a single `localStorage` flag, not a named save)
 
 New Supabase migration `supabase/migrations/007_metronome_loops.sql`:
 - `metronome_loops` table: `id uuid PK`, `user_id FK`, `name text`, `data jsonb`, `created/updated_at`
@@ -93,7 +99,7 @@ interface LoopSchedulerState {
 Key scheduling logic:
 - Uses `getAudioContext()` from `lib/instrument.ts` (shared context = guide notes align with metronome)
 - At each beat, determines click tone: 440 Hz (count-in) vs 1320/880 Hz (loop accent/beat)
-- Looks up `guideNotes` for `(currentBar, currentBeat+1)` → `getEngine(engineId).playNote(midi, { time: t })`
+- Collects all `guideNotes` where `bar === currentBar && beat === currentBeat+1 && enabled` → fires each through `getEngine(engineId).playNote(midi, { time: t })` simultaneously (multiple notes at the same beat play together as a chord)
 - At last beat of last bar: schedules the 3-note end chime, then resets to count-in phase (or straight back to LOOP if count-in between loops is disabled)
 
 ---
@@ -108,13 +114,20 @@ components/metronome/
 └── LoopPlayer.tsx       — live phase display + bar/beat indicators + playback controls
 ```
 
-**GuideNotesGrid** is a table, columns = bars, rows = beats. Each cell either shows an empty slot (click to add) or a note chip with the note name (click to remove or edit). Validation via `Note.midi(name)` from Tonal — invalid names show a red outline.
+**GuideNotesGrid** is a table, columns = bars, rows = beats. Each cell can hold **multiple note chips** — one per `GuideNote` entry at that position. Each chip has its own enable/disable toggle and a remove button. An "add note" button per cell opens a small input for a new note name. Validation via `Note.midi(name)` from Tonal — invalid names show a red outline.
+
+This structure is intentionally forward-compatible with tab input: a future "import from tab" action would populate the grid with all tab notes, and the existing per-note `enabled` toggle becomes the mechanism for choosing which ones play as guide notes.
 
 ---
 
 ## MetronomeView changes
 
-[`components/metronome/MetronomeView.tsx`](../components/metronome/MetronomeView.tsx) gets a two-mode layout — "Metronome" (existing `MetronomePanel`) and "Loops" (new loop library + player) — using the same pill-style tab switcher used elsewhere in the app.
+[`components/metronome/MetronomeView.tsx`](../components/metronome/MetronomeView.tsx) gets a simple **toggle switch** at the top — no pill tabs — with exactly two positions:
+
+- **Metronome** — the existing `MetronomePanel` (BPM, time sig, Simple/Practice mode). No guide notes, no loops.
+- **Loop player** — the new loop library + editor + player with guide notes.
+
+The toggle is the minimal UI for now. When tab-based input is eventually built it can be added as a third position on the same toggle without any structural change to the page.
 
 ---
 

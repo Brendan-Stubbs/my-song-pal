@@ -6,6 +6,8 @@ const MIN_BPM = 40
 const MAX_BPM = 240
 const BEATS_OPTIONS = [2, 3, 4, 5, 6, 7]
 const NOTE_VALUES = [4, 8]
+const PCT_PRESETS = [50, 60, 70, 75, 80, 85, 90, 95, 100]
+const LS_MODE_KEY = 'mysongpal_metronome_mode'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -45,11 +47,26 @@ interface MetronomePanelProps {
 }
 
 export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) {
+  // Simple vs Practice mode — persisted so it sticks across reloads.
+  const [practiceMode, setPracticeMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem(LS_MODE_KEY) === 'practice'
+  })
+
   const [bpm, setBpm] = useState(80)
   const [beatsPerBar, setBeatsPerBar] = useState(4)
   const [noteValue, setNoteValue] = useState(4)
   const [accentFirst, setAccentFirst] = useState(true)
   const [currentBeat, setCurrentBeat] = useState(-1)
+
+  // Practice mode state
+  const [targetBpm, setTargetBpm] = useState(120)
+  const [targetBpmInput, setTargetBpmInput] = useState('120')
+  const [pct, setPct] = useState(100)
+
+  // The actual BPM used by the scheduler — raw BPM in simple mode,
+  // derived from target × pct in practice mode.
+  const effectiveBpm = practiceMode ? Math.max(MIN_BPM, Math.floor((targetBpm * pct) / 100)) : bpm
 
   // Audio engine refs
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -57,17 +74,24 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
   const nextNoteTimeRef = useRef(0)
   const beatCounterRef = useRef(0)
 
-  // Mutable value refs — scheduler reads these so BPM/accent changes are
-  // picked up immediately without restarting the scheduler interval
-  const bpmRef = useRef(bpm)
+  // Mutable value refs — scheduler reads these so changes are picked up
+  // immediately without restarting the scheduler interval.
+  const effectiveBpmRef = useRef(effectiveBpm)
   const beatsPerBarRef = useRef(beatsPerBar)
   const noteValueRef = useRef(noteValue)
   const accentFirstRef = useRef(accentFirst)
 
-  useEffect(() => { bpmRef.current = bpm }, [bpm])
+  useEffect(() => { effectiveBpmRef.current = effectiveBpm }, [effectiveBpm])
   useEffect(() => { beatsPerBarRef.current = beatsPerBar }, [beatsPerBar])
   useEffect(() => { noteValueRef.current = noteValue }, [noteValue])
   useEffect(() => { accentFirstRef.current = accentFirst }, [accentFirst])
+
+  // Persist mode choice
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LS_MODE_KEY, practiceMode ? 'practice' : 'simple')
+    }
+  }, [practiceMode])
 
   // ── Scheduling ────────────────────────────────────────────────────────────
 
@@ -83,7 +107,7 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
       const beat = beatCounterRef.current
       scheduleClick(ctx, beat, nextNoteTimeRef.current)
 
-      const secondsPerBeat = (60 / bpmRef.current) * (4 / noteValueRef.current)
+      const secondsPerBeat = (60 / effectiveBpmRef.current) * (4 / noteValueRef.current)
       nextNoteTimeRef.current += secondsPerBeat
       beatCounterRef.current = (beatCounterRef.current + 1) % beatsPerBarRef.current
     }
@@ -146,22 +170,54 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
     }
   }, [])
 
-  // ── BPM helpers ────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   function clampBpm(v: number) {
     return Math.max(MIN_BPM, Math.min(MAX_BPM, v))
   }
+
+  function clampPct(v: number) {
+    return Math.max(1, Math.min(100, v))
+  }
+
+  function commitTargetBpmInput() {
+    const n = parseInt(targetBpmInput, 10)
+    if (!isNaN(n)) setTargetBpm(clampBpm(n))
+    else setTargetBpmInput(String(targetBpm))
+  }
+
+  // ── Shared class strings ───────────────────────────────────────────────────
+
+  const selectCls =
+    'text-center text-sm font-bold text-gray-900 dark:text-white rounded-md border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 py-1 outline-none focus:border-brand'
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-4 space-y-5">
 
-      {/* Header: title + play/pause button */}
-      <div className="flex items-center justify-between">
+      {/* Header: title + mode toggle + play/pause */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
           <MetronomeIcon />
           Metronome
+        </div>
+
+        {/* Simple / Practice toggle */}
+        <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden text-xs font-semibold">
+          {(['simple', 'practice'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setPracticeMode(m === 'practice')}
+              className={`px-3 py-1.5 capitalize transition-colors ${
+                (m === 'practice') === practiceMode
+                  ? 'bg-brand text-white'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {m}
+            </button>
+          ))}
         </div>
 
         <button
@@ -177,13 +233,12 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
         </button>
       </div>
 
-      {/* Beat indicator dots — fixed-height row so accent dot never shifts layout */}
+      {/* Beat indicator dots */}
       <div className="flex justify-center items-center gap-2">
         {Array.from({ length: beatsPerBar }, (_, i) => {
           const isActive = isOn && i === currentBeat
           const isAccentBeat = i === 0 && accentFirst
           return (
-            // Fixed 24×24 container — dot scales inside it, row height never changes
             <div key={i} className="w-6 h-6 flex items-center justify-center">
               <div
                 className={`rounded-full transition-all duration-75 ${
@@ -199,39 +254,118 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
         })}
       </div>
 
-      {/* BPM */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tempo</span>
-          <span className="text-sm font-bold tabular-nums text-gray-900 dark:text-white">{bpm} BPM</span>
-        </div>
+      {/* ── Simple mode: raw BPM slider ─────────────────────────────────── */}
+      {!practiceMode && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tempo</span>
+            <span className="text-sm font-bold tabular-nums text-gray-900 dark:text-white">{bpm} BPM</span>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setBpm((v) => clampBpm(v - 1))}
-            aria-label="Decrease BPM"
-            className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-colors text-lg leading-none select-none"
-          >
-            −
-          </button>
-          <input
-            type="range"
-            min={MIN_BPM}
-            max={MAX_BPM}
-            step={1}
-            value={bpm}
-            onChange={(e) => setBpm(Number(e.target.value))}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-600 cursor-pointer accent-brand"
-          />
-          <button
-            onClick={() => setBpm((v) => clampBpm(v + 1))}
-            aria-label="Increase BPM"
-            className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-colors text-lg leading-none select-none"
-          >
-            +
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setBpm((v) => clampBpm(v - 1))}
+              aria-label="Decrease BPM"
+              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-colors text-lg leading-none select-none"
+            >
+              −
+            </button>
+            <input
+              type="range"
+              min={MIN_BPM}
+              max={MAX_BPM}
+              step={1}
+              value={bpm}
+              onChange={(e) => setBpm(Number(e.target.value))}
+              className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-600 cursor-pointer accent-brand"
+            />
+            <button
+              onClick={() => setBpm((v) => clampBpm(v + 1))}
+              aria-label="Increase BPM"
+              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand dark:hover:border-brand dark:hover:text-brand transition-colors text-lg leading-none select-none"
+            >
+              +
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── Practice mode: target BPM + percentage ──────────────────────── */}
+      {practiceMode && (
+        <div className="space-y-4">
+          {/* Target BPM */}
+          <div className="space-y-1.5">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Target BPM</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={MIN_BPM}
+                max={MAX_BPM}
+                value={targetBpmInput}
+                onChange={(e) => setTargetBpmInput(e.target.value)}
+                onBlur={commitTargetBpmInput}
+                onKeyDown={(e) => { if (e.key === 'Enter') commitTargetBpmInput() }}
+                className="w-20 text-center text-sm font-bold text-gray-900 dark:text-white rounded-md border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 py-1.5 outline-none focus:border-brand"
+                aria-label="Target BPM"
+              />
+              <span className="text-xs text-gray-400 dark:text-gray-500">BPM (your goal tempo)</span>
+            </div>
+          </div>
+
+          {/* Current effective BPM readout */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Practising at</span>
+            <span className="text-sm font-bold tabular-nums text-gray-900 dark:text-white">
+              {effectiveBpm} BPM
+              <span className="ml-1.5 text-xs font-normal text-brand">({pct}%)</span>
+            </span>
+          </div>
+
+          {/* Quick-select percentage buttons */}
+          <div className="flex flex-wrap gap-1.5">
+            {PCT_PRESETS.map((p) => (
+              <button
+                key={p}
+                onClick={() => setPct(p)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
+                  pct === p
+                    ? 'bg-brand text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                {p}%
+              </button>
+            ))}
+          </div>
+
+          {/* Fine-tune +/- */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPct((v) => clampPct(v - 1))}
+              aria-label="Decrease percentage"
+              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors text-lg leading-none select-none"
+            >
+              −
+            </button>
+            <input
+              type="range"
+              min={1}
+              max={100}
+              step={1}
+              value={pct}
+              onChange={(e) => setPct(Number(e.target.value))}
+              className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-600 cursor-pointer accent-brand"
+            />
+            <button
+              onClick={() => setPct((v) => clampPct(v + 1))}
+              aria-label="Increase percentage"
+              className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand transition-colors text-lg leading-none select-none"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Time signature + accent */}
       <div className="flex items-center gap-4 flex-wrap">
@@ -241,7 +375,7 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
             <select
               value={beatsPerBar}
               onChange={(e) => setBeatsPerBar(Number(e.target.value))}
-              className="w-14 text-center text-sm font-bold text-gray-900 dark:text-white rounded-md border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 py-1 outline-none focus:border-brand"
+              className={`w-14 ${selectCls}`}
               aria-label="Beats per bar"
             >
               {BEATS_OPTIONS.map((b) => (
@@ -252,7 +386,7 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
             <select
               value={noteValue}
               onChange={(e) => setNoteValue(Number(e.target.value))}
-              className="w-14 text-center text-sm font-bold text-gray-900 dark:text-white rounded-md border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 py-1 outline-none focus:border-brand"
+              className={`w-14 ${selectCls}`}
               aria-label="Note value"
             >
               {NOTE_VALUES.map((v) => (
