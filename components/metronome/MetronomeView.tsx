@@ -124,7 +124,6 @@ export default function MetronomeView() {
                 height="9"
                 viewBox="0 0 10 10"
                 fill="currentColor"
-                title="Super user feature"
                 className="opacity-60"
                 aria-hidden
               >
