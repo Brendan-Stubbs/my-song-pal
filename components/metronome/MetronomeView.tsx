@@ -14,7 +14,11 @@ import type { MetronomeLoop } from '@/types/metronome-loop'
 type Mode = 'metronome' | 'loop'
 type LoopView = 'player' | 'editor'
 
-export default function MetronomeView() {
+interface MetronomeViewProps {
+  isPremium: boolean
+}
+
+export default function MetronomeView({ isPremium }: MetronomeViewProps) {
   const { canSeeSuperUserFeatures } = useSuperUser()
   const [mode, setMode] = useState<Mode>('metronome')
   const [metronomeOn, setMetronomeOn] = useState(false)
@@ -138,7 +142,7 @@ export default function MetronomeView() {
       {mode === 'metronome' && (
         <div className="flex justify-center">
           <div className="w-full max-w-lg">
-            <MetronomePanel isOn={metronomeOn} onToggle={setMetronomeOn} />
+            <MetronomePanel isOn={metronomeOn} onToggle={setMetronomeOn} isPremium={isPremium} />
           </div>
         </div>
       )}

@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { loadMetronomeSettings, saveMetronomeSettings } from '@/lib/metronome-settings-storage'
 
 const MIN_BPM = 40
 const MAX_BPM = 240
 const BEATS_OPTIONS = [2, 3, 4, 5, 6, 7]
 const NOTE_VALUES = [4, 8]
 const PCT_PRESETS = [50, 60, 70, 75, 80, 85, 90, 95, 100]
-const LS_MODE_KEY = 'mysongpal_metronome_mode'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -44,25 +44,25 @@ interface MetronomePanelProps {
   /** Controlled on/off state — managed by parent */
   isOn: boolean
   onToggle: (on: boolean) => void
+  /** When true, all settings are persisted and restored across sessions. */
+  isPremium?: boolean
 }
 
-export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) {
-  // Simple vs Practice mode — persisted so it sticks across reloads.
-  const [practiceMode, setPracticeMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem(LS_MODE_KEY) === 'practice'
-  })
+export default function MetronomePanel({ isOn, onToggle, isPremium = false }: MetronomePanelProps) {
+  // Load persisted settings once on mount (only for premium users)
+  const saved = isPremium ? loadMetronomeSettings() : null
 
-  const [bpm, setBpm] = useState(80)
-  const [beatsPerBar, setBeatsPerBar] = useState(4)
-  const [noteValue, setNoteValue] = useState(4)
-  const [accentFirst, setAccentFirst] = useState(true)
+  const [practiceMode, setPracticeMode] = useState<boolean>(saved?.practiceMode ?? false)
+  const [bpm, setBpm] = useState(saved?.bpm ?? 80)
+  const [beatsPerBar, setBeatsPerBar] = useState(saved?.beatsPerBar ?? 4)
+  const [noteValue, setNoteValue] = useState(saved?.noteValue ?? 4)
+  const [accentFirst, setAccentFirst] = useState(saved?.accentFirst ?? true)
   const [currentBeat, setCurrentBeat] = useState(-1)
 
   // Practice mode state
-  const [targetBpm, setTargetBpm] = useState(120)
-  const [targetBpmInput, setTargetBpmInput] = useState('120')
-  const [pct, setPct] = useState(100)
+  const [targetBpm, setTargetBpm] = useState(saved?.targetBpm ?? 120)
+  const [targetBpmInput, setTargetBpmInput] = useState(String(saved?.targetBpm ?? 120))
+  const [pct, setPct] = useState(saved?.pct ?? 100)
 
   // The actual BPM used by the scheduler — raw BPM in simple mode,
   // derived from target × pct in practice mode.
@@ -86,12 +86,11 @@ export default function MetronomePanel({ isOn, onToggle }: MetronomePanelProps) 
   useEffect(() => { noteValueRef.current = noteValue }, [noteValue])
   useEffect(() => { accentFirstRef.current = accentFirst }, [accentFirst])
 
-  // Persist mode choice
+  // Persist all settings for premium users whenever any value changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LS_MODE_KEY, practiceMode ? 'practice' : 'simple')
-    }
-  }, [practiceMode])
+    if (!isPremium) return
+    saveMetronomeSettings({ bpm, beatsPerBar, noteValue, accentFirst, practiceMode, targetBpm, pct })
+  }, [isPremium, bpm, beatsPerBar, noteValue, accentFirst, practiceMode, targetBpm, pct])
 
   // ── Scheduling ────────────────────────────────────────────────────────────
 

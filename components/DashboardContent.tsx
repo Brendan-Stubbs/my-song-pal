@@ -144,7 +144,7 @@ export default function DashboardContent({
           </>
         )}
         {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
-        {activeTab === 'metronome' && <MetronomeView />}
+        {activeTab === 'metronome' && <MetronomeView isPremium={isPremium} />}
         {activeTab === 'ear-training' && <EarTrainingView />}
         {activeTab === 'fretboard-trainer' && <FretboardTrainerView />}
         {activeTab === 'practice' && <PracticeView />}
