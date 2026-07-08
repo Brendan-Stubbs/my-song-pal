@@ -87,13 +87,6 @@ export function useLoopScheduler(options: Options): LoopSchedulerState {
     osc.stop(time + 0.05)
   }
 
-  /** Schedule the end-of-loop chime: three descending tones. */
-  function scheduleEndChime(ctx: AudioContext, time: number) {
-    const tones = [1320, 880, 660]
-    tones.forEach((freq, i) => {
-      scheduleClick(ctx, freq, 0.7, time + i * 0.07)
-    })
-  }
 
   /**
    * Schedule all enabled guide notes whose (bar, beat) matches the current
@@ -202,9 +195,6 @@ export function useLoopScheduler(options: Options): LoopSchedulerState {
           beatRef.current = 0
           barRef.current += 1
           if (barRef.current > loop.bars) {
-            // End of loop — schedule chime slightly after last beat.
-            scheduleEndChime(ctx, t + spb * 0.1)
-
             // Decide whether to count in again.
             const skipCountIn =
               !countInBetweenRef.current && loopCountRef.current >= 1
