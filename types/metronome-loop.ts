@@ -34,6 +34,17 @@ export interface GuideNote {
   duration: NoteDuration
   note: string        // e.g. "C4", "G#3"
   enabled: boolean
+  /**
+   * Which guitar string this note lives on (1 = high e, 6 = low E).
+   * Set by the tab view; undefined for notes placed via the grid/fretboard picker.
+   * When present, takes precedence over the note-name lookup in the tab display.
+   */
+  guitarString?: number
+  /**
+   * Fret number (0–24) for the note on `guitarString`.
+   * Set alongside `guitarString` by the tab view.
+   */
+  fret?: number
 }
 
 export interface MetronomeLoop {

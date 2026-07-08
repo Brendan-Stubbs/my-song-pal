@@ -179,13 +179,41 @@ function StepPopover({ gn, beatsPerBar, anchorRect, onUpdate, onDelete, onClose 
         })}
       </div>
 
-      {/* Delete */}
-      <button
-        onClick={onDelete}
-        className="w-full text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium text-left pt-1 border-t border-gray-100 dark:border-gray-700 transition-colors"
-      >
-        Remove this note
-      </button>
+      {/* Mute / unmute + delete */}
+      <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
+        <button
+          onClick={() => onUpdate({ enabled: !gn.enabled })}
+          className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+            gn.enabled
+              ? 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              : 'text-brand font-semibold'
+          }`}
+        >
+          {gn.enabled ? (
+            <>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
+                <path d="M12.5 5.5a4 4 0 0 1 0 5M14.5 3.5a7 7 0 0 1 0 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              </svg>
+              Mute
+            </>
+          ) : (
+            <>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
+                <path d="M13 6l-4 4m0-4l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+              </svg>
+              Unmute
+            </>
+          )}
+        </button>
+        <button
+          onClick={onDelete}
+          className="text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors"
+        >
+          Remove
+        </button>
+      </div>
     </div>,
     document.body,
   )
@@ -336,17 +364,51 @@ export default function GuideNotesGrid({
                     <div key={bar} className="w-28 shrink-0">
                       {gn ? (
                         /* Active — show position badge, click to edit */
-                        <button
-                          onClick={(e) => openPopover(e, popKey)}
-                          className="w-full flex flex-col items-center justify-center gap-0.5 h-10 rounded-lg bg-brand/15 border border-brand/40 hover:bg-brand/25 transition-colors"
-                        >
-                          <span className="text-[11px] font-semibold text-brand leading-none">
-                            {positionLabel(gn)}
-                          </span>
-                          <span className="text-[9px] text-brand/70 leading-none">
-                            {DURATION_BADGE[gn.duration]}
-                          </span>
-                        </button>
+                        <div className="relative group/cell h-10">
+                          <button
+                            onClick={(e) => openPopover(e, popKey)}
+                            className={`w-full h-full flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-colors ${
+                              gn.enabled
+                                ? 'bg-brand/15 border-brand/40 hover:bg-brand/25'
+                                : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            <span className={`text-[11px] font-semibold leading-none ${gn.enabled ? 'text-brand' : 'text-gray-400 dark:text-gray-500'}`}>
+                              {positionLabel(gn)}
+                            </span>
+                            <span className={`text-[9px] leading-none ${gn.enabled ? 'text-brand/70' : 'text-gray-400/70 dark:text-gray-500/70'}`}>
+                              {DURATION_BADGE[gn.duration]}
+                            </span>
+                          </button>
+                          {/* Hover mute toggle — appears in top-right corner */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              updateNote(gn.id, { enabled: !gn.enabled })
+                            }}
+                            title={gn.enabled ? 'Mute this note' : 'Unmute this note'}
+                            aria-label={gn.enabled ? 'Mute' : 'Unmute'}
+                            className={`absolute top-0.5 right-0.5 rounded p-0.5 transition-all ${
+                              gn.enabled
+                                ? 'opacity-0 group-hover/cell:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                                : 'opacity-100 text-brand'
+                            }`}
+                          >
+                            {gn.enabled ? (
+                              /* Speaker icon */
+                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
+                                <path d="M12.5 5.5a4 4 0 0 1 0 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                              </svg>
+                            ) : (
+                              /* Muted speaker icon */
+                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
+                                <path d="M13 6l-4 4m0-4l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       ) : (
                         /* Inactive — click to add */
                         <button

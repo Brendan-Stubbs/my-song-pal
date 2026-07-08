@@ -7,11 +7,12 @@ import { Note } from 'tonal'
 // MIDI for open strings, index 0 = string 6 (low E), index 5 = string 1 (high e)
 const OPEN_MIDI = [40, 45, 50, 55, 59, 64]
 const STRING_LABELS = ['E', 'A', 'D', 'G', 'B', 'e']
-const FRET_COUNT = 12
 const BRAND = '#ff9933'
 
-// Cells with a finger dot inlay on a standard guitar
-const INLAY_FRETS = new Set([3, 5, 7, 9, 12])
+// Single-dot inlays on a standard guitar (both octaves)
+const INLAY_SINGLE = new Set([3, 5, 7, 9, 15, 17, 19, 21])
+// Double-dot inlays (octave markers)
+const INLAY_DOUBLE = new Set([12, 24])
 
 interface FretboardNotePickerProps {
   /** Called with a note name string like "C4" when a fret is clicked. */
@@ -27,7 +28,10 @@ interface FretboardNotePickerProps {
 
 export default function FretboardNotePicker({ onPick, onClose, anchorRect }: FretboardNotePickerProps) {
   const [hovered, setHovered] = useState<{ string: number; fret: number } | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  const FRET_COUNT = expanded ? 24 : 12
 
   // Close on click outside
   useEffect(() => {
@@ -61,7 +65,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
     return Note.fromMidi(midi) ?? ''
   }
 
-  const CELL_W = 38
+  const CELL_W = expanded ? 28 : 38
   const CELL_H = 30
   const PAD_LEFT = 28  // room for string labels
   const PAD_TOP = 22   // room for fret number labels
@@ -108,15 +112,26 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
       className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-2"
       style={portalStyle ?? { position: 'absolute', zIndex: 50, marginTop: 4, minWidth: svgW + 24 }}
     >
-      {/* Note name preview */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
           Click a fret to select a note
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {hoveredNote && (
             <span className="font-mono font-bold text-brand text-sm">{hoveredNote}</span>
           )}
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className={`px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors ${
+              expanded
+                ? 'bg-brand text-white border-brand'
+                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand'
+            }`}
+            title={expanded ? 'Show frets 0–12' : 'Show frets 13–24'}
+          >
+            {expanded ? '0–12' : '13–24'}
+          </button>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -148,8 +163,8 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
               y={PAD_TOP - 6}
               textAnchor="middle"
               fontSize={9}
-              fontWeight={fret === 12 ? 700 : 400}
-              fill={fret === 12 ? BRAND : '#9ca3af'}
+              fontWeight={INLAY_DOUBLE.has(fret) ? 700 : 400}
+              fill={INLAY_DOUBLE.has(fret) ? BRAND : '#9ca3af'}
             >
               {fret}
             </text>
@@ -167,18 +182,23 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
           />
         ))}
 
-        {/* Inlay dots (single dots at 3,5,7,9,12) */}
-        {Array.from({ length: FRET_COUNT + 1 }, (_, fret) =>
-          INLAY_FRETS.has(fret) && fret > 0 ? (
-            <circle
-              key={`inlay-${fret}`}
-              cx={fretCX(fret)}
-              cy={PAD_TOP + 5 * CELL_H / 2}
-              r={3}
-              fill="#e5e7eb"
-            />
-          ) : null
-        )}
+        {/* Inlay dots */}
+        {Array.from({ length: FRET_COUNT + 1 }, (_, fret) => {
+          if (fret === 0) return null
+          const midY = PAD_TOP + 5 * CELL_H / 2
+          if (INLAY_DOUBLE.has(fret)) {
+            return (
+              <g key={`inlay-${fret}`}>
+                <circle cx={fretCX(fret)} cy={midY - 7} r={3} fill="#e5e7eb" />
+                <circle cx={fretCX(fret)} cy={midY + 7} r={3} fill="#e5e7eb" />
+              </g>
+            )
+          }
+          if (INLAY_SINGLE.has(fret)) {
+            return <circle key={`inlay-${fret}`} cx={fretCX(fret)} cy={midY} r={3} fill="#e5e7eb" />
+          }
+          return null
+        })}
 
         {/* String lines */}
         {Array.from({ length: 6 }, (_, i) => {
