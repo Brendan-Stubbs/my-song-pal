@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Note } from 'tonal'
 
 // MIDI for open strings, index 0 = string 6 (low E), index 5 = string 1 (high e)
@@ -17,9 +18,14 @@ interface FretboardNotePickerProps {
   onPick: (note: string) => void
   /** Called when the user dismisses without picking. */
   onClose: () => void
+  /**
+   * Screen rect of the trigger button. When provided the picker renders in a
+   * portal at `position: fixed` so it is never clipped by overflow containers.
+   */
+  anchorRect?: DOMRect
 }
 
-export default function FretboardNotePicker({ onPick, onClose }: FretboardNotePickerProps) {
+export default function FretboardNotePicker({ onPick, onClose, anchorRect }: FretboardNotePickerProps) {
   const [hovered, setHovered] = useState<{ string: number; fret: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -34,13 +40,20 @@ export default function FretboardNotePicker({ onPick, onClose }: FretboardNotePi
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [onClose])
 
-  // Close on Escape
+  // Close on Escape or scroll/resize so the portal doesn't drift
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
+    function reposition() { onClose() }
     document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
+    window.addEventListener('scroll', reposition, { capture: true, passive: true })
+    window.addEventListener('resize', reposition)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      window.removeEventListener('scroll', reposition, { capture: true })
+      window.removeEventListener('resize', reposition)
+    }
   }, [onClose])
 
   function noteAt(stringIdx: number, fret: number): string {
@@ -73,11 +86,27 @@ export default function FretboardNotePicker({ onPick, onClose }: FretboardNotePi
 
   const hoveredNote = hovered ? noteAt(hovered.string, hovered.fret) : null
 
-  return (
+  // Portal-based positioning: place below the anchor, nudge left if it would
+  // overflow the viewport's right edge.
+  const portalStyle = anchorRect
+    ? (() => {
+        const panelW = svgW + 24
+        const spaceBelow = window.innerHeight - anchorRect.bottom
+        const top =
+          spaceBelow >= 260
+            ? anchorRect.bottom + 8
+            : anchorRect.top - 260 - 8
+        const rawLeft = anchorRect.left
+        const left = Math.min(rawLeft, window.innerWidth - panelW - 12)
+        return { position: 'fixed' as const, top, left, zIndex: 9999, minWidth: panelW }
+      })()
+    : undefined
+
+  const panel = (
     <div
       ref={containerRef}
-      className="absolute z-50 mt-1 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-2"
-      style={{ minWidth: svgW + 24 }}
+      className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-2"
+      style={portalStyle ?? { position: 'absolute', zIndex: 50, marginTop: 4, minWidth: svgW + 24 }}
     >
       {/* Note name preview */}
       <div className="flex items-center justify-between">
@@ -235,4 +264,6 @@ export default function FretboardNotePicker({ onPick, onClose }: FretboardNotePi
       </svg>
     </div>
   )
+
+  return anchorRect ? createPortal(panel, document.body) : panel
 }

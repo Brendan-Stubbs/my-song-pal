@@ -303,9 +303,13 @@ export default function GuideNotesGrid({
               <div key={row.id} className="flex items-center gap-2 group">
 
                 {/* Pitch selector */}
-                <div className="relative w-20 shrink-0">
+                <div className="w-20 shrink-0">
                   <button
-                    onClick={() => setOpenKey(openKey === pickerKey ? null : pickerKey)}
+                    onClick={(e) => {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                      setAnchorRect(rect)
+                      setOpenKey(openKey === pickerKey ? null : pickerKey)
+                    }}
                     className="w-full flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-mono font-bold hover:border-brand transition-colors"
                   >
                     <span>{row.note}</span>
@@ -313,8 +317,9 @@ export default function GuideNotesGrid({
                       <path d="M2 4l3 3 3-3" />
                     </svg>
                   </button>
-                  {openKey === pickerKey && (
+                  {openKey === pickerKey && anchorRect && (
                     <FretboardNotePicker
+                      anchorRect={anchorRect}
                       onPick={(note) => changeRowNote(row.id, note)}
                       onClose={() => setOpenKey(null)}
                     />
