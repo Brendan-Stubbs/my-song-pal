@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const securityHeaders = [
   // Prevent the page from being embedded in an iframe (clickjacking)
@@ -46,15 +47,38 @@ const securityHeaders = [
   },
 ];
 
+// Tab slugs that get short-URL aliases (e.g. /metronome → /dashboard/metronome).
+// The browser URL stays as the short form; Next.js serves the dashboard content.
+const TAB_SLUGS = [
+  'music',
+  'chords',
+  'metronome',
+  'exercises',
+  'fretboard-trainer',
+  'practice',
+] as const
+
 const nextConfig: NextConfig = {
+  // Explicitly set the workspace root so Turbopack doesn't get confused by
+  // other package-lock.json files higher up in the filesystem.
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
+
   async headers() {
     return [
       {
-        // Apply to all routes
         source: "/(.*)",
         headers: securityHeaders,
       },
     ];
+  },
+
+  async rewrites() {
+    return TAB_SLUGS.map((slug) => ({
+      source: `/${slug}`,
+      destination: `/dashboard/${slug}`,
+    }))
   },
 };
 

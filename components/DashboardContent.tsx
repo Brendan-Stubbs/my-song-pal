@@ -1,18 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import MusicDashboard from './music/MusicDashboard'
 import PracticeView from './practice/PracticeView'
 import ChordsView from './chords/ChordsView'
 import MetronomeView from './metronome/MetronomeView'
-import EarTrainingView from './ear-training/EarTrainingView'
+import ExercisesView from './exercises/ExercisesView'
 import FretboardTrainerView from './trainers/FretboardTrainerView'
 import TrialBanner from './premium/TrialBanner'
 import { SuperUserProvider } from '@/contexts/SuperUserContext'
 import SuperUserBadge from './superuser/SuperUserBadge'
 import type { AccessLevel } from '@/types/subscription'
 
-type Tab = 'music' | 'chords' | 'metronome' | 'ear-training' | 'fretboard-trainer' | 'practice'
+type Tab = 'music' | 'chords' | 'metronome' | 'exercises' | 'fretboard-trainer' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -51,12 +51,13 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     ),
   },
   {
-    id: 'ear-training',
-    label: 'Ear Training',
+    id: 'exercises',
+    label: 'Exercises',
     icon: (
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3.5 7a4 4 0 0 1 8 0c0 2-1.5 2.5-1.5 4a1.75 1.75 0 0 1-3.5 0" />
-        <path d="M6 7a1.5 1.5 0 0 1 3 0" />
+        <path d="M2 4h11M2 7.5h7M2 11h9" />
+        <circle cx="12.5" cy="10.5" r="1.5" />
+        <path d="M12.5 7v2" />
       </svg>
     ),
   },
@@ -94,13 +95,26 @@ interface DashboardContentProps {
   trialDaysLeft: number | null
 }
 
+/** Derive the active tab from the current pathname.
+ *  Handles /dashboard, /dashboard/metronome, and short aliases like /metronome. */
+function tabFromPathname(pathname: string): Tab {
+  const last = pathname.split('/').at(-1) ?? ''
+  return (TABS.find((t) => t.id === last)?.id) ?? 'music'
+}
+
 export default function DashboardContent({
   userName,
   isPremium,
   accessLevel,
   trialDaysLeft,
 }: DashboardContentProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('music')
+  const router = useRouter()
+  const pathname = usePathname()
+  const activeTab = tabFromPathname(pathname)
+
+  function setActiveTab(tab: Tab) {
+    router.push(`/dashboard/${tab}`)
+  }
 
   return (
     <SuperUserProvider>
@@ -145,7 +159,7 @@ export default function DashboardContent({
         )}
         {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
         {activeTab === 'metronome' && <MetronomeView isPremium={isPremium} />}
-        {activeTab === 'ear-training' && <EarTrainingView />}
+        {activeTab === 'exercises' && <ExercisesView />}
         {activeTab === 'fretboard-trainer' && <FretboardTrainerView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>

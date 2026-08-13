@@ -31,6 +31,12 @@ interface Options {
   guideNotesEnabled: boolean
   /** When false, count-in is skipped for repetitions 2, 3, … (first is always played). */
   countInBetweenLoops: boolean
+  /**
+   * Velocity/volume for guide notes, 0–1. Defaults to 1 (full velocity).
+   * The metronome click is a raw oscillator so this controls the relative
+   * loudness of the guide notes against it.
+   */
+  guideNoteVolume?: number
 }
 
 export function useLoopScheduler(options: Options): LoopSchedulerState {
@@ -46,12 +52,14 @@ export function useLoopScheduler(options: Options): LoopSchedulerState {
   const engineIdRef = useRef(options.engineId)
   const guideNotesEnabledRef = useRef(options.guideNotesEnabled)
   const countInBetweenRef = useRef(options.countInBetweenLoops)
+  const guideNoteVolumeRef = useRef(options.guideNoteVolume ?? 1)
 
   useEffect(() => { loopRef.current = options.loop }, [options.loop])
   useEffect(() => { pctRef.current = options.pct }, [options.pct])
   useEffect(() => { engineIdRef.current = options.engineId }, [options.engineId])
   useEffect(() => { guideNotesEnabledRef.current = options.guideNotesEnabled }, [options.guideNotesEnabled])
   useEffect(() => { countInBetweenRef.current = options.countInBetweenLoops }, [options.countInBetweenLoops])
+  useEffect(() => { guideNoteVolumeRef.current = options.guideNoteVolume ?? 1 }, [options.guideNoteVolume])
 
   // Scheduler internal state refs
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -121,6 +129,7 @@ export function useLoopScheduler(options: Options): LoopSchedulerState {
       engine.playNote(midi, {
         time: beatStartTime + offset,
         duration: soundDuration,
+        velocity: Math.max(0, Math.min(1, guideNoteVolumeRef.current)),
       })
     })
   }

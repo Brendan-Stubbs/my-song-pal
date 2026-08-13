@@ -5,7 +5,7 @@ import MetronomePanel from '@/components/practice/MetronomePanel'
 import LoopList from './LoopList'
 import LoopEditor from './LoopEditor'
 import LoopPlayer from './LoopPlayer'
-import { loadLoops, saveLoop, deleteLoop, createLoop } from '@/lib/metronome-loop-storage'
+import { loadLoops, saveLoop, deleteLoop, createLoop, duplicateLoop } from '@/lib/metronome-loop-storage'
 import { loadDashboardState } from '@/lib/dashboard-storage'
 import { DEFAULT_AUDIO_ENGINE, coerceAudioEngineId, type AudioEngineId } from '@/lib/instrument'
 import { useSuperUser } from '@/contexts/SuperUserContext'
@@ -71,6 +71,16 @@ export default function MetronomeView({ isPremium }: MetronomeViewProps) {
     setSelectedLoop(updated)
     setLoopView('player')
     await saveLoop(updated)
+  }
+
+  async function handleDuplicate(id: string) {
+    const source = loops.find((l) => l.id === id)
+    if (!source) return
+    const copy = duplicateLoop(source)
+    setLoops((prev) => [...prev, copy])
+    setSelectedLoop(copy)
+    setLoopView('editor')
+    await saveLoop(copy)
   }
 
   async function handleDelete(id: string) {
@@ -161,6 +171,7 @@ export default function MetronomeView({ isPremium }: MetronomeViewProps) {
                 selectedId={selectedLoop?.id ?? null}
                 onSelect={handleSelect}
                 onCreate={handleCreate}
+                onDuplicate={handleDuplicate}
                 onDelete={handleDelete}
               />
             ) : (

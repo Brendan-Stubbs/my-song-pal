@@ -4,9 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Note } from 'tonal'
 
-// MIDI for open strings, index 0 = string 6 (low E), index 5 = string 1 (high e)
-const OPEN_MIDI = [40, 45, 50, 55, 59, 64]
-const STRING_LABELS = ['E', 'A', 'D', 'G', 'B', 'e']
 const BRAND = '#ff9933'
 
 // Single-dot inlays on a standard guitar (both octaves)
@@ -14,9 +11,51 @@ const INLAY_SINGLE = new Set([3, 5, 7, 9, 15, 17, 19, 21])
 // Double-dot inlays (octave markers)
 const INLAY_DOUBLE = new Set([12, 24])
 
+// ── Tuning presets ────────────────────────────────────────────────────────────
+// midi[0] = string 6 (lowest), midi[5] = string 1 (highest)
+
+interface Tuning {
+  id: string
+  name: string
+  /** Display label for each string, index 0 = string 6 */
+  labels: string[]
+  midi: number[]
+}
+
+const TUNINGS: Tuning[] = [
+  { id: 'standard',        name: 'Standard (EADGBe)',    labels: ['E','A','D','G','B','e'], midi: [40, 45, 50, 55, 59, 64] },
+  { id: 'drop-d',          name: 'Drop D (DADGBe)',      labels: ['D','A','D','G','B','e'], midi: [38, 45, 50, 55, 59, 64] },
+  { id: 'half-step-down',  name: 'Eb (½ step down)',     labels: ['Eb','Ab','Db','Gb','Bb','eb'], midi: [39, 44, 49, 54, 58, 63] },
+  { id: 'full-step-down',  name: 'D (full step down)',   labels: ['D','G','C','F','A','d'],  midi: [38, 43, 48, 53, 57, 62] },
+  { id: 'open-g',          name: 'Open G (DGDGBd)',      labels: ['D','G','D','G','B','d'],  midi: [38, 43, 50, 55, 59, 62] },
+  { id: 'open-d',          name: 'Open D (DADf#ad)',     labels: ['D','A','D','F#','A','d'], midi: [38, 45, 50, 54, 57, 62] },
+  { id: 'dadgad',          name: 'DADGAD',               labels: ['D','A','D','G','A','d'],  midi: [38, 45, 50, 55, 57, 62] },
+]
+
+const TUNING_LS_KEY = 'mysongpal_fretboard_tuning'
+
+function loadTuningId(): string {
+  if (typeof window === 'undefined') return 'standard'
+  return localStorage.getItem(TUNING_LS_KEY) ?? 'standard'
+}
+
+function saveTuningId(id: string) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(TUNING_LS_KEY, id)
+}
+
+export interface FretPick {
+  /** MIDI-derived note name, e.g. "D2". Used for audio playback. */
+  note: string
+  /** Guitar string number: 1 = high e, 6 = low E. */
+  guitarString: number
+  /** Fret number (0 = open string). */
+  fret: number
+}
+
 interface FretboardNotePickerProps {
-  /** Called with a note name string like "C4" when a fret is clicked. */
-  onPick: (note: string) => void
+  /** Called with the fret pick when a fret is clicked. */
+  onPick: (pick: FretPick) => void
   /** Called when the user dismisses without picking. */
   onClose: () => void
   /**
@@ -29,9 +68,17 @@ interface FretboardNotePickerProps {
 export default function FretboardNotePicker({ onPick, onClose, anchorRect }: FretboardNotePickerProps) {
   const [hovered, setHovered] = useState<{ string: number; fret: number } | null>(null)
   const [expanded, setExpanded] = useState(false)
+  const [tuningId, setTuningId] = useState<string>(loadTuningId)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  const tuning = TUNINGS.find((t) => t.id === tuningId) ?? TUNINGS[0]
   const FRET_COUNT = expanded ? 24 : 12
+
+  function handleTuningChange(id: string) {
+    setTuningId(id)
+    saveTuningId(id)
+    setHovered(null)
+  }
 
   // Close on click outside
   useEffect(() => {
@@ -61,7 +108,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
   }, [onClose])
 
   function noteAt(stringIdx: number, fret: number): string {
-    const midi = OPEN_MIDI[stringIdx] + fret
+    const midi = tuning.midi[stringIdx] + fret
     return Note.fromMidi(midi) ?? ''
   }
 
@@ -112,36 +159,52 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
       className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-2"
       style={portalStyle ?? { position: 'absolute', zIndex: 50, marginTop: 4, minWidth: svgW + 24 }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+      {/* Header row 1: hint + controls */}
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-gray-500 dark:text-gray-400 shrink-0 mr-auto">
           Click a fret to select a note
         </p>
-        <div className="flex items-center gap-2 ml-auto">
-          {hoveredNote && (
-            <span className="font-mono font-bold text-brand text-sm">{hoveredNote}</span>
-          )}
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className={`px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors ${
-              expanded
-                ? 'bg-brand text-white border-brand'
-                : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand'
-            }`}
-            title={expanded ? 'Show frets 0–12' : 'Show frets 13–24'}
-          >
-            {expanded ? '0–12' : '13–24'}
-          </button>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-            aria-label="Close"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M2 2l8 8M10 2L2 10" />
-            </svg>
-          </button>
-        </div>
+        {hoveredNote && (
+          <span className="font-mono font-bold text-brand text-sm shrink-0">{hoveredNote}</span>
+        )}
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className={`px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors shrink-0 ${
+            expanded
+              ? 'bg-brand text-white border-brand'
+              : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-brand hover:text-brand'
+          }`}
+          title={expanded ? 'Show frets 0–12' : 'Show frets 13–24'}
+        >
+          {expanded ? '0–12' : '13–24'}
+        </button>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0"
+          aria-label="Close"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M2 2l8 8M10 2L2 10" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Header row 2: tuning selector */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 shrink-0">
+          Tuning
+        </span>
+        <select
+          value={tuningId}
+          onChange={(e) => handleTuningChange(e.target.value)}
+          className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 cursor-pointer"
+        >
+          {TUNINGS.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Fretboard SVG */}
@@ -226,7 +289,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
             fontWeight="600"
             fill="#6b7280"
           >
-            {STRING_LABELS[i]}
+            {tuning.labels[i]}
           </text>
         ))}
 
@@ -241,7 +304,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={() => setHovered({ string: stringIdx, fret })}
                 onMouseLeave={() => setHovered(null)}
-                onClick={() => onPick(note)}
+                onClick={() => onPick({ note, guitarString: 6 - stringIdx, fret })}
                 aria-label={`${note} — string ${6 - stringIdx}, fret ${fret}`}
               >
                 {/* Invisible hit area */}

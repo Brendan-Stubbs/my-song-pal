@@ -1,29 +1,27 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useState, useCallback } from 'react'
 import type { GuideNote, NoteDuration } from '@/types/metronome-loop'
 import { SUBDIVISIONS_PER_BEAT } from '@/types/metronome-loop'
-import FretboardNotePicker from './FretboardNotePicker'
+import FretboardNotePicker, { type FretPick } from './FretboardNotePicker'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const DURATION_OPTIONS: { id: NoteDuration; label: string; title: string }[] = [
-  { id: 'quarter',   label: '¼',    title: 'Quarter note'    },
-  { id: 'eighth',    label: '⅛',    title: 'Eighth note'     },
-  { id: 'sixteenth', label: '¹⁄₁₆', title: 'Sixteenth note'  },
-  { id: 'triplet',   label: '⅓',    title: 'Triplet'         },
+const RESOLUTION_OPTIONS: { id: NoteDuration; label: string; title: string }[] = [
+  { id: 'quarter',   label: '¼',    title: 'Quarter notes — one tap per beat'        },
+  { id: 'eighth',    label: '⅛',    title: 'Eighth notes — the beat and the "and"'   },
+  { id: 'sixteenth', label: '¹⁄₁₆', title: 'Sixteenth notes — 1 e + a'               },
+  { id: 'triplet',   label: '⅓',    title: 'Triplets — three even notes per beat'    },
 ]
 
-// Column header labels per subdivision slot (shown above the grid)
+// Column labels for the sub-beats inside a single beat, per resolution.
 const SUB_LABELS: Record<NoteDuration, string[]> = {
   quarter:   [''],
   eighth:    ['', '+'],
   sixteenth: ['', 'e', '+', 'a'],
-  triplet:   ['1', '2', '3'],
+  triplet:   ['', 'la', 'li'],
 }
 
-// Tooltip per subdivision slot
 const SUB_TITLES: Record<NoteDuration, string[]> = {
   quarter:   ['on the beat'],
   eighth:    ['on the beat', 'the "and"'],
@@ -31,192 +29,31 @@ const SUB_TITLES: Record<NoteDuration, string[]> = {
   triplet:   ['1st triplet', '2nd triplet', '3rd triplet'],
 }
 
-const DURATION_BADGE: Record<NoteDuration, string> = {
-  quarter:   '¼',
-  eighth:    '⅛',
-  sixteenth: '¹⁄₁₆',
-  triplet:   '⅓',
-}
+// Cell geometry (px)
+const CELL = 26
+const SUB_GAP = 3
+const BEAT_GAP = 10
+const BAR_GAP = 8
+const BAR_PAD = 4
 
 // ── Row model ──────────────────────────────────────────────────────────────
 
 interface StepRow {
   id: string
   note: string
+  guitarString?: number
+  fret?: number
 }
 
 function initRows(notes: GuideNote[]): StepRow[] {
-  const seen = new Map<string, string>()
+  const seen = new Map<string, Omit<StepRow, 'id'>>()
   for (const gn of notes) {
     const rid = gn.rowId ?? gn.id
-    if (!seen.has(rid)) seen.set(rid, gn.note)
-  }
-  return Array.from(seen.entries()).map(([id, note]) => ({ id, note }))
-}
-
-// ── Position popover ───────────────────────────────────────────────────────
-
-interface StepPopoverProps {
-  gn: GuideNote
-  beatsPerBar: number
-  /** Screen coordinates of the trigger button (bottom-left). */
-  anchorRect: DOMRect
-  onUpdate: (patch: Partial<GuideNote>) => void
-  onDelete: () => void
-  onClose: () => void
-}
-
-function StepPopover({ gn, beatsPerBar, anchorRect, onUpdate, onDelete, onClose }: StepPopoverProps) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function down(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    if (!seen.has(rid)) {
+      seen.set(rid, { note: gn.note, guitarString: gn.guitarString, fret: gn.fret })
     }
-    function key(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
-    // Close on scroll/resize so the popover doesn't drift
-    function reposition() { onClose() }
-    document.addEventListener('pointerdown', down)
-    document.addEventListener('keydown', key)
-    window.addEventListener('scroll', reposition, { capture: true, passive: true })
-    window.addEventListener('resize', reposition)
-    return () => {
-      document.removeEventListener('pointerdown', down)
-      document.removeEventListener('keydown', key)
-      window.removeEventListener('scroll', reposition, { capture: true })
-      window.removeEventListener('resize', reposition)
-    }
-  }, [onClose])
-
-  const subCount = SUBDIVISIONS_PER_BEAT[gn.duration]
-  const colLabels = SUB_LABELS[gn.duration]
-  const colTitles = SUB_TITLES[gn.duration]
-
-  const durBtn = (opt: typeof DURATION_OPTIONS[number]) => {
-    const sel = gn.duration === opt.id
-    return (
-      <button
-        key={opt.id}
-        onClick={() => onUpdate({ duration: opt.id, subdivision: 0 })}
-        title={opt.title}
-        className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
-          sel
-            ? 'bg-brand text-white'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-        }`}
-      >
-        {opt.label}
-      </button>
-    )
   }
-
-  const top = anchorRect.bottom + 8
-  const left = anchorRect.left
-
-  return createPortal(
-    <div
-      ref={ref}
-      className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-3"
-      style={{
-        position: 'fixed',
-        top,
-        left,
-        zIndex: 9999,
-        minWidth: 48 + subCount * 28 + (subCount - 1) * 4 + 24,
-      }}
-    >
-      {/* Duration */}
-      <div className="space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Duration</p>
-        <div className="flex flex-wrap gap-1">
-          {DURATION_OPTIONS.map(durBtn)}
-        </div>
-      </div>
-
-      {/* Combined beat × subdivision grid */}
-      <div className="space-y-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Position</p>
-
-        {/* Column headers (subdivision labels) */}
-        {subCount > 1 && (
-          <div className="flex items-center gap-1 ml-9 mb-0.5">
-            {colLabels.map((lbl, si) => (
-              <div key={si} className="w-6 text-center text-[9px] text-gray-400 dark:text-gray-500 font-mono">
-                {si === 0 ? '↓' : lbl}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Beat rows */}
-        {Array.from({ length: beatsPerBar }, (_, bi) => {
-          const beat = bi + 1
-          return (
-            <div key={bi} className="flex items-center gap-1">
-              {/* Beat label */}
-              <span className="w-8 text-[10px] font-bold text-gray-400 dark:text-gray-500 text-right shrink-0">
-                {beat}
-              </span>
-
-              {/* Subdivision cells */}
-              {Array.from({ length: subCount }, (_, si) => {
-                const selected = gn.beat === beat && (gn.subdivision ?? 0) === si
-                return (
-                  <button
-                    key={si}
-                    onClick={() => onUpdate({ beat, subdivision: si })}
-                    title={`Beat ${beat}, ${colTitles[si]}`}
-                    className={`w-6 h-6 rounded transition-all duration-100 ${
-                      selected
-                        ? 'bg-brand shadow scale-110'
-                        : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  />
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Mute / unmute + delete */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
-        <button
-          onClick={() => onUpdate({ enabled: !gn.enabled })}
-          className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-            gn.enabled
-              ? 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              : 'text-brand font-semibold'
-          }`}
-        >
-          {gn.enabled ? (
-            <>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
-                <path d="M12.5 5.5a4 4 0 0 1 0 5M14.5 3.5a7 7 0 0 1 0 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              </svg>
-              Mute
-            </>
-          ) : (
-            <>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
-                <path d="M13 6l-4 4m0-4l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-              </svg>
-              Unmute
-            </>
-          )}
-        </button>
-        <button
-          onClick={onDelete}
-          className="text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors"
-        >
-          Remove
-        </button>
-      </div>
-    </div>,
-    document.body,
-  )
+  return Array.from(seen.entries()).map(([id, data]) => ({ id, ...data }))
 }
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -230,6 +67,8 @@ interface GuideNotesGridProps {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
+const MAX_HISTORY = 50
+
 export default function GuideNotesGrid({
   bars,
   beatsPerBar,
@@ -237,223 +76,424 @@ export default function GuideNotesGrid({
   onChange,
 }: GuideNotesGridProps) {
   const [rows, setRows] = useState<StepRow[]>(() => initRows(guideNotes))
-  // "popover:rowId:bar" | "picker:rowId" | null
-  const [openKey, setOpenKey] = useState<string | null>(null)
+  // Global grid resolution — how finely each beat is divided.
+  const [resolution, setResolution] = useState<NoteDuration>(
+    () => guideNotes[0]?.duration ?? 'quarter',
+  )
+  // Which row's pitch picker is open (rowId) or null.
+  const [pickerRow, setPickerRow] = useState<string | null>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
+  const [history, setHistory] = useState<GuideNote[][]>([])
 
-  const openPopover = useCallback((e: React.MouseEvent, key: string) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    setAnchorRect(rect)
-    setOpenKey((prev) => (prev === key ? null : key))
-  }, [])
+  const subCount = SUBDIVISIONS_PER_BEAT[resolution]
+  const subLabels = SUB_LABELS[resolution]
+  const subTitles = SUB_TITLES[resolution]
 
-  function activeNote(rowId: string, bar: number): GuideNote | undefined {
-    return guideNotes.find((n) => (n.rowId ?? n.id) === rowId && n.bar === bar)
+  // ── Undo infrastructure ───────────────────────────────────────────────────
+
+  const commit = useCallback(
+    (next: GuideNote[]) => {
+      setHistory((h) => [...h.slice(-(MAX_HISTORY - 1)), guideNotes])
+      onChange(next)
+    },
+    [guideNotes, onChange],
+  )
+
+  const undo = useCallback(() => {
+    setHistory((h) => {
+      if (h.length === 0) return h
+      const prev = h[h.length - 1]
+      onChange(prev)
+      setRows(initRows(prev))
+      return h.slice(0, -1)
+    })
+  }, [onChange])
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== 'z' || e.shiftKey) return
+      const tag = (document.activeElement as HTMLElement | null)?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return
+      e.preventDefault()
+      undo()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [undo])
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function noteAt(rowId: string, bar: number, beat: number, sub: number): GuideNote | undefined {
+    return guideNotes.find(
+      (n) =>
+        (n.rowId ?? n.id) === rowId &&
+        n.bar === bar &&
+        n.beat === beat &&
+        (n.subdivision ?? 0) === sub,
+    )
   }
 
-  function activateStep(row: StepRow, bar: number) {
+  function rowNotes(rowId: string): GuideNote[] {
+    return guideNotes.filter((n) => (n.rowId ?? n.id) === rowId)
+  }
+
+  /** Toggle a single step on/off. */
+  function toggleStep(row: StepRow, bar: number, beat: number, sub: number) {
+    const existing = noteAt(row.id, bar, beat, sub)
+    if (existing) {
+      commit(guideNotes.filter((n) => n.id !== existing.id))
+      return
+    }
     const gn: GuideNote = {
       id: crypto.randomUUID(),
       rowId: row.id,
       bar,
-      beat: 1,
-      subdivision: 0,
-      duration: 'quarter',
+      beat,
+      subdivision: sub,
+      duration: resolution,
       note: row.note,
       enabled: true,
+      guitarString: row.guitarString,
+      fret: row.fret,
     }
-    onChange([...guideNotes, gn])
+    commit([...guideNotes, gn])
   }
 
-  function updateNote(id: string, patch: Partial<GuideNote>) {
-    onChange(guideNotes.map((n) => (n.id === id ? { ...n, ...patch } : n)))
+  /**
+   * Change the global grid resolution. Notes whose current sub-position still
+   * fits the new grid keep their spot; those that don't snap back to the beat.
+   * Duplicates that collapse onto the same step are removed.
+   */
+  function changeResolution(next: NoteDuration) {
+    if (next === resolution) return
+    const newSub = SUBDIVISIONS_PER_BEAT[next]
+    const seen = new Set<string>()
+    const remapped: GuideNote[] = []
+    for (const n of guideNotes) {
+      const sub = (n.subdivision ?? 0) < newSub ? (n.subdivision ?? 0) : 0
+      const key = `${n.rowId ?? n.id}:${n.bar}:${n.beat}:${sub}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      remapped.push({ ...n, duration: next, subdivision: sub })
+    }
+    commit(remapped)
+    setResolution(next)
   }
 
-  function removeNote(id: string) {
-    onChange(guideNotes.filter((n) => n.id !== id))
-    setOpenKey(null)
+  /** Mute / unmute every note in a row. */
+  function toggleRowMute(rowId: string) {
+    const notes = rowNotes(rowId)
+    if (notes.length === 0) return
+    const allMuted = notes.every((n) => !n.enabled)
+    commit(
+      guideNotes.map((n) =>
+        (n.rowId ?? n.id) === rowId ? { ...n, enabled: allMuted } : n,
+      ),
+    )
   }
 
-  function changeRowNote(rowId: string, note: string) {
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, note } : r)))
-    onChange(guideNotes.map((n) => ((n.rowId ?? n.id) === rowId ? { ...n, note } : n)))
-    setOpenKey(null)
+  /** Clear every step in a row (keeps the row + its pitch). */
+  function clearRow(rowId: string) {
+    if (rowNotes(rowId).length === 0) return
+    commit(guideNotes.filter((n) => (n.rowId ?? n.id) !== rowId))
+  }
+
+  function changeRowPick(rowId: string, pick: FretPick) {
+    const { note, guitarString, fret } = pick
+    setRows((prev) =>
+      prev.map((r) => (r.id === rowId ? { ...r, note, guitarString, fret } : r)),
+    )
+    commit(
+      guideNotes.map((n) =>
+        (n.rowId ?? n.id) === rowId ? { ...n, note, guitarString, fret } : n,
+      ),
+    )
+    setPickerRow(null)
   }
 
   function deleteRow(rowId: string) {
     setRows((prev) => prev.filter((r) => r.id !== rowId))
-    onChange(guideNotes.filter((n) => (n.rowId ?? n.id) !== rowId))
-    setOpenKey(null)
+    commit(guideNotes.filter((n) => (n.rowId ?? n.id) !== rowId))
+    setPickerRow(null)
   }
 
   function addRow() {
     setRows((prev) => [...prev, { id: crypto.randomUUID(), note: 'E4' }])
   }
 
-  // ── Label helper ──────────────────────────────────────────────────────────
+  // ── Sub-render: one beat group of cells for a row ───────────────────────────
 
-  function positionLabel(gn: GuideNote): string {
-    const sub = SUB_LABELS[gn.duration][gn.subdivision ?? 0]
-    return sub ? `${gn.beat} ${sub}` : `Beat ${gn.beat}`
+  function renderRowCells(row: StepRow) {
+    const muted = rowNotes(row.id).length > 0 && rowNotes(row.id).every((n) => !n.enabled)
+    return (
+      <div className="flex" style={{ gap: BAR_GAP }}>
+        {Array.from({ length: bars }, (_, bari) => {
+          const bar = bari + 1
+          return (
+            <div
+              key={bar}
+              className="flex items-center rounded-md bg-white/50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700"
+              style={{ gap: BEAT_GAP, padding: BAR_PAD }}
+            >
+              {Array.from({ length: beatsPerBar }, (_, beati) => {
+                const beat = beati + 1
+                return (
+                  <div key={beat} className="flex" style={{ gap: SUB_GAP }}>
+                    {Array.from({ length: subCount }, (_, sub) => {
+                      const gn = noteAt(row.id, bar, beat, sub)
+                      const active = !!gn
+                      const isEnabled = gn?.enabled ?? false
+                      return (
+                        <button
+                          key={sub}
+                          type="button"
+                          onClick={() => toggleStep(row, bar, beat, sub)}
+                          title={`Bar ${bar}, beat ${beat} ${subTitles[sub]}${
+                            active ? ' — tap to remove' : ' — tap to add'
+                          }`}
+                          aria-label={`Bar ${bar} beat ${beat} ${subTitles[sub]}`}
+                          className={`rounded-md transition-all duration-100 ${
+                            active
+                              ? isEnabled && !muted
+                                ? 'bg-brand border border-brand shadow-sm hover:opacity-80'
+                                : 'bg-brand/20 border border-brand/50 hover:bg-brand/30'
+                              : sub === 0
+                              ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-brand'
+                              : 'bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-brand'
+                          }`}
+                          style={{ width: CELL, height: CELL }}
+                        />
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // ── Header: bar labels + beat numbers aligned to the grid ───────────────────
+
+  function renderHeader() {
+    return (
+      <div className="flex" style={{ gap: BAR_GAP }}>
+        {Array.from({ length: bars }, (_, bari) => {
+          const bar = bari + 1
+          return (
+            <div key={bar}>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-0.5 pl-1">
+                Bar {bar}
+              </div>
+              <div
+                className="flex border border-transparent"
+                style={{ gap: BEAT_GAP, padding: BAR_PAD }}
+              >
+                {Array.from({ length: beatsPerBar }, (_, beati) => {
+                  const beat = beati + 1
+                  return (
+                    <div key={beat} className="flex" style={{ gap: SUB_GAP }}>
+                      {Array.from({ length: subCount }, (_, sub) => (
+                        <div
+                          key={sub}
+                          className="text-center font-mono text-gray-400 dark:text-gray-500"
+                          style={{ width: CELL, fontSize: sub === 0 ? 11 : 9 }}
+                        >
+                          {sub === 0 ? beat : subLabels[sub]}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-2">
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
-        <div className="inline-block min-w-full p-3 space-y-1.5">
+    <div className="space-y-3">
+      {/* Toolbar: resolution + undo */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Grid
+          </span>
+          <div className="flex gap-1">
+            {RESOLUTION_OPTIONS.map((opt) => {
+              const sel = resolution === opt.id
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => changeResolution(opt.id)}
+                  title={opt.title}
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
+                    sel
+                      ? 'bg-brand text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-          {/* Column headers */}
-          <div className="flex items-center gap-2 mb-2">
+        <button
+          type="button"
+          onClick={undo}
+          disabled={history.length === 0}
+          title="Undo last change (Ctrl+Z / ⌘Z)"
+          className="ml-auto flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+        >
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M2 8a6 6 0 1 0 1.5-4" />
+            <polyline points="2 3 2 8 7 8" />
+          </svg>
+          Undo
+          {history.length > 0 && (
+            <span className="text-[9px] tabular-nums text-gray-400 dark:text-gray-500">
+              ({history.length})
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Sequencer grid */}
+      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
+        <div className="inline-block min-w-full p-3">
+          {/* Header row */}
+          <div className="flex items-end gap-3 mb-1.5">
             <div className="w-20 shrink-0" />
-            {Array.from({ length: bars }, (_, i) => (
-              <div
-                key={i}
-                className="w-28 text-center text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500"
-              >
-                Bar {i + 1}
-              </div>
-            ))}
+            <div className="w-6 shrink-0" />
+            {renderHeader()}
           </div>
 
           {/* Empty state */}
           {rows.length === 0 && (
             <p className="text-xs text-gray-400 dark:text-gray-500 py-3 pl-1">
-              No guide notes yet — click "Add note" to build a pattern.
+              No guide notes yet — click &ldquo;Add note&rdquo; to start a pattern.
             </p>
           )}
 
-          {/* Rows */}
-          {rows.map((row) => {
-            const pickerKey = `picker:${row.id}`
-            return (
-              <div key={row.id} className="flex items-center gap-2 group">
-
-                {/* Pitch selector */}
-                <div className="w-20 shrink-0">
-                  <button
-                    onClick={(e) => {
-                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                      setAnchorRect(rect)
-                      setOpenKey(openKey === pickerKey ? null : pickerKey)
-                    }}
-                    className="w-full flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-mono font-bold hover:border-brand transition-colors"
-                  >
-                    <span>{row.note}</span>
-                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
-                      <path d="M2 4l3 3 3-3" />
-                    </svg>
-                  </button>
-                  {openKey === pickerKey && anchorRect && (
-                    <FretboardNotePicker
-                      anchorRect={anchorRect}
-                      onPick={(note) => changeRowNote(row.id, note)}
-                      onClose={() => setOpenKey(null)}
-                    />
-                  )}
-                </div>
-
-                {/* Bar cells */}
-                {Array.from({ length: bars }, (_, bari) => {
-                  const bar = bari + 1
-                  const gn = activeNote(row.id, bar)
-                  const popKey = `popover:${row.id}:${bar}`
-
-                  return (
-                    <div key={bar} className="w-28 shrink-0">
-                      {gn ? (
-                        /* Active — show position badge, click to edit */
-                        <div className="relative group/cell h-10">
-                          <button
-                            onClick={(e) => openPopover(e, popKey)}
-                            className={`w-full h-full flex flex-col items-center justify-center gap-0.5 rounded-lg border transition-colors ${
-                              gn.enabled
-                                ? 'bg-brand/15 border-brand/40 hover:bg-brand/25'
-                                : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            <span className={`text-[11px] font-semibold leading-none ${gn.enabled ? 'text-brand' : 'text-gray-400 dark:text-gray-500'}`}>
-                              {positionLabel(gn)}
-                            </span>
-                            <span className={`text-[9px] leading-none ${gn.enabled ? 'text-brand/70' : 'text-gray-400/70 dark:text-gray-500/70'}`}>
-                              {DURATION_BADGE[gn.duration]}
-                            </span>
-                          </button>
-                          {/* Hover mute toggle — appears in top-right corner */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              updateNote(gn.id, { enabled: !gn.enabled })
-                            }}
-                            title={gn.enabled ? 'Mute this note' : 'Unmute this note'}
-                            aria-label={gn.enabled ? 'Mute' : 'Unmute'}
-                            className={`absolute top-0.5 right-0.5 rounded p-0.5 transition-all ${
-                              gn.enabled
-                                ? 'opacity-0 group-hover/cell:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                                : 'opacity-100 text-brand'
-                            }`}
-                          >
-                            {gn.enabled ? (
-                              /* Speaker icon */
-                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
-                                <path d="M12.5 5.5a4 4 0 0 1 0 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                              </svg>
-                            ) : (
-                              /* Muted speaker icon */
-                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                                <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
-                                <path d="M13 6l-4 4m0-4l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
+          {/* Note rows */}
+          <div className="space-y-1.5">
+            {rows.map((row) => {
+              const notes = rowNotes(row.id)
+              const hasNotes = notes.length > 0
+              const muted = hasNotes && notes.every((n) => !n.enabled)
+              return (
+                <div key={row.id} className="flex items-center gap-3 group">
+                  {/* Pitch selector */}
+                  <div className="w-20 shrink-0 relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                        setAnchorRect(rect)
+                        setPickerRow(pickerRow === row.id ? null : row.id)
+                      }}
+                      className="w-full flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-mono hover:border-brand transition-colors"
+                      title={
+                        row.guitarString !== undefined && row.fret !== undefined
+                          ? `String ${row.guitarString}, fret ${row.fret} (${row.note})`
+                          : row.note
+                      }
+                    >
+                      {row.guitarString !== undefined && row.fret !== undefined ? (
+                        <span className="flex flex-col leading-none gap-0.5">
+                          <span className="text-[9px] text-gray-400 dark:text-gray-500 font-normal">
+                            str {row.guitarString}
+                          </span>
+                          <span className="font-bold text-sm">{row.fret}</span>
+                        </span>
                       ) : (
-                        /* Inactive — click to add */
-                        <button
-                          onClick={() => activateStep(row, bar)}
-                          className="w-full h-10 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 hover:border-brand hover:text-brand transition-colors flex items-center justify-center"
-                          aria-label={`Add ${row.note} in bar ${bar}`}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                            <path d="M6 1v10M1 6h10" />
-                          </svg>
-                        </button>
+                        <span className="font-bold">{row.note}</span>
                       )}
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+                        <path d="M2 4l3 3 3-3" />
+                      </svg>
+                    </button>
+                    {pickerRow === row.id && anchorRect && (
+                      <FretboardNotePicker
+                        anchorRect={anchorRect}
+                        onPick={(pick) => changeRowPick(row.id, pick)}
+                        onClose={() => setPickerRow(null)}
+                      />
+                    )}
+                  </div>
 
-                      {/* Position/duration popover — rendered in a portal to escape overflow clipping */}
-                      {openKey === popKey && gn && anchorRect && (
-                        <StepPopover
-                          gn={gn}
-                          beatsPerBar={beatsPerBar}
-                          anchorRect={anchorRect}
-                          onUpdate={(patch) => updateNote(gn.id, patch)}
-                          onDelete={() => removeNote(gn.id)}
-                          onClose={() => setOpenKey(null)}
-                        />
-                      )}
-                    </div>
-                  )
-                })}
+                  {/* Mute toggle */}
+                  <button
+                    type="button"
+                    onClick={() => toggleRowMute(row.id)}
+                    disabled={!hasNotes}
+                    title={muted ? 'Unmute this note' : 'Mute this note'}
+                    aria-label={muted ? 'Unmute this note' : 'Mute this note'}
+                    className={`w-6 h-6 shrink-0 flex items-center justify-center rounded transition-colors disabled:opacity-25 ${
+                      muted
+                        ? 'text-gray-400'
+                        : 'text-brand hover:text-brand/70'
+                    }`}
+                  >
+                    {muted ? (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                        <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
+                        <path d="M13 6l-4 4m0-4l4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                        <path d="M9 2L5 6H2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h3l4 4V2z" />
+                        <path d="M12.5 5.5a4 4 0 0 1 0 5M14.5 3.5a7 7 0 0 1 0 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </button>
 
-                {/* Delete row */}
-                <button
-                  onClick={() => deleteRow(row.id)}
-                  aria-label="Remove note row"
-                  className="opacity-0 group-hover:opacity-100 text-gray-300 dark:text-gray-600 hover:text-red-500 transition-all"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M2 2l10 10M12 2L2 12" />
-                  </svg>
-                </button>
-              </div>
-            )
-          })}
+                  {/* Step cells */}
+                  {renderRowCells(row)}
+
+                  {/* Row actions */}
+                  <div className="flex items-center gap-1 shrink-0 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => clearRow(row.id)}
+                      disabled={!hasNotes}
+                      title="Clear all steps in this row"
+                      aria-label="Clear row"
+                      className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-300 disabled:opacity-30 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M4 4.5l.6 8a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteRow(row.id)}
+                      aria-label="Remove note row"
+                      className="text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M2 2l10 10M12 2L2 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
           {/* Add row */}
-          <div className="pt-2">
+          <div className="pt-2.5">
             <button
+              type="button"
               onClick={addRow}
               className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-brand transition-colors font-medium"
             >

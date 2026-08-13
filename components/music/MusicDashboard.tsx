@@ -21,6 +21,7 @@ import CagedPositionsPanel from './CagedPositionsPanel'
 import ChordProgressionsPanel from './ChordProgressionsPanel'
 import SongPanel from './SongPanel'
 import ScaleFinderModal from './ScaleFinderModal'
+import ChordFinderModal from './ChordFinderModal'
 import {
   DndContext,
   closestCenter,
@@ -220,6 +221,7 @@ export default function MusicDashboard() {
   const [selectedScale, setSelectedScale] = useState('major')
   const [editMode, setEditMode] = useState(false)
   const [scaleFinderOpen, setScaleFinderOpen] = useState(false)
+  const [chordFinderOpen, setChordFinderOpen] = useState(false)
   const [showScaleNotes, setShowScaleNotes] = useState(false)
   const [audioEngine, setAudioEngine] = useState<AudioEngineId>(DEFAULT_AUDIO_ENGINE)
   const [panels, setPanels] = useState<DashboardPanel[]>(DEFAULT_PANELS)
@@ -536,6 +538,16 @@ export default function MusicDashboard() {
             </svg>
             Scale Finder
           </button>
+          <button
+            onClick={() => setChordFinderOpen(true)}
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand border border-gray-300 dark:border-gray-600 bg-warm-panel dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-warm-page dark:hover:bg-gray-600"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1.5" y="2.5" width="11" height="9" rx="1" />
+              <path d="M4.5 2.5v9M9.5 2.5v9M1.5 7h11" />
+            </svg>
+            Chord Finder
+          </button>
         </div>
         <div className="pb-0.5">
           <button
@@ -673,6 +685,13 @@ export default function MusicDashboard() {
           setSelectedKey(key)
           setSelectedScale(scaleName)
         }}
+      />
+
+      {/* Chord Finder modal — identifies chords from exact note selections */}
+      <ChordFinderModal
+        isOpen={chordFinderOpen}
+        onClose={() => setChordFinderOpen(false)}
+        tuning={tuning}
       />
     </div>
   )

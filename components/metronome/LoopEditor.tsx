@@ -147,8 +147,8 @@ export default function LoopEditor({ initial, onSave, onCancel }: LoopEditorProp
         <div>
           <p className={labelCls}>Guide Notes</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            Each row is one note. Click the note name to pick its pitch on the fretboard.
-            Click + in a bar to activate it — then click the badge to set the exact beat, subdivision and duration.
+            Each row is one note — click the note name to pick its pitch on the fretboard.
+            Pick a grid resolution, then tap the cells to place notes on the exact beats. Bold lines separate bars.
           </p>
         </div>
         <GuideNotesGrid

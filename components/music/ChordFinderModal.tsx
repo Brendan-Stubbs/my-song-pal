@@ -1,167 +1,105 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { findMatchingScales, type ScaleMatch } from '@/lib/scale-finder'
+import { findMatchingChords, type ChordMatch } from '@/lib/chord-finder'
 import InteractiveFretboard from './InteractiveFretboard'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export interface ScaleFinderModalProps {
+export interface ChordFinderModalProps {
   isOpen: boolean
   onClose: () => void
   /** Current dashboard tuning — used to label fretboard notes */
   tuning?: string[]
-  /** Called when user clicks "Apply to dashboard" on a result */
-  onApplyScale?: (key: string, scaleName: string) => void
 }
 
-// ─── Scale result card ────────────────────────────────────────────────────────
+// ─── Chord result card ─────────────────────────────────────────────────────────
 
-function ScaleResultCard({
-  match,
-  onApply,
-}: {
-  match: ScaleMatch
-  onApply?: () => void
-}) {
+function ChordResultCard({ match }: { match: ChordMatch }) {
   return (
     <div className="flex items-center gap-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-warm-panel dark:bg-gray-800 px-4 py-3 hover:border-brand/40 transition-colors">
-      <div className="flex-1 min-w-0">
-        {/* Scale name */}
-        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-          {match.displayName}
-        </p>
-
-        {/* Note chips */}
-        <div className="flex flex-wrap gap-1 mt-1.5">
-          {match.scaleNotes.map((note) => {
-            const isMatched = match.matchedNotes.includes(note)
-            return (
-              <span
-                key={note}
-                className={[
-                  'inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium',
-                  isMatched
-                    ? 'bg-brand text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500',
-                ].join(' ')}
-              >
-                {note}
-              </span>
-            )
-          })}
-        </div>
+      {/* Symbol */}
+      <div className="shrink-0 w-16">
+        <span className="text-lg font-bold text-gray-900 dark:text-white">
+          {match.symbol}
+        </span>
       </div>
 
-      {/* Extra note count badge */}
-      {match.extraNoteCount > 0 && (
-        <div className="shrink-0 text-right">
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            +{match.extraNoteCount} note{match.extraNoteCount !== 1 ? 's' : ''}
-          </span>
-        </div>
-      )}
+      <div className="flex-1 min-w-0">
+        {/* Type label */}
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+          {match.typeLabel}
+        </p>
 
-      {/* Apply button */}
-      {onApply && (
-        <button
-          type="button"
-          onClick={onApply}
-          className="shrink-0 rounded-md border border-brand text-brand text-xs font-medium px-2.5 py-1 hover:bg-brand hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand"
-        >
-          Apply
-        </button>
-      )}
+        {/* Note chips — all matched by definition (exact match) */}
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {match.chordNotes.map((note, i) => (
+            <span
+              key={`${note}-${i}`}
+              className={[
+                'inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium',
+                i === 0
+                  ? 'bg-brand text-white'
+                  : 'bg-brand/15 text-brand dark:bg-brand/20',
+              ].join(' ')}
+              title={i === 0 ? 'Root' : undefined}
+            >
+              {note}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
 // ─── Results section ──────────────────────────────────────────────────────────
 
-const MAX_EXTRA = 5
-
-function groupLabel(extraCount: number): string {
-  if (extraCount === 0) return 'Exact matches'
-  if (extraCount === 1) return '1 extra note'
-  return `${extraCount} extra notes`
-}
-
-function ResultsSection({
-  results,
-  onApply,
-}: {
-  results: ScaleMatch[]
-  onApply?: (key: string, scaleName: string) => void
-}) {
+function ResultsSection({ results }: { results: ChordMatch[] }) {
   if (results.length === 0) {
     return (
       <div className="rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          No scales found containing all selected notes.
+          No chord exactly matches those notes.
         </p>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-          Try removing one of the selected notes and searching again.
+          Every selected note must belong to the chord — try adding or removing a note.
         </p>
       </div>
     )
   }
 
-  // Group by extraNoteCount (cap at MAX_EXTRA)
-  const groups = new Map<number, ScaleMatch[]>()
-  for (const match of results) {
-    if (match.extraNoteCount > MAX_EXTRA) continue
-    const group = groups.get(match.extraNoteCount) ?? []
-    group.push(match)
-    groups.set(match.extraNoteCount, group)
-  }
-
-  const hiddenCount = results.filter((r) => r.extraNoteCount > MAX_EXTRA).length
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Found{' '}
         <span className="font-medium text-gray-700 dark:text-gray-300">
-          {results.length - hiddenCount}
+          {results.length}
         </span>{' '}
-        matching scale{results.length - hiddenCount !== 1 ? 's' : ''}
-        {hiddenCount > 0 && (
-          <span className="text-xs ml-1">
-            ({hiddenCount} with 6+ extra notes hidden)
-          </span>
+        matching chord{results.length !== 1 ? 's' : ''}
+        {results.length > 1 && (
+          <span className="text-xs ml-1">(the same notes can spell more than one chord)</span>
         )}
       </p>
 
-      {[...groups.entries()].map(([extraCount, matches]) => (
-        <div key={extraCount}>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
-            {groupLabel(extraCount)}
-          </h4>
-          <div className="space-y-2">
-            {matches.map((m) => (
-              <ScaleResultCard
-                key={`${m.key}-${m.scaleName}`}
-                match={m}
-                onApply={onApply ? () => onApply(m.key, m.scaleName) : undefined}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="space-y-2">
+        {results.map((m) => (
+          <ChordResultCard key={m.symbol} match={m} />
+        ))}
+      </div>
     </div>
   )
 }
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
-export default function ScaleFinderModal({
+export default function ChordFinderModal({
   isOpen,
   onClose,
   tuning = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
-  onApplyScale,
-}: ScaleFinderModalProps) {
+}: ChordFinderModalProps) {
   const [selectedPcs, setSelectedPcs] = useState<Set<string>>(new Set())
-  const [results, setResults] = useState<ScaleMatch[] | null>(null)
+  const [results, setResults] = useState<ChordMatch[] | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
   const [highEAtTop, setHighEAtTop] = useState(false)
 
@@ -205,14 +143,9 @@ export default function ScaleFinderModal({
     setHasSearched(false)
   }
 
-  function handleFindScales() {
-    setResults(findMatchingScales([...selectedPcs]))
+  function handleFindChords() {
+    setResults(findMatchingChords([...selectedPcs]))
     setHasSearched(true)
-  }
-
-  function handleApply(key: string, scaleName: string) {
-    onApplyScale?.(key, scaleName)
-    onClose()
   }
 
   if (!isOpen) return null
@@ -234,14 +167,14 @@ export default function ScaleFinderModal({
         className="relative z-10 w-full max-w-3xl max-h-[90vh] flex flex-col bg-warm-panel dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden"
         role="dialog"
         aria-modal="true"
-        aria-label="Scale Finder"
+        aria-label="Chord Finder"
       >
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Scale Finder</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Chord Finder</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Click notes on the fretboard, then identify which scales they belong to
+              Click the notes of a chord, then identify every chord they exactly spell
             </p>
           </div>
           <button
@@ -319,11 +252,11 @@ export default function ScaleFinderModal({
             </div>
           )}
 
-          {/* Find Scales button */}
+          {/* Find Chords button */}
           <div>
             <button
               type="button"
-              onClick={handleFindScales}
+              onClick={handleFindChords}
               disabled={!canSearch}
               className={[
                 'w-full rounded-lg py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-1',
@@ -333,17 +266,14 @@ export default function ScaleFinderModal({
               ].join(' ')}
             >
               {canSearch
-                ? `Find Scales (${selectedPcs.size} note${selectedPcs.size !== 1 ? 's' : ''} selected)`
-                : 'Select at least 2 notes to identify a scale'}
+                ? `Find Chords (${selectedPcs.size} note${selectedPcs.size !== 1 ? 's' : ''} selected)`
+                : 'Select at least 2 notes to identify a chord'}
             </button>
           </div>
 
           {/* Results */}
           {hasSearched && results !== null && (
-            <ResultsSection
-              results={results}
-              onApply={onApplyScale ? handleApply : undefined}
-            />
+            <ResultsSection results={results} />
           )}
         </div>
       </div>

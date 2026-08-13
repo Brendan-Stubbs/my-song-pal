@@ -126,3 +126,17 @@ export function createLoop(name = 'New Loop'): MetronomeLoop {
     updatedAt: now,
   }
 }
+
+/** Deep-clone a loop with fresh IDs so edits to the duplicate never affect the original. */
+export function duplicateLoop(source: MetronomeLoop): MetronomeLoop {
+  const now = Date.now()
+  return {
+    ...source,
+    id: crypto.randomUUID(),
+    name: `Copy of ${source.name}`,
+    // Reassign guide note IDs so there are no shared references
+    guideNotes: source.guideNotes.map((gn) => ({ ...gn, id: crypto.randomUUID() })),
+    createdAt: now,
+    updatedAt: now,
+  }
+}

@@ -68,12 +68,27 @@ function phaseLabel(phase: LoopPhase, currentBar: number, countInBars: number): 
 const MIN_TARGET_BPM = 40
 const MAX_TARGET_BPM = 240
 
+const VOLUME_LS_KEY = 'mysongpal_guide_note_volume'
+
+function loadVolume(): number {
+  if (typeof window === 'undefined') return 1
+  const v = parseFloat(localStorage.getItem(VOLUME_LS_KEY) ?? '')
+  return isNaN(v) ? 1 : Math.max(0, Math.min(1, v))
+}
+
 export default function LoopPlayer({ loop, engineId, onEdit }: LoopPlayerProps) {
   const [pct, setPct] = useState(100)
   const [targetBpm, setTargetBpm] = useState(loop.targetBpm)
   const [targetInput, setTargetInput] = useState(String(loop.targetBpm))
   const [guideNotesEnabled, setGuideNotesEnabled] = useState(true)
   const [countInBetween, setCountInBetween] = useState(true)
+  const [guideNoteVolume, setGuideNoteVolume] = useState<number>(loadVolume)
+
+  function handleVolumeChange(v: number) {
+    const clamped = Math.max(0, Math.min(1, v))
+    setGuideNoteVolume(clamped)
+    try { localStorage.setItem(VOLUME_LS_KEY, String(clamped)) } catch { /* quota */ }
+  }
 
   // Keep local targetBpm in sync if the loop prop changes (e.g. after saving edits)
   const schedulerLoop = { ...loop, targetBpm }
@@ -85,6 +100,7 @@ export default function LoopPlayer({ loop, engineId, onEdit }: LoopPlayerProps) 
       engineId,
       guideNotesEnabled,
       countInBetweenLoops: countInBetween,
+      guideNoteVolume,
     })
 
   const isPlaying = phase !== 'idle'
@@ -282,6 +298,27 @@ export default function LoopPlayer({ loop, engineId, onEdit }: LoopPlayerProps) 
           onChange={setGuideNotesEnabled}
           label="Guide notes"
         />
+
+        {/* Guide note volume — only meaningful when guide notes are on */}
+        {guideNotesEnabled && (
+          <div className="flex items-center gap-3 pl-11">
+            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0 w-14">Volume</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={Math.round(guideNoteVolume * 100)}
+              onChange={(e) => handleVolumeChange(Number(e.target.value) / 100)}
+              className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 dark:bg-gray-600 cursor-pointer accent-brand"
+              aria-label="Guide note volume"
+            />
+            <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400 w-8 text-right">
+              {Math.round(guideNoteVolume * 100)}%
+            </span>
+          </div>
+        )}
+
         <Toggle
           checked={countInBetween}
           onChange={setCountInBetween}

@@ -7,6 +7,7 @@ interface LoopListProps {
   selectedId: string | null
   onSelect: (loop: MetronomeLoop) => void
   onCreate: () => void
+  onDuplicate: (id: string) => void
   onDelete: (id: string) => void
 }
 
@@ -15,6 +16,7 @@ export default function LoopList({
   selectedId,
   onSelect,
   onCreate,
+  onDuplicate,
   onDelete,
 }: LoopListProps) {
   return (
@@ -61,6 +63,23 @@ export default function LoopList({
               </p>
             </div>
 
+            {/* Duplicate */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDuplicate(loop.id)
+              }}
+              className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-gray-300 dark:text-gray-600 hover:text-brand transition-all"
+              aria-label={`Duplicate "${loop.name}"`}
+              title="Duplicate"
+            >
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="4" width="8" height="8" rx="1.5" />
+                <path d="M2 10V3a1 1 0 0 1 1-1h7" />
+              </svg>
+            </button>
+
+            {/* Delete */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -68,6 +87,7 @@ export default function LoopList({
               }}
               className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-gray-300 dark:text-gray-600 hover:text-red-500 transition-all"
               aria-label={`Delete "${loop.name}"`}
+              title="Delete"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M2 3h8M5 3V2h2v1M4 3v6h4V3" />
