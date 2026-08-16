@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import EarTrainingView from '@/components/ear-training/EarTrainingView'
+import FretboardTrainerView from '@/components/trainers/FretboardTrainerView'
 import ScaleBuilderExercise from './ScaleBuilderExercise'
 
 // ── Exercise registry ───────────────────────────────────────────────────────
 
-type ExerciseId = 'ear-training' | 'scale-builder'
+type ExerciseId = 'ear-training' | 'scale-builder' | 'fretboard-trainer'
 
 interface ExerciseMeta {
   id: ExerciseId
@@ -41,6 +42,24 @@ const EXERCISES: ExerciseMeta[] = [
         <path d="M9 18V5l12-2v13" />
         <circle cx="6" cy="18" r="3" />
         <circle cx="18" cy="16" r="3" />
+      </svg>
+    ),
+  },
+  {
+    id: 'fretboard-trainer',
+    title: 'Fretboard Trainer',
+    description:
+      'Learn the notes on the neck — name a highlighted note, or find a named note on the fretboard.',
+    tags: ['Fretboard', 'Notes', 'Recall'],
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="3" y1="5" x2="21" y2="5" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+        <line x1="3" y1="14" x2="21" y2="14" />
+        <line x1="3" y1="19" x2="21" y2="19" />
+        <line x1="8" y1="3" x2="8" y2="21" />
+        <line x1="16" y1="3" x2="16" y2="21" />
+        <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
@@ -136,6 +155,15 @@ export default function ExercisesView() {
       <div>
         <BackButton onClick={() => setSelected(null)} />
         <ScaleBuilderExercise />
+      </div>
+    )
+  }
+
+  if (selected === 'fretboard-trainer') {
+    return (
+      <div>
+        <BackButton onClick={() => setSelected(null)} />
+        <FretboardTrainerView />
       </div>
     )
   }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Note } from 'tonal'
+import { TUNINGS, loadTuningId, saveTuningId } from '@/lib/guitar-tuning'
 
 const BRAND = '#ff9933'
 
@@ -10,39 +11,6 @@ const BRAND = '#ff9933'
 const INLAY_SINGLE = new Set([3, 5, 7, 9, 15, 17, 19, 21])
 // Double-dot inlays (octave markers)
 const INLAY_DOUBLE = new Set([12, 24])
-
-// ── Tuning presets ────────────────────────────────────────────────────────────
-// midi[0] = string 6 (lowest), midi[5] = string 1 (highest)
-
-interface Tuning {
-  id: string
-  name: string
-  /** Display label for each string, index 0 = string 6 */
-  labels: string[]
-  midi: number[]
-}
-
-const TUNINGS: Tuning[] = [
-  { id: 'standard',        name: 'Standard (EADGBe)',    labels: ['E','A','D','G','B','e'], midi: [40, 45, 50, 55, 59, 64] },
-  { id: 'drop-d',          name: 'Drop D (DADGBe)',      labels: ['D','A','D','G','B','e'], midi: [38, 45, 50, 55, 59, 64] },
-  { id: 'half-step-down',  name: 'Eb (½ step down)',     labels: ['Eb','Ab','Db','Gb','Bb','eb'], midi: [39, 44, 49, 54, 58, 63] },
-  { id: 'full-step-down',  name: 'D (full step down)',   labels: ['D','G','C','F','A','d'],  midi: [38, 43, 48, 53, 57, 62] },
-  { id: 'open-g',          name: 'Open G (DGDGBd)',      labels: ['D','G','D','G','B','d'],  midi: [38, 43, 50, 55, 59, 62] },
-  { id: 'open-d',          name: 'Open D (DADf#ad)',     labels: ['D','A','D','F#','A','d'], midi: [38, 45, 50, 54, 57, 62] },
-  { id: 'dadgad',          name: 'DADGAD',               labels: ['D','A','D','G','A','d'],  midi: [38, 45, 50, 55, 57, 62] },
-]
-
-const TUNING_LS_KEY = 'mysongpal_fretboard_tuning'
-
-function loadTuningId(): string {
-  if (typeof window === 'undefined') return 'standard'
-  return localStorage.getItem(TUNING_LS_KEY) ?? 'standard'
-}
-
-function saveTuningId(id: string) {
-  if (typeof window === 'undefined') return
-  localStorage.setItem(TUNING_LS_KEY, id)
-}
 
 export interface FretPick {
   /** MIDI-derived note name, e.g. "D2". Used for audio playback. */

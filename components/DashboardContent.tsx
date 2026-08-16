@@ -6,13 +6,12 @@ import PracticeView from './practice/PracticeView'
 import ChordsView from './chords/ChordsView'
 import MetronomeView from './metronome/MetronomeView'
 import ExercisesView from './exercises/ExercisesView'
-import FretboardTrainerView from './trainers/FretboardTrainerView'
 import TrialBanner from './premium/TrialBanner'
 import { SuperUserProvider } from '@/contexts/SuperUserContext'
 import SuperUserBadge from './superuser/SuperUserBadge'
 import type { AccessLevel } from '@/types/subscription'
 
-type Tab = 'music' | 'chords' | 'metronome' | 'exercises' | 'fretboard-trainer' | 'practice'
+type Tab = 'music' | 'chords' | 'metronome' | 'exercises' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -58,21 +57,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
         <path d="M2 4h11M2 7.5h7M2 11h9" />
         <circle cx="12.5" cy="10.5" r="1.5" />
         <path d="M12.5 7v2" />
-      </svg>
-    ),
-  },
-  {
-    id: 'fretboard-trainer',
-    label: 'Fretboard',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="2" y1="3" x2="13" y2="3" />
-        <line x1="2" y1="6" x2="13" y2="6" />
-        <line x1="2" y1="9" x2="13" y2="9" />
-        <line x1="2" y1="12" x2="13" y2="12" />
-        <line x1="5" y1="2" x2="5" y2="13" />
-        <line x1="10" y1="2" x2="10" y2="13" />
-        <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
@@ -160,7 +144,6 @@ export default function DashboardContent({
         {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
         {activeTab === 'metronome' && <MetronomeView isPremium={isPremium} />}
         {activeTab === 'exercises' && <ExercisesView />}
-        {activeTab === 'fretboard-trainer' && <FretboardTrainerView />}
         {activeTab === 'practice' && <PracticeView />}
       </main>
     </SuperUserProvider>

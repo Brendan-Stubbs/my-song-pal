@@ -218,6 +218,7 @@ export default function MetronomeView({ isPremium }: MetronomeViewProps) {
                   initial={selectedLoop}
                   onSave={handleSave}
                   onCancel={() => setLoopView('player')}
+                  engineId={engineId}
                 />
               </div>
             )}
