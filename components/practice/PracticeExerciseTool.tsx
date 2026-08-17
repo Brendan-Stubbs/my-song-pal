@@ -21,16 +21,18 @@ interface Props {
   link: ExerciseLink
   /** Whether the surrounding practice timer is paused. */
   paused: boolean
+  /** Elapsed fraction (0–1) of the current exercise segment. */
+  progress: number
 }
 
 /**
  * Renders the tool bound to a practice exercise inline in the player.
  * Keyed by exercise id upstream, so it remounts (and resets) per exercise.
  */
-export default function PracticeExerciseTool({ link, paused }: Props) {
+export default function PracticeExerciseTool({ link, paused, progress }: Props) {
   switch (link.kind) {
     case 'metronome':
-      return <InlineLoopTool loopId={link.loopId} paused={paused} />
+      return <InlineLoopTool loopId={link.loopId} paused={paused} bpmRamp={link.bpmRamp} progress={progress} />
     case 'scale':
       return <ScaleTool root={link.root} scaleId={link.scaleId} />
     case 'chord-drill':
@@ -57,7 +59,22 @@ function ToolShell({ children }: { children: React.ReactNode }) {
 
 // ── Metronome loop ──────────────────────────────────────────────────────────
 
-function InlineLoopTool({ loopId, paused }: { loopId: string; paused: boolean }) {
+interface BpmRamp {
+  fromPct: number
+  toPct: number
+}
+
+function InlineLoopTool({
+  loopId,
+  paused,
+  bpmRamp,
+  progress,
+}: {
+  loopId: string
+  paused: boolean
+  bpmRamp?: BpmRamp
+  progress: number
+}) {
   const [loop, setLoop] = useState<MetronomeLoop | null>(null)
   const [missing, setMissing] = useState(false)
   const [engineId, setEngineId] = useState<AudioEngineId>(DEFAULT_AUDIO_ENGINE)
@@ -92,21 +109,29 @@ function InlineLoopTool({ loopId, paused }: { loopId: string; paused: boolean })
       </ToolShell>
     )
   }
-  return <LoopRunner loop={loop} engineId={engineId} paused={paused} />
+  return <LoopRunner loop={loop} engineId={engineId} paused={paused} bpmRamp={bpmRamp} progress={progress} />
 }
 
 function LoopRunner({
   loop,
   engineId,
   paused,
+  bpmRamp,
+  progress,
 }: {
   loop: MetronomeLoop
   engineId: AudioEngineId
   paused: boolean
+  bpmRamp?: BpmRamp
+  progress: number
 }) {
+  const pct = bpmRamp
+    ? Math.round(bpmRamp.fromPct + (bpmRamp.toPct - bpmRamp.fromPct) * Math.max(0, Math.min(1, progress)))
+    : 100
+
   const { phase, currentBar, currentBeat, start, stop } = useLoopScheduler({
     loop,
-    pct: 100,
+    pct,
     engineId,
     guideNotesEnabled: true,
     countInBetweenLoops: false,
@@ -129,7 +154,11 @@ function LoopRunner({
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-sm font-semibold text-ink">{loop.name}</p>
-          <p className="text-xs text-ink-muted">{loop.targetBpm} BPM · {loop.bars} bar{loop.bars !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-ink-muted">
+            {bpmRamp
+              ? `${Math.max(40, Math.floor((loop.targetBpm * pct) / 100))} BPM (ramping ${bpmRamp.fromPct}→${bpmRamp.toPct}%)`
+              : `${loop.targetBpm} BPM · ${loop.bars} bar${loop.bars !== 1 ? 's' : ''}`}
+          </p>
         </div>
         <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 bg-brand/15 text-brand">
           {phase === 'count-in' ? 'Count in' : phase === 'loop' ? 'Playing' : 'Ready'}

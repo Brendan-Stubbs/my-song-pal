@@ -18,7 +18,12 @@ import type { ChordQuality } from '@/data/open-chord-voicings'
  */
 export type ExerciseLink =
   | { kind: 'free' }
-  | { kind: 'metronome'; loopId: string }
+  | {
+      kind: 'metronome'
+      loopId: string
+      /** Optional tempo ramp (% of the loop's target BPM) across the exercise. */
+      bpmRamp?: { fromPct: number; toPct: number }
+    }
   | { kind: 'scale'; root: string; scaleId: string }
   | { kind: 'chord-drill'; chords: { root: string; quality: ChordQuality }[]; changesPerMin: number }
   | { kind: 'ear-training'; mode: 'intervals' | 'modes' }

@@ -76,18 +76,49 @@ export default function ExerciseLinkConfig({ link, onChange, loops }: Props) {
             No saved loops yet — create one in the Metronome tab first.
           </p>
         ) : (
-          <select
-            aria-label="Metronome loop"
-            value={link.loopId}
-            onChange={(e) => onChange({ kind: 'metronome', loopId: e.target.value })}
-            className={selectClass}
-          >
-            {loops.map((loop) => (
-              <option key={loop.id} value={loop.id}>
-                {loop.name} · {loop.targetBpm} BPM
-              </option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <select
+              aria-label="Metronome loop"
+              value={link.loopId}
+              onChange={(e) => onChange({ ...link, loopId: e.target.value })}
+              className={selectClass}
+            >
+              {loops.map((loop) => (
+                <option key={loop.id} value={loop.id}>
+                  {loop.name} · {loop.targetBpm} BPM
+                </option>
+              ))}
+            </select>
+            <label className="flex items-center gap-2 text-xs text-ink">
+              <input
+                type="checkbox"
+                checked={!!link.bpmRamp}
+                onChange={(e) =>
+                  onChange({
+                    ...link,
+                    bpmRamp: e.target.checked ? { fromPct: 80, toPct: 100 } : undefined,
+                  })
+                }
+                className="accent-[var(--brand)]"
+              />
+              Ramp tempo over the exercise
+            </label>
+            {link.bpmRamp && (
+              <div className="flex items-center gap-2 text-xs text-ink-muted pl-6">
+                from
+                <PctInput
+                  value={link.bpmRamp.fromPct}
+                  onChange={(fromPct) => onChange({ ...link, bpmRamp: { ...link.bpmRamp!, fromPct } })}
+                />
+                to
+                <PctInput
+                  value={link.bpmRamp.toPct}
+                  onChange={(toPct) => onChange({ ...link, bpmRamp: { ...link.bpmRamp!, toPct } })}
+                />
+                of target BPM
+              </div>
+            )}
+          </div>
         )
       )}
 
@@ -177,6 +208,22 @@ export default function ExerciseLinkConfig({ link, onChange, loops }: Props) {
         <p className="text-xs text-ink-muted">Note-finding drill will run during this exercise.</p>
       )}
     </div>
+  )
+}
+
+function PctInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <span className="inline-flex items-center">
+      <input
+        type="number"
+        min={40}
+        max={120}
+        value={value}
+        onChange={(e) => onChange(Math.max(40, Math.min(120, Number(e.target.value) || 100)))}
+        className="w-14 text-center bg-surface-2 border border-line rounded-md px-1.5 py-1 outline-none focus:border-brand text-ink tabular-nums"
+      />
+      <span className="ml-0.5">%</span>
+    </span>
   )
 }
 

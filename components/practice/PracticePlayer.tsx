@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import type { PracticeSession, PracticeBlock } from '@/lib/practice-storage'
 import { exerciseDisplayName, formatTime } from '@/lib/practice-storage'
 import { logPractice } from '@/lib/practice-log-storage'
+import { saveResume, clearResume, type ResumePosition } from '@/lib/practice-resume-storage'
+import { useWakeLock } from '@/lib/useWakeLock'
 import MetronomePanel from './MetronomePanel'
 import PracticeExerciseTool from './PracticeExerciseTool'
 
@@ -63,7 +65,24 @@ function getSegmentDisplayName(block: PracticeBlock, exerciseIndex: number): str
   return block.name
 }
 
-function createInitialState(session: PracticeSession, startBlockIndex: number): TimerState {
+function createInitialState(
+  session: PracticeSession,
+  startBlockIndex: number,
+  resume?: ResumePosition,
+): TimerState {
+  if (resume && resume.sessionId === session.id && session.blocks[resume.blockIndex]) {
+    return {
+      blockIndex: resume.blockIndex,
+      exerciseIndex: resume.exerciseIndex,
+      secondsRemaining: resume.secondsRemaining,
+      isPaused: true,
+      isComplete: false,
+      blockEnded: false,
+      exerciseTransitioning: false,
+      exerciseTransitionName: undefined,
+    }
+  }
+
   const block = session.blocks[startBlockIndex] ?? session.blocks[0]
   const exercises = block?.exercises
   const useExercises = (exercises?.length ?? 0) > 0
@@ -134,10 +153,12 @@ interface PracticePlayerProps {
   onEnd: () => void
   /** Called once when a session's practice has been logged (>= 1 min). */
   onLogged?: () => void
+  /** Restore an in-progress position (from a previous, interrupted session). */
+  resume?: ResumePosition
 }
 
-export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogged }: PracticePlayerProps) {
-  const [state, setState] = useState<TimerState>(() => createInitialState(session, startBlockIndex))
+export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogged, resume }: PracticePlayerProps) {
+  const [state, setState] = useState<TimerState>(() => createInitialState(session, startBlockIndex, resume))
   const [metronomeOn, setMetronomeOn] = useState(false)
 
   const endCueFiredRef = useRef(false)
@@ -146,6 +167,9 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogg
   const elapsedSecondsRef = useRef(0)
   const blocksCompletedRef = useRef(0)
   const loggedRef = useRef(false)
+
+  // Keep the screen awake for the duration of an active session.
+  useWakeLock(!state.isComplete)
 
   function logSessionOnce() {
     if (loggedRef.current) return
@@ -162,6 +186,7 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogg
 
   function handleEnd() {
     logSessionOnce()
+    clearResume()
     onEnd()
   }
 
@@ -251,9 +276,33 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogg
   }, [state.blockEnded])
 
   useEffect(() => {
-    if (state.isComplete) logSessionOnce()
+    if (state.isComplete) {
+      logSessionOnce()
+      clearResume()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isComplete])
+
+  // Persist in-progress position so the session can be resumed after a refresh.
+  useEffect(() => {
+    if (state.isComplete || state.blockEnded || state.exerciseTransitioning) return
+    saveResume({
+      sessionId: session.id,
+      sessionName: session.name,
+      blockIndex: state.blockIndex,
+      exerciseIndex: state.exerciseIndex,
+      secondsRemaining: state.secondsRemaining,
+    })
+  }, [
+    state.blockIndex,
+    state.exerciseIndex,
+    state.secondsRemaining,
+    state.isComplete,
+    state.blockEnded,
+    state.exerciseTransitioning,
+    session.id,
+    session.name,
+  ])
 
   function togglePause() {
     setState((prev) => ({ ...prev, isPaused: !prev.isPaused }))
@@ -500,6 +549,7 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogg
           key={`${state.blockIndex}-${state.exerciseIndex}`}
           link={activeLink}
           paused={toolPaused}
+          progress={Math.max(0, Math.min(1, 1 - progress))}
         />
       )}
 

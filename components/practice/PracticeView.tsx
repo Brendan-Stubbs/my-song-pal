@@ -10,6 +10,9 @@ import {
   totalMinutes,
   formatDuration,
 } from '@/lib/practice-storage'
+import { PRACTICE_TEMPLATES, buildSessionFromTemplate, type PracticeTemplate } from '@/lib/practice-templates'
+import { loadResume, clearResume, type ResumePosition } from '@/lib/practice-resume-storage'
+import { Modal } from '@/components/ui/Modal'
 import PracticeSessionEditor from './PracticeSessionEditor'
 import PracticePlayer from './PracticePlayer'
 import PracticeStreakCard from './PracticeStreakCard'
@@ -19,7 +22,7 @@ import PracticeStreakCard from './PracticeStreakCard'
 type View =
   | { type: 'list' }
   | { type: 'edit'; sessionId: string }
-  | { type: 'play'; session: PracticeSession; startBlockIndex: number }
+  | { type: 'play'; session: PracticeSession; startBlockIndex: number; resume?: ResumePosition }
 
 // ── Session card ──────────────────────────────────────────────────────────────
 
@@ -152,6 +155,8 @@ export default function PracticeView() {
   const [view, setView] = useState<View>({ type: 'list' })
   const [loaded, setLoaded] = useState(false)
   const [logSignal, setLogSignal] = useState(0)
+  const [showNew, setShowNew] = useState(false)
+  const [resume, setResume] = useState<{ position: ResumePosition; name: string } | null>(null)
 
   useEffect(() => {
     loadSessions()
@@ -159,13 +164,50 @@ export default function PracticeView() {
         setSessions(data)
         setPersistedIds(new Set(data.map((s) => s.id)))
         setLoaded(true)
+        const saved = loadResume()
+        if (saved && data.some((s) => s.id === saved.sessionId)) {
+          setResume({
+            position: {
+              sessionId: saved.sessionId,
+              blockIndex: saved.blockIndex,
+              exerciseIndex: saved.exerciseIndex,
+              secondsRemaining: saved.secondsRemaining,
+            },
+            name: saved.sessionName,
+          })
+        }
       })
       .catch(() => { setSessions([]); setLoaded(true) })
   }, [])
 
+  function handleResume() {
+    if (!resume) return
+    const session = sessions.find((s) => s.id === resume.position.sessionId)
+    if (!session) return
+    setView({ type: 'play', session, startBlockIndex: resume.position.blockIndex, resume: resume.position })
+    setResume(null)
+  }
+
+  function dismissResume() {
+    clearResume()
+    setResume(null)
+  }
+
   function handleNewSession() {
+    setShowNew(true)
+  }
+
+  function createBlank() {
     const session = createSession()
     setSessions((prev) => [...prev, session])
+    setShowNew(false)
+    setView({ type: 'edit', sessionId: session.id })
+  }
+
+  function createFromTemplate(template: PracticeTemplate) {
+    const session = buildSessionFromTemplate(template)
+    setSessions((prev) => [...prev, session])
+    setShowNew(false)
     setView({ type: 'edit', sessionId: session.id })
   }
 
@@ -225,6 +267,7 @@ export default function PracticeView() {
       <PracticePlayer
         session={view.session}
         startBlockIndex={view.startBlockIndex}
+        resume={view.resume}
         onEnd={() => setView({ type: 'list' })}
         onLogged={() => setLogSignal((n) => n + 1)}
       />
@@ -272,7 +315,68 @@ export default function PracticeView() {
         </button>
       </div>
 
+      {resume && (
+        <div className="rounded-xl border border-brand/40 bg-brand/10 p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand" aria-hidden>
+              <circle cx="12" cy="12" r="9" />
+              <polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none" />
+            </svg>
+            <p className="text-sm text-ink">
+              You have an unfinished session — <span className="font-semibold">{resume.name}</span>.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResume}
+              className="px-4 py-1.5 rounded-md bg-brand text-white text-sm font-semibold hover:bg-brand-strong transition-colors"
+            >
+              Resume
+            </button>
+            <button
+              onClick={dismissResume}
+              className="px-3 py-1.5 rounded-md text-sm text-ink-muted hover:text-ink transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <PracticeStreakCard reloadSignal={logSignal} />
+
+      {showNew && (
+        <Modal onClose={() => setShowNew(false)} aria-label="Start a new practice session" className="max-w-lg">
+          <div className="p-5 sm:p-6 space-y-4">
+            <div>
+              <h3 className="text-lg font-bold text-ink">New practice session</h3>
+              <p className="text-sm text-ink-muted mt-0.5">Start from scratch or pick a template you can tweak.</p>
+            </div>
+
+            <button
+              onClick={createBlank}
+              className="w-full text-left rounded-lg border border-line hover:border-brand bg-surface p-4 transition-colors group"
+            >
+              <p className="text-sm font-semibold text-ink group-hover:text-brand transition-colors">Blank session</p>
+              <p className="text-xs text-ink-muted mt-0.5">One empty warm-up block to build on.</p>
+            </button>
+
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">Templates</p>
+              {PRACTICE_TEMPLATES.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => createFromTemplate(t)}
+                  className="w-full text-left rounded-lg border border-line hover:border-brand bg-surface p-4 transition-colors group"
+                >
+                  <p className="text-sm font-semibold text-ink group-hover:text-brand transition-colors">{t.name}</p>
+                  <p className="text-xs text-ink-muted mt-0.5">{t.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Empty state */}
       {sessions.length === 0 ? (

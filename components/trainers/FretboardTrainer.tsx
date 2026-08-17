@@ -21,6 +21,7 @@ import {
   type PitchClass,
   type FretPosition,
 } from '@/lib/fretboard-trainer'
+import FretboardStatsPanel from './FretboardStatsPanel'
 
 const CORRECT_DELAY_MS = 900
 const WRONG_DELAY_MS = 1600
@@ -429,20 +430,10 @@ export default function FretboardTrainer() {
   const accuracy = attempts > 0 ? Math.round((score / attempts) * 100) : 0
   const fretCount = maxFret
 
-  const statsBanner =
-    lifetimeStats && lifetimeStats.gamesPlayed > 0 ? (
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        Best score: <span className="font-semibold text-brand">{lifetimeStats.bestScore}</span>
-        {' · '}
-        Lifetime accuracy:{' '}
-        <span className="font-semibold">{lifetimeAccuracy(lifetimeStats)}%</span>
-      </p>
-    ) : null
-
   if (phase === 'idle') {
     return (
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-6 space-y-6">
-        {statsBanner}
+        <FretboardStatsPanel stats={lifetimeStats} />
 
         <div>
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide">

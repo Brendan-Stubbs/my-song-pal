@@ -136,11 +136,16 @@ JSONB sessions still parse). `exerciseDisplayName` falls back to a tool-derived 
       `lib/practice-log-storage.ts` (dual Supabase/localStorage, `computePracticeStats`),
       logged on session complete/end (≥1 min), surfaced via `PracticeStreakCard`
       (current streak, this-week minutes, totals) atop the sessions list.
-- [ ] **Resume where you left off**: persist in-progress player state across refresh/lock. *(Phase 4)*
-- [ ] **Per-exercise target BPM progression** for metronome-linked exercises (ties into
-      existing `practiceMode`/`targetBpm`).
-- [ ] **Keep-screen-awake** (`navigator.wakeLock`) during a session.
-- [ ] **Templates**: 2–3 built-in starter routines (Warm-up / Technique / Repertoire).
+- [x] **Resume where you left off** *(Phase 4)*: device-local `lib/practice-resume-storage.ts`
+      persists in-progress position; `PracticeView` shows a Resume banner and restores the
+      player (paused) at the saved block/exercise/time.
+- [x] **Per-exercise target BPM progression** *(Phase 4)*: metronome `ExerciseLink` gains an
+      optional `bpmRamp { fromPct, toPct }`; the inline loop tool lerps `pct` by segment
+      progress via `useLoopScheduler`.
+- [x] **Keep-screen-awake** *(Phase 4)*: `lib/useWakeLock.ts`, active for the session duration
+      in `PracticePlayer` (re-acquires on tab re-focus; no-op where unsupported).
+- [x] **Templates** *(Phase 4)*: `lib/practice-templates.ts` (Daily Warm-Up / Technique /
+      Ear & Theory) surfaced via a "New session" chooser modal.
 
 Deliberately **not** doing: social feeds, XP/badges — fluff for this audience.
 
@@ -148,8 +153,9 @@ Deliberately **not** doing: social feeds, XP/badges — fluff for this audience.
 
 ## 6. Improving existing pieces
 
-- [ ] **Fretboard Trainer**: surface the `training_stats` already stored in
-      `user_app_state` (accuracy/speed history panel).
+- [x] **Fretboard Trainer** *(Phase 4)*: `FretboardStatsPanel` on the idle screen surfaces the
+      stored `training_stats` — games, best score, lifetime accuracy, and per-note accuracy
+      bars (weakest first) so the user can see weak spots.
 - [ ] **Chord Explore → Book**: add an explicit "＋ Add" affordance (hover-to-add is
       invisible on touch).
 - [ ] **Metronome**: onboarding copy for the "mute to fade toward guide notes" idea.
@@ -308,8 +314,8 @@ whether to keep the 6-month tier.
 - [ ] Provider + checkout + webhook + server-side entitlement + billing portal (§9).
 - [ ] Minimal public landing + pricing page.
 
-**Phase 4 — Depth**
-- [ ] Fretboard-trainer stats surface, BPM progression, wake-lock, templates.
+**Phase 4 — Depth** *(left uncommitted for review)*
+- [x] Fretboard-trainer stats surface, BPM progression, wake-lock, templates, resume.
 
 ---
 
