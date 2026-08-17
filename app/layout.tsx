@@ -1,16 +1,31 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Bricolage_Grotesque, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// Body / UI text — highly legible neutral.
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+// Display / headings — characterful, warm, clearly not a framework default.
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
   subsets: ['latin'],
+  display: 'swap',
 })
+
+// Monospace — tab staff, timers, BPM numerals.
+const jetbrainsMono = JetBrains_Mono({
+  variable: '--font-jetbrains',
+  subsets: ['latin'],
+  display: 'swap',
+})
+
+// Applies the persisted theme (or system preference) before first paint to
+// avoid a flash of the wrong colour scheme.
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('mysongpal_theme');var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://mysongpal.co.za'
 
@@ -69,9 +84,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${bricolage.variable} ${jetbrainsMono.variable} antialiased`}
       >
         {children}
       </body>

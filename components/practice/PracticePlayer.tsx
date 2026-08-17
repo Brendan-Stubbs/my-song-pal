@@ -277,7 +277,11 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
   if (state.isComplete) {
     return (
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-16 text-center">
-        <div className="text-6xl mb-5" aria-hidden>🎉</div>
+        <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-brand/15 text-brand flex items-center justify-center" aria-hidden>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Session complete!</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-xs mx-auto">
           Great work. You completed <span className="font-medium text-gray-700 dark:text-gray-200">{session.name}</span>.

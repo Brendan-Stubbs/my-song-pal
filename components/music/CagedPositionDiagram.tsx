@@ -16,7 +16,7 @@ const NUM_STRINGS = 6
 const DOT_RADIUS = 10
 
 const BRAND_COLOR = '#ff9933'
-const DOT_COLOR_LIGHT = '#374151'   // gray-700
+const DOT_COLOR_LIGHT = '#44403c'   // stone-700
 const TEXT_COLOR = '#ffffff'
 
 export default function CagedPositionDiagram({
@@ -59,7 +59,7 @@ export default function CagedPositionDiagram({
       >
         {/* Background */}
         <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#1f2937" className="hidden dark:block" />
+        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
 
         {/* Position title */}
         <text
@@ -84,7 +84,7 @@ export default function CagedPositionDiagram({
               y1={y}
               x2={svgWidth - PAD_RIGHT}
               y2={y}
-              stroke="#d1d5db"
+              stroke="#d6d3d1"
               strokeWidth={1}
             />
           )
@@ -101,7 +101,7 @@ export default function CagedPositionDiagram({
               y1={PAD_TOP}
               x2={x}
               y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-              stroke={isNut ? '#374151' : '#d1d5db'}
+              stroke={isNut ? '#44403c' : '#d6d3d1'}
               strokeWidth={isNut ? 3 : 1}
             />
           )
@@ -150,7 +150,7 @@ export default function CagedPositionDiagram({
               y={y}
               textAnchor="middle"
               fontSize={9}
-              fill="#6b7280"
+              fill="#78716c"
             >
               {fretNum}
             </text>

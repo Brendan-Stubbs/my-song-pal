@@ -80,7 +80,7 @@ export default function InteractiveFretboard({
       >
         {/* Light/dark backgrounds */}
         <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#1f2937" className="hidden dark:block" />
+        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
 
         {/* Open string column shading */}
         <rect
@@ -97,7 +97,7 @@ export default function InteractiveFretboard({
           y={PAD_T}
           width={CELL_W}
           height={(NUM_STRINGS - 1) * CELL_H}
-          fill="#374151"
+          fill="#44403c"
           className="hidden dark:block"
           opacity={0.5}
         />
@@ -111,7 +111,7 @@ export default function InteractiveFretboard({
               key={`str-${s}`}
               x1={PAD_L} y1={y}
               x2={svgWidth - PAD_R} y2={y}
-              stroke="#d1d5db" strokeWidth={1}
+              stroke="#d6d3d1" strokeWidth={1}
             />
           )
         })}
@@ -125,7 +125,7 @@ export default function InteractiveFretboard({
               key={`fret-line-${i}`}
               x1={x} y1={PAD_T}
               x2={x} y2={PAD_T + (NUM_STRINGS - 1) * CELL_H}
-              stroke={isNut ? '#374151' : '#d1d5db'}
+              stroke={isNut ? '#44403c' : '#d6d3d1'}
               strokeWidth={isNut ? 3 : 1}
             />
           )
@@ -142,7 +142,7 @@ export default function InteractiveFretboard({
               dominantBaseline="auto"
               fontSize={10}
               fontWeight="500"
-              fill="#6b7280"
+              fill="#78716c"
             >
               {f}
             </text>
@@ -154,7 +154,7 @@ export default function InteractiveFretboard({
               dominantBaseline="auto"
               fontSize={10}
               fontWeight="500"
-              fill="#6b7280"
+              fill="#78716c"
             >
               {f}
             </text>
@@ -173,7 +173,7 @@ export default function InteractiveFretboard({
               dominantBaseline="central"
               fontSize={9}
               fontWeight="600"
-              fill="#6b7280"
+              fill="#78716c"
             >
               {STRING_NAMES[s]}
             </text>
@@ -187,13 +187,13 @@ export default function InteractiveFretboard({
             cx={fretX(f)}
             cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET}
             r={3}
-            fill="#9ca3af"
+            fill="#a8a29e"
           />
         ))}
         {DOUBLE_MARKERS.map((f) => (
           <g key={`dbl-${f}`}>
-            <circle cx={fretX(f) - 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} fill="#9ca3af" />
-            <circle cx={fretX(f) + 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} fill="#9ca3af" />
+            <circle cx={fretX(f) - 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} fill="#a8a29e" />
+            <circle cx={fretX(f) + 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} fill="#a8a29e" />
           </g>
         ))}
 
@@ -222,12 +222,12 @@ export default function InteractiveFretboard({
               />
               {/* Background circle — covers string/fret lines so dot looks clean */}
               <circle cx={cx} cy={cy} r={DOT_R} fill="#faf9f7" className="dark:hidden" />
-              <circle cx={cx} cy={cy} r={DOT_R} fill="#1f2937" className="hidden dark:block" />
+              <circle cx={cx} cy={cy} r={DOT_R} fill="#211e1b" className="hidden dark:block" />
               {/* Visible dot */}
               {selected ? (
                 <circle cx={cx} cy={cy} r={DOT_R} fill={BRAND} />
               ) : (
-                <circle cx={cx} cy={cy} r={DOT_R} fill="none" stroke="#4b5563" strokeWidth={1.5} />
+                <circle cx={cx} cy={cy} r={DOT_R} fill="none" stroke="#57534e" strokeWidth={1.5} />
               )}
               <text
                 x={cx}
@@ -236,7 +236,7 @@ export default function InteractiveFretboard({
                 dominantBaseline="central"
                 fontSize={9}
                 fontWeight={selected ? '700' : '400'}
-                fill={selected ? DOT_FILLED_TEXT : '#6b7280'}
+                fill={selected ? DOT_FILLED_TEXT : '#78716c'}
                 style={{ pointerEvents: 'none', userSelect: 'none' }}
               >
                 {pc}

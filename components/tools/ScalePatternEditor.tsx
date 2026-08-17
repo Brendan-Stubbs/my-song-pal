@@ -131,9 +131,9 @@ const PAD_RIGHT = 12;
 const DOT_RADIUS = 11;
 const HIT_RADIUS = 16;
 const BRAND_COLOR = '#ff9933';
-const DOT_COLOR = '#374151';
+const DOT_COLOR = '#44403c';
 const OPEN_FRET_FILL_LIGHT = '#e8e3db';
-const OPEN_FRET_FILL_DARK = '#4b5563';
+const OPEN_FRET_FILL_DARK = '#57534e';
 
 /** Row 0 = string 1 (high e), row 5 = string 6 (low E) */
 const STRING_LABELS = ['e', 'B', 'G', 'D', 'A', 'E'] as const;
@@ -462,7 +462,7 @@ export default function ScalePatternEditor() {
             <rect
               width={svgWidth}
               height={svgHeight}
-              fill="#1f2937"
+              fill="#211e1b"
               className="hidden dark:block"
             />
 
@@ -492,7 +492,7 @@ export default function ScalePatternEditor() {
                   y1={stringY(stringIndex)}
                   x2={svgWidth - PAD_RIGHT}
                   y2={stringY(stringIndex)}
-                  stroke="#9ca3af"
+                  stroke="#a8a29e"
                   strokeWidth={STRING_STROKE[stringNumber]}
                 />
               );
@@ -505,7 +505,7 @@ export default function ScalePatternEditor() {
                 y1={PAD_TOP}
                 x2={PAD_LEFT + fretLine * CELL_WIDTH}
                 y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-                stroke={fretLine === 0 ? '#374151' : '#d1d5db'}
+                stroke={fretLine === 0 ? '#44403c' : '#d6d3d1'}
                 strokeWidth={fretLine === 0 ? 3 : 1}
                 className={
                   fretLine === 0
@@ -524,7 +524,7 @@ export default function ScalePatternEditor() {
                 dominantBaseline="central"
                 fontSize={9}
                 fontWeight="600"
-                fill="#6b7280"
+                fill="#78716c"
               >
                 {label}
               </text>
@@ -537,7 +537,7 @@ export default function ScalePatternEditor() {
                 y={svgHeight - 8}
                 textAnchor="middle"
                 fontSize={10}
-                fill="#6b7280"
+                fill="#78716c"
               >
                 {fretIndex}
               </text>

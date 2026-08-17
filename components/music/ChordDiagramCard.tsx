@@ -34,10 +34,10 @@ const NUM_STRINGS = 6
 const NUM_FRETS = 5
 
 const BRAND = '#ff9933'
-const DARK_DOT = '#374151'
+const DARK_DOT = '#44403c'
 const WHITE = '#ffffff'
-const MUTED_COLOR = '#9ca3af'
-const OPEN_COLOR = '#6b7280'
+const MUTED_COLOR = '#a8a29e'
+const OPEN_COLOR = '#78716c'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -51,11 +51,6 @@ export interface ChordDiagramCardProps {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** x-coordinate of a guitar string in the diagram (s6=leftmost, s1=rightmost) */
-function stringX(stringNum: number, padLeft: number, spacing: number): number {
-  return padLeft + (6 - stringNum) * spacing
-}
 
 /** y-coordinate of the centre of a fret cell (0-indexed from baseFret) */
 function fretCenterY(cellIndex: number, padTop: number, spacing: number): number {
@@ -96,17 +91,9 @@ function ChordSVG({
 
   // Fret lines y positions (0..NUM_FRETS inclusive = NUM_FRETS+1 lines)
   const fretLineYs = Array.from({ length: NUM_FRETS + 1 }, (_, i) => padTop + i * fs)
-  // String x positions (string 6 = index 0 = leftmost)
-  const stringXs = Array.from({ length: NUM_STRINGS }, (_, i) => stringX(i + 1 /* but we want s6=leftmost */, padLeft, ss))
-  // Actually: string index i (0-based) corresponds to string (6-i), x = padLeft + i*ss
-  // frets[0]=s6 (leftmost), frets[5]=s1 (rightmost)
-  // So string at display column i has x = padLeft + i*ss, and its fret value = frets[5-i] (reversed!)
-  // Wait let me reclarify:
-  //   frets[0] = string 6 (low E) = leftmost column = x = padLeft + 0*ss
-  //   frets[5] = string 1 (high e) = rightmost = x = padLeft + 5*ss
-  // So display column i (0-5) corresponds to frets[i], at x = padLeft + i*ss
-  // String number for column i = 6 - i
 
+  // Display column i (0-5) maps to frets[i]: column 0 = string 6 (low E, leftmost),
+  // column 5 = string 1 (high e, rightmost). So string number = 6 - col.
   function colX(col: number): number {
     return padLeft + col * ss
   }
@@ -213,7 +200,7 @@ function ChordSVG({
           key={`str-${i}`}
           x1={colX(i)} y1={padTop}
           x2={colX(i)} y2={padTop + NUM_FRETS * fs}
-          stroke="#d1d5db" strokeWidth={1}
+          stroke="#d6d3d1" strokeWidth={1}
         />
       ))}
 
@@ -223,7 +210,7 @@ function ChordSVG({
           key={`fret-${i}`}
           x1={padLeft} y1={y}
           x2={padLeft + (NUM_STRINGS - 1) * ss} y2={y}
-          stroke="#d1d5db" strokeWidth={1}
+          stroke="#d6d3d1" strokeWidth={1}
         />
       ))}
 

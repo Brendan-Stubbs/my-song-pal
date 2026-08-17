@@ -99,7 +99,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
         aria-label="Interactive fretboard"
       >
         <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#1f2937" className="hidden dark:block" />
+        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
 
         <rect
           x={PAD_LEFT}
@@ -114,7 +114,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
           y={PAD_TOP}
           width={CELL_WIDTH}
           height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-          fill="#4b5563"
+          fill="#57534e"
           className="hidden dark:block"
         />
 
@@ -139,7 +139,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               y1={stringY(s)}
               x2={svgWidth - PAD_RIGHT}
               y2={stringY(s)}
-              stroke="#9ca3af"
+              stroke="#a8a29e"
               strokeWidth={STRING_STROKE[s]}
             />
           )
@@ -152,7 +152,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
             y1={PAD_TOP}
             x2={PAD_LEFT + i * CELL_WIDTH}
             y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-            stroke={i === 0 ? '#374151' : '#d1d5db'}
+            stroke={i === 0 ? '#44403c' : '#d6d3d1'}
             strokeWidth={i === 0 ? 3 : 1}
           />
         ))}
@@ -168,7 +168,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               dominantBaseline="central"
               fontSize={9}
               fontWeight="600"
-              fill="#6b7280"
+              fill="#78716c"
             >
               {STRING_NAMES[s]}
             </text>
@@ -247,7 +247,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               textAnchor="middle"
               fontSize={10}
               fontWeight={isOctave ? 700 : 400}
-              fill={isOctave ? BRAND_COLOR : '#6b7280'}
+              fill={isOctave ? BRAND_COLOR : '#78716c'}
             >
               {i}
             </text>

@@ -195,7 +195,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
               textAnchor="middle"
               fontSize={9}
               fontWeight={INLAY_DOUBLE.has(fret) ? 700 : 400}
-              fill={INLAY_DOUBLE.has(fret) ? BRAND : '#9ca3af'}
+              fill={INLAY_DOUBLE.has(fret) ? BRAND : '#a8a29e'}
             >
               {fret}
             </text>
@@ -208,7 +208,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
             key={`fl-${i}`}
             x1={PAD_LEFT + i * CELL_W} y1={PAD_TOP}
             x2={PAD_LEFT + i * CELL_W} y2={PAD_TOP + 5 * CELL_H}
-            stroke={i === 0 ? '#374151' : '#d1d5db'}
+            stroke={i === 0 ? '#44403c' : '#d6d3d1'}
             strokeWidth={i === 0 ? NUT_WIDTH : 1}
           />
         ))}
@@ -220,13 +220,13 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
           if (INLAY_DOUBLE.has(fret)) {
             return (
               <g key={`inlay-${fret}`}>
-                <circle cx={fretCX(fret)} cy={midY - 7} r={3} fill="#e5e7eb" />
-                <circle cx={fretCX(fret)} cy={midY + 7} r={3} fill="#e5e7eb" />
+                <circle cx={fretCX(fret)} cy={midY - 7} r={3} fill="#e7e5e4" />
+                <circle cx={fretCX(fret)} cy={midY + 7} r={3} fill="#e7e5e4" />
               </g>
             )
           }
           if (INLAY_SINGLE.has(fret)) {
-            return <circle key={`inlay-${fret}`} cx={fretCX(fret)} cy={midY} r={3} fill="#e5e7eb" />
+            return <circle key={`inlay-${fret}`} cx={fretCX(fret)} cy={midY} r={3} fill="#e7e5e4" />
           }
           return null
         })}
@@ -239,7 +239,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
               key={`sl-${i}`}
               x1={PAD_LEFT} y1={stringY(i)}
               x2={svgW - PAD_RIGHT} y2={stringY(i)}
-              stroke="#9ca3af"
+              stroke="#a8a29e"
               strokeWidth={strokeWidth}
             />
           )
@@ -255,7 +255,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
             dominantBaseline="central"
             fontSize={9}
             fontWeight="600"
-            fill="#6b7280"
+            fill="#78716c"
           >
             {tuning.labels[i]}
           </text>

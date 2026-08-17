@@ -32,12 +32,6 @@ export interface PracticeSession {
   updatedAt: number
 }
 
-/** @deprecated Use PracticeExercise */
-export type PracticeActivity = PracticeExercise
-
-/** @deprecated Use PracticeExercise */
-export type SubBlock = PracticeExercise
-
 // ── localStorage fallback ─────────────────────────────────────────────────────
 
 const LS_KEY = 'mysongpal_practice_sessions'
@@ -187,28 +181,13 @@ export function createExercise(name = '', durationMinutes = 5): PracticeExercise
   }
 }
 
-/** @deprecated Use createExercise */
-export const createActivity = createExercise
-
-/** @deprecated Use createExercise */
-export const createSubBlock = createExercise
-
 export function exerciseTotalMinutes(exercises: PracticeExercise[]): number {
   return exercises.reduce((sum, e) => sum + e.durationMinutes, 0)
 }
 
-/** @deprecated Use exerciseTotalMinutes */
-export const activityTotalMinutes = exerciseTotalMinutes
-
-/** @deprecated Use exerciseTotalMinutes */
-export const subBlockTotalMinutes = exerciseTotalMinutes
-
 export function exerciseDisplayName(exercise: PracticeExercise, index: number): string {
   return exercise.name.trim() || `Exercise ${index + 1}`
 }
-
-/** @deprecated Use exerciseDisplayName */
-export const activityDisplayName = exerciseDisplayName
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -228,11 +207,3 @@ export function formatTime(totalSeconds: number): string {
   const s = totalSeconds % 60
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
-
-// ── Legacy sync exports (kept so existing callers don't break) ────────────────
-
-/** @deprecated Use loadSessions() (async) */
-export function loadSessionsSync(): PracticeSession[] { return lsLoad() }
-
-/** @deprecated Use upsertSession() (async) */
-export function saveSessions(sessions: PracticeSession[]): void { lsSave(sessions) }

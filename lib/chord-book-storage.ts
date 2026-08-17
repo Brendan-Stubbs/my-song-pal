@@ -128,24 +128,3 @@ export async function removeChordFromBook(
 export function isInBook(book: SavedChord[], root: string, quality: ChordQuality): boolean {
   return book.some((c) => c.root === root && c.quality === quality)
 }
-
-// ── Legacy sync exports (kept so existing callers don't break) ────────────────
-// These write to localStorage only. Swap call-sites to the async versions above.
-
-/** @deprecated Use loadChordBook() (async) */
-export function loadChordBookSync(): SavedChord[] { return lsLoad() }
-
-/** @deprecated Use addChordToBook() (async) */
-export function addChord(book: SavedChord[], root: string, quality: ChordQuality): SavedChord[] {
-  if (book.some((c) => c.root === root && c.quality === quality)) return book
-  const entry: SavedChord = { id: crypto.randomUUID(), root, quality, symbol: buildChordSymbol(root, quality), addedAt: Date.now() }
-  return [...book, entry]
-}
-
-/** @deprecated Use removeChordFromBook() (async) */
-export function removeChord(book: SavedChord[], id: string): SavedChord[] {
-  return book.filter((c) => c.id !== id)
-}
-
-/** @deprecated Use addChordToBook() / removeChordFromBook() (async) */
-export function saveChordBook(chords: SavedChord[]): void { lsSave(chords) }

@@ -7,6 +7,7 @@ import ChordsView from './chords/ChordsView'
 import MetronomeView from './metronome/MetronomeView'
 import ExercisesView from './exercises/ExercisesView'
 import TrialBanner from './premium/TrialBanner'
+import { Card } from './ui/Card'
 import { SuperUserProvider } from '@/contexts/SuperUserContext'
 import SuperUserBadge from './superuser/SuperUserBadge'
 import type { AccessLevel } from '@/types/subscription'
@@ -106,7 +107,7 @@ export default function DashboardContent({
       <SuperUserBadge />
 
       {/* Tab bar */}
-      <div className="bg-warm-panel dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-surface border-b border-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex" aria-label="Dashboard tabs">
             {TABS.map((tab) => (
@@ -116,7 +117,7 @@ export default function DashboardContent({
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-brand text-brand'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600'
+                    : 'border-transparent text-ink-muted hover:text-ink hover:border-line'
                 }`}
                 aria-current={activeTab === tab.id ? 'page' : undefined}
               >
@@ -133,11 +134,11 @@ export default function DashboardContent({
         <TrialBanner accessLevel={accessLevel} trialDaysLeft={trialDaysLeft} />
         {activeTab === 'music' && (
           <>
-            <div className="bg-warm-panel dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold text-ink">
                 Welcome, {userName}
               </h2>
-            </div>
+            </Card>
             <MusicDashboard />
           </>
         )}
