@@ -12,6 +12,7 @@ import {
 } from '@/lib/practice-storage'
 import PracticeSessionEditor from './PracticeSessionEditor'
 import PracticePlayer from './PracticePlayer'
+import PracticeStreakCard from './PracticeStreakCard'
 
 // ── View state ────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,7 @@ export default function PracticeView() {
   const [persistedIds, setPersistedIds] = useState<Set<string>>(new Set())
   const [view, setView] = useState<View>({ type: 'list' })
   const [loaded, setLoaded] = useState(false)
+  const [logSignal, setLogSignal] = useState(0)
 
   useEffect(() => {
     loadSessions()
@@ -224,6 +226,7 @@ export default function PracticeView() {
         session={view.session}
         startBlockIndex={view.startBlockIndex}
         onEnd={() => setView({ type: 'list' })}
+        onLogged={() => setLogSignal((n) => n + 1)}
       />
     )
   }
@@ -268,6 +271,8 @@ export default function PracticeView() {
           New session
         </button>
       </div>
+
+      <PracticeStreakCard reloadSignal={logSignal} />
 
       {/* Empty state */}
       {sessions.length === 0 ? (

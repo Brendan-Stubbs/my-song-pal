@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import type { PracticeSession, PracticeBlock } from '@/lib/practice-storage'
 import { exerciseDisplayName, formatTime } from '@/lib/practice-storage'
+import { logPractice } from '@/lib/practice-log-storage'
 import MetronomePanel from './MetronomePanel'
+import PracticeExerciseTool from './PracticeExerciseTool'
 
 // ── Sound cues ────────────────────────────────────────────────────────────────
 
@@ -130,15 +132,38 @@ interface PracticePlayerProps {
   session: PracticeSession
   startBlockIndex: number
   onEnd: () => void
+  /** Called once when a session's practice has been logged (>= 1 min). */
+  onLogged?: () => void
 }
 
-export default function PracticePlayer({ session, startBlockIndex, onEnd }: PracticePlayerProps) {
+export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogged }: PracticePlayerProps) {
   const [state, setState] = useState<TimerState>(() => createInitialState(session, startBlockIndex))
   const [metronomeOn, setMetronomeOn] = useState(false)
 
   const endCueFiredRef = useRef(false)
   const exerciseTransitionRef = useRef(false)
   const sessionStartCueFiredRef = useRef(false)
+  const elapsedSecondsRef = useRef(0)
+  const blocksCompletedRef = useRef(0)
+  const loggedRef = useRef(false)
+
+  function logSessionOnce() {
+    if (loggedRef.current) return
+    const minutes = Math.round(elapsedSecondsRef.current / 60)
+    if (minutes < 1) return
+    loggedRef.current = true
+    void logPractice({
+      sessionId: session.id,
+      sessionName: session.name,
+      minutes,
+      blocksCompleted: blocksCompletedRef.current,
+    }).then(() => onLogged?.())
+  }
+
+  function handleEnd() {
+    logSessionOnce()
+    onEnd()
+  }
 
   useEffect(() => {
     if (sessionStartCueFiredRef.current) return
@@ -150,6 +175,7 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
     if (state.isPaused || state.isComplete || state.blockEnded || state.exerciseTransitioning) return
 
     const id = setInterval(() => {
+      elapsedSecondsRef.current += 1
       setState((prev) => {
         if (prev.isPaused || prev.isComplete || prev.blockEnded || prev.exerciseTransitioning) return prev
 
@@ -219,9 +245,15 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
     if (endCueFiredRef.current) return
     endCueFiredRef.current = true
 
+    blocksCompletedRef.current += 1
     playBlockEndCue()
     setMetronomeOn(false)
   }, [state.blockEnded])
+
+  useEffect(() => {
+    if (state.isComplete) logSessionOnce()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.isComplete])
 
   function togglePause() {
     setState((prev) => ({ ...prev, isPaused: !prev.isPaused }))
@@ -273,6 +305,10 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
   const displayName = onExercise
     ? getSegmentDisplayName(currentBlock, state.exerciseIndex)
     : currentBlock?.name
+  const activeExercise = onExercise ? currentExercises[state.exerciseIndex] : undefined
+  const activeLink =
+    activeExercise?.link && activeExercise.link.kind !== 'free' ? activeExercise.link : undefined
+  const toolPaused = state.isPaused || state.blockEnded || state.exerciseTransitioning
 
   if (state.isComplete) {
     return (
@@ -287,7 +323,7 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
           Great work. You completed <span className="font-medium text-gray-700 dark:text-gray-200">{session.name}</span>.
         </p>
         <button
-          onClick={onEnd}
+          onClick={handleEnd}
           className="px-7 py-2.5 rounded-md bg-brand text-white font-medium hover:bg-brand/90 transition-colors"
         >
           Done
@@ -300,7 +336,7 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <button
-          onClick={onEnd}
+          onClick={handleEnd}
           className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -458,6 +494,14 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd }: Prac
           </div>
         )}
       </div>
+
+      {activeLink && !state.blockEnded && (
+        <PracticeExerciseTool
+          key={`${state.blockIndex}-${state.exerciseIndex}`}
+          link={activeLink}
+          paused={toolPaused}
+        />
+      )}
 
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-4">
         <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">

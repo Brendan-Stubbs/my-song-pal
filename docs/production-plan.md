@@ -108,27 +108,35 @@ interface PracticeExercise {
 Persisted for free (blocks are already JSONB in `practice_sessions.blocks`); bump a
 schema-version field inside the JSON for safety.
 
+Done: `ExerciseLink` union added to `lib/practice-storage.ts` (additive, `link?`; existing
+JSONB sessions still parse). `exerciseDisplayName` falls back to a tool-derived name.
+
 ### Editor UX (`PracticeSessionEditor`)
-- [ ] Each exercise row gets an **"Attach"** dropdown (Metronome loop ▸ / Scale ▸ /
-      Chord drill ▸ / Ear training / Free) with a compact inline config that reuses
-      existing pickers.
+- [x] Each exercise row gets an **"Attach"** dropdown (No tool / Metronome loop / Scale /
+      Chord drill / Ear training / Fretboard trainer) with a compact inline config
+      (`components/practice/ExerciseLinkConfig.tsx`) — loop picker, root+scale selects,
+      chord chip builder + changes/min, interval/mode toggle. Loops loaded via `loadLoops()`.
 
 ### Player UX (`PracticePlayer`)
-- [ ] When an exercise has a `link`, render the relevant tool **inline above the timer**:
-  - `metronome` → auto-load + start the loop with count-in (reuse `useLoopScheduler`).
-  - `scale` → render on a fretboard diagram (reuse `FretboardDiagram`).
-  - `chord-drill` → show the chord sequence changing on a timer.
-  - `ear-training` → embed the trainer.
-  - `free` → current label + notes.
-- Keep the existing timer + transitions as-is.
+- [x] When an exercise has a `link`, render the relevant tool **inline above the timeline**
+      (`components/practice/PracticeExerciseTool.tsx`, keyed per exercise):
+  - `metronome` → auto-load loop by id + `useLoopScheduler` with count-in; pauses with the timer.
+  - `scale` → `FretboardDiagram` via `getFretboardNotes`.
+  - `chord-drill` → chord sequence cycling on a timer (changes/min), shows current + next.
+  - `ear-training` → embeds `IntervalTrainer` / `ModeTrainer`.
+  - `fretboard-trainer` → embeds `FretboardTrainer`.
+  - `free` → current label + notes (unchanged).
+- Existing timer + transitions kept as-is.
 
 ---
 
 ## 5. Additional practice features (useful, not gimmicky)
 
-- [ ] **Practice history / streak**: new `practice_log` table (session id, date, minutes,
-      blocks completed); surface simple weekly summary.
-- [ ] **Resume where you left off**: persist in-progress player state across refresh/lock.
+- [x] **Practice history / streak**: `practice_log` table (migration `009`), storage lib
+      `lib/practice-log-storage.ts` (dual Supabase/localStorage, `computePracticeStats`),
+      logged on session complete/end (≥1 min), surfaced via `PracticeStreakCard`
+      (current streak, this-week minutes, totals) atop the sessions list.
+- [ ] **Resume where you left off**: persist in-progress player state across refresh/lock. *(Phase 4)*
 - [ ] **Per-exercise target BPM progression** for metronome-linked exercises (ties into
       existing `practiceMode`/`targetBpm`).
 - [ ] **Keep-screen-awake** (`navigator.wakeLock`) during a session.
@@ -194,13 +202,16 @@ interface MovableShape {
   addedAt: number
 }
 ```
-- [ ] Slide the neck by adding a `basePosition` (1–12) at display time (diagram handles it).
-- [ ] Relative naming by default; optionally compute the absolute name when parked at a fret
-      (via `lib/chord-finder.ts` / tonal).
-- [ ] Capture UX using existing `FretboardNotePicker`/`InteractiveFretboard`: tap a shape,
-      mark the root string, name it.
-- [ ] New `movable_shapes` table mirroring `chord_book` RLS.
-- [ ] Keep the existing absolute book; movable shapes = second section in the Book tab.
+- [x] Slide the neck by a `basePosition` (1–12) stepper at display time (`MovableShapeCard`,
+      `shapeToVoicing`); position clamped so the shape stays on the 12-fret window.
+- [x] Relative naming by default (user names the grip). Absolute-name inference left as a
+      future nicety.
+- [x] Capture UX: dedicated per-string grid picker (`MovableShapeEditor`, in a `Modal`) —
+      tap a fret offset per string, mute strings, mark the root string, optional base-fret
+      barre, live `ChordDiagramCard` preview.
+- [x] New `movable_shapes` table (migration `009`) mirroring `chord_book` RLS; storage lib
+      `lib/movable-shape-storage.ts` (dual Supabase/localStorage).
+- [x] Kept the existing absolute book; movable shapes = second section in the Book tab.
 
 ---
 
@@ -287,8 +298,11 @@ whether to keep the 6-month tier.
       `subscription` (§10).
 
 **Phase 2 — Complete the core features**
-- [ ] Practice: exercises-as-configured-blocks (§4) + practice history/streak (§5).
-- [ ] Chord book: movable/relative shapes (§8).
+- [x] Practice: exercises-as-configured-blocks (§4) + practice history/streak (§5).
+- [x] Chord book: movable/relative shapes (§8).
+  - Note: requires `npm run db:push` to create the `practice_log` + `movable_shapes` tables
+    for authenticated users (guests use localStorage; authed clients fall back gracefully
+    until the migration is applied).
 
 **Phase 3 — Monetise**
 - [ ] Provider + checkout + webhook + server-side entitlement + billing portal (§9).

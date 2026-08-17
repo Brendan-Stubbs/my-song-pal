@@ -3,6 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { PracticeSession, PracticeBlock, PracticeExercise } from '@/lib/practice-storage'
 import { createBlock, createExercise, exerciseTotalMinutes, exerciseDisplayName, totalMinutes, formatDuration } from '@/lib/practice-storage'
+import type { MetronomeLoop } from '@/types/metronome-loop'
+import { loadLoops } from '@/lib/metronome-loop-storage'
+import ExerciseLinkConfig from './ExerciseLinkConfig'
 import {
   DndContext,
   closestCenter,
@@ -23,12 +26,13 @@ import { CSS } from '@dnd-kit/utilities'
 
 interface BlockRowProps {
   block: PracticeBlock
+  loops: MetronomeLoop[]
   onChange: (partial: Partial<PracticeBlock>) => void
   onDelete: () => void
   onStartHere: () => void
 }
 
-function SortableBlockRow({ block, onChange, onDelete, onStartHere }: BlockRowProps) {
+function SortableBlockRow({ block, loops, onChange, onDelete, onStartHere }: BlockRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: block.id })
 
@@ -213,6 +217,13 @@ function SortableBlockRow({ block, onChange, onDelete, onStartHere }: BlockRowPr
                       </svg>
                     </button>
                   </div>
+                  <div className="pt-1">
+                    <ExerciseLinkConfig
+                      link={exercise.link}
+                      loops={loops}
+                      onChange={(link) => updateExercise(exercise.id, { link })}
+                    />
+                  </div>
                   {!exercise.name.trim() && (
                     <p className="text-[10px] text-gray-400 dark:text-gray-500">
                       Untitled — will show as &ldquo;{exerciseDisplayName(exercise, index)}&rdquo; during practice
@@ -302,11 +313,16 @@ export default function PracticeSessionEditor({
   const [draft, setDraft] = useState(session)
   const [savedSnapshot, setSavedSnapshot] = useState(session)
   const [saving, setSaving] = useState(false)
+  const [loops, setLoops] = useState<MetronomeLoop[]>([])
 
   useEffect(() => {
     setDraft(session)
     setSavedSnapshot(session)
   }, [session])
+
+  useEffect(() => {
+    void loadLoops().then(setLoops).catch(() => setLoops([]))
+  }, [])
 
   const isDirty = useMemo(
     () => JSON.stringify(draft) !== JSON.stringify(savedSnapshot),
@@ -422,6 +438,7 @@ export default function PracticeSessionEditor({
                 <SortableBlockRow
                   key={block.id}
                   block={block}
+                  loops={loops}
                   onChange={(partial) => updateBlock(block.id, partial)}
                   onDelete={() => deleteBlock(block.id)}
                   onStartHere={() => onStart(draft, index)}

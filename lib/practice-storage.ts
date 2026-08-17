@@ -7,13 +7,30 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import type { ChordQuality } from '@/data/open-chord-voicings'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Optional binding from a practice exercise to a real tool in the app. When
+ * present, the player renders that tool inline. `undefined` (or `kind: 'free'`)
+ * keeps the original free-text-label behaviour, so existing sessions still parse.
+ */
+export type ExerciseLink =
+  | { kind: 'free' }
+  | { kind: 'metronome'; loopId: string }
+  | { kind: 'scale'; root: string; scaleId: string }
+  | { kind: 'chord-drill'; chords: { root: string; quality: ChordQuality }[]; changesPerMin: number }
+  | { kind: 'ear-training'; mode: 'intervals' | 'modes' }
+  | { kind: 'fretboard-trainer' }
+
+export type ExerciseLinkKind = ExerciseLink['kind']
 
 export interface PracticeExercise {
   id: string
   name: string
   durationMinutes: number
+  link?: ExerciseLink
 }
 
 export interface PracticeBlock {
@@ -186,7 +203,37 @@ export function exerciseTotalMinutes(exercises: PracticeExercise[]): number {
 }
 
 export function exerciseDisplayName(exercise: PracticeExercise, index: number): string {
-  return exercise.name.trim() || `Exercise ${index + 1}`
+  if (exercise.name.trim()) return exercise.name.trim()
+  const fromLink = exercise.link && exerciseLinkDefaultName(exercise.link)
+  return fromLink || `Exercise ${index + 1}`
+}
+
+export const EXERCISE_LINK_LABELS: Record<ExerciseLinkKind, string> = {
+  free: 'No tool',
+  metronome: 'Metronome loop',
+  scale: 'Scale',
+  'chord-drill': 'Chord drill',
+  'ear-training': 'Ear training',
+  'fretboard-trainer': 'Fretboard trainer',
+}
+
+/** A sensible auto-name for an exercise based on its attached tool. */
+export function exerciseLinkDefaultName(link: ExerciseLink): string {
+  switch (link.kind) {
+    case 'scale':
+      return `${link.root} ${link.scaleId}`
+    case 'chord-drill':
+      return link.chords.length ? `Chord drill (${link.chords.length})` : 'Chord drill'
+    case 'ear-training':
+      return link.mode === 'intervals' ? 'Interval training' : 'Mode training'
+    case 'fretboard-trainer':
+      return 'Fretboard trainer'
+    case 'metronome':
+      return 'Metronome loop'
+    case 'free':
+    default:
+      return ''
+  }
 }
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────

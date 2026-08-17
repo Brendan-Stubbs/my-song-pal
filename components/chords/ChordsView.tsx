@@ -8,6 +8,13 @@ import {
   addChordToBook,
   removeChordFromBook,
 } from '@/lib/chord-book-storage'
+import {
+  type MovableShape,
+  type ShapeGeometry,
+  loadMovableShapes,
+  addMovableShape,
+  removeMovableShape,
+} from '@/lib/movable-shape-storage'
 import ExploreTab from './ExploreTab'
 import ChordBookTab from './ChordBookTab'
 import PremiumGate, { PremiumBadge } from '@/components/premium/PremiumGate'
@@ -27,9 +34,11 @@ interface ChordsViewProps {
 export default function ChordsView({ isPremium }: ChordsViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('explore')
   const [chordBook, setChordBook] = useState<SavedChord[]>([])
+  const [shapes, setShapes] = useState<MovableShape[]>([])
 
   useEffect(() => {
     loadChordBook().then(setChordBook).catch(() => setChordBook([]))
+    loadMovableShapes().then(setShapes).catch(() => setShapes([]))
   }, [])
 
   async function handleAdd(root: string, quality: ChordQuality) {
@@ -40,6 +49,16 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
   async function handleRemove(id: string) {
     const updated = await removeChordFromBook(chordBook, id)
     setChordBook(updated)
+  }
+
+  async function handleAddShape(name: string, geometry: ShapeGeometry) {
+    const updated = await addMovableShape(shapes, name, geometry)
+    setShapes(updated)
+  }
+
+  async function handleRemoveShape(id: string) {
+    const updated = await removeMovableShape(shapes, id)
+    setShapes(updated)
   }
 
   const chordBookFeature = PREMIUM_FEATURES.find((f) => f.key === 'chord_book')!
@@ -119,8 +138,11 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
           >
             <ChordBookTab
               chordBook={chordBook}
+              shapes={shapes}
               onRemove={handleRemove}
               onGoExplore={() => setSubTab('explore')}
+              onAddShape={handleAddShape}
+              onRemoveShape={handleRemoveShape}
             />
           </PremiumGate>
         )}
