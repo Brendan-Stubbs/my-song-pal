@@ -215,7 +215,7 @@ export default function LoopPlayer({ loop, engineId, onEdit }: LoopPlayerProps) 
               onChange={(e) => setTargetInput(e.target.value)}
               onBlur={commitTargetBpm}
               onKeyDown={(e) => { if (e.key === 'Enter') commitTargetBpm() }}
-              className="w-14 text-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-1.5 py-0.5 text-sm outline-none focus:border-brand tabular-nums"
+              className="w-14 text-center rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-900 dark:text-white px-1.5 py-0.5 text-sm outline-none focus:border-brand tabular-nums"
               aria-label="Target BPM"
             />
             <button

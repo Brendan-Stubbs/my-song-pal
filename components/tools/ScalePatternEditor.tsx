@@ -381,7 +381,7 @@ export default function ScalePatternEditor() {
               onChange={(e) =>
                 setSelectedScale((e.target.value as AvailableScale) || null)
               }
-              className="text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-2 py-1"
+              className="text-sm rounded border border-gray-300 dark:border-gray-600 bg-surface text-gray-900 dark:text-gray-100 px-2 py-1"
             >
               <option value="">— none —</option>
               {AVAILABLE_SCALES.map((s) => (
@@ -619,7 +619,7 @@ export default function ScalePatternEditor() {
           rows={Math.max(8, NUM_STRINGS + 3)}
           spellCheck={false}
           className={[
-            'w-full font-mono text-sm rounded-lg border bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 resize-y',
+            'w-full font-mono text-sm rounded-lg border bg-surface text-gray-900 dark:text-gray-100 p-4 resize-y',
             parseError
               ? 'border-red-400 dark:border-red-500'
               : 'border-gray-300 dark:border-gray-600',

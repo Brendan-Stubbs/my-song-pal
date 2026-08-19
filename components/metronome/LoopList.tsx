@@ -45,7 +45,7 @@ export default function LoopList({
             className={`group flex items-center gap-2 rounded-lg border px-3 py-2.5 cursor-pointer transition-colors ${
               isSelected
                 ? 'border-brand bg-brand/10 dark:bg-brand/10'
-                : 'border-gray-200 dark:border-gray-600 hover:border-brand bg-white dark:bg-gray-800'
+                : 'border-gray-200 dark:border-gray-600 hover:border-brand bg-surface'
             }`}
             onClick={() => onSelect(loop)}
           >

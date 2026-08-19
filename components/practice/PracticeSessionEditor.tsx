@@ -59,8 +59,18 @@ function SortableBlockRow({ block, loops, onChange, onDelete, onStartHere }: Blo
   }
 
   function addExercise() {
-    const exercises = [...(block.exercises ?? []), createExercise()]
-    updateExercises(exercises)
+    const existing = block.exercises ?? []
+    const isFirst = existing.length === 0
+    // When first breaking a block into exercises, carry over its duration and any
+    // block-level tool so nothing is lost, then clear the block-level link.
+    const created = createExercise('', isFirst ? block.durationMinutes : 5)
+    if (isFirst && block.link && block.link.kind !== 'free') created.link = block.link
+    const exercises = [...existing, created]
+    onChange({
+      exercises,
+      durationMinutes: exerciseTotalMinutes(exercises),
+      link: isFirst ? undefined : block.link,
+    })
     setExercisesOpen(true)
   }
 
@@ -152,26 +162,45 @@ function SortableBlockRow({ block, loops, onChange, onDelete, onStartHere }: Blo
           )}
         </div>
 
-        {/* Exercises */}
+        {/* Block-level tool — a block can simply be a configured exercise.
+            Hidden once the block is broken into exercises (they carry their own tools). */}
+        {!hasExercises && (
+          <ExerciseLinkConfig
+            link={block.link}
+            loops={loops}
+            onChange={(link) => onChange({ link })}
+          />
+        )}
+
+        {/* Exercises (optional subdivision) */}
         <div>
-          <button
-            onClick={() => setExercisesOpen((v) => !v)}
-            className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-brand dark:hover:text-brand transition-colors"
-          >
-            <svg
-              width="10" height="10" viewBox="0 0 10 10"
-              fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
-              style={{ transform: exercisesOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+          {hasExercises ? (
+            <button
+              onClick={() => setExercisesOpen((v) => !v)}
+              className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-brand dark:hover:text-brand transition-colors"
             >
-              <polyline points="3,2 7,5 3,8" />
-            </svg>
-            {exercisesOpen
-              ? 'Hide exercises'
-              : hasExercises
-              ? `${block.exercises!.length} exercise${block.exercises!.length !== 1 ? 's' : ''}`
-              : 'Add exercises'}
-          </button>
-          {exercisesOpen && (
+              <svg
+                width="10" height="10" viewBox="0 0 10 10"
+                fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"
+                style={{ transform: exercisesOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+              >
+                <polyline points="3,2 7,5 3,8" />
+              </svg>
+              {exercisesOpen
+                ? 'Hide exercises'
+                : `${block.exercises!.length} exercise${block.exercises!.length !== 1 ? 's' : ''}`}
+            </button>
+          ) : (
+            <button
+              onClick={addExercise}
+              title="Split this block into several timed exercises"
+              className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-brand dark:hover:text-brand transition-colors"
+            >
+              <span className="text-sm leading-none">+</span>
+              Break into exercises
+            </button>
+          )}
+          {hasExercises && exercisesOpen && (
             <div className="mt-2 space-y-3 pl-3 border-l-2 border-gray-100 dark:border-gray-700">
               {(block.exercises ?? []).map((exercise, index) => (
                 <div key={exercise.id} className="space-y-1">

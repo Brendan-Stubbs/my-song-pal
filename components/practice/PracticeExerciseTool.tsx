@@ -14,6 +14,9 @@ import { getChordVoicing, buildChordSymbol } from '@/data/open-chord-voicings'
 import IntervalTrainer from '@/components/ear-training/IntervalTrainer'
 import ModeTrainer from '@/components/ear-training/ModeTrainer'
 import FretboardTrainer from '@/components/trainers/FretboardTrainer'
+import MelodyMaker from '@/components/melody/MelodyMaker'
+import { createMelody } from '@/lib/melody-storage'
+import type { Melody } from '@/types/melody'
 
 const STANDARD_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4']
 
@@ -45,6 +48,12 @@ export default function PracticeExerciseTool({ link, paused, progress }: Props) 
       return (
         <ToolShell>
           <FretboardTrainer />
+        </ToolShell>
+      )
+    case 'melody-maker':
+      return (
+        <ToolShell>
+          <MelodyMakerTool root={link.root} scaleId={link.scaleId} />
         </ToolShell>
       )
     case 'free':
@@ -265,4 +274,31 @@ function ChordDrillTool({
       </div>
     </div>
   )
+}
+
+// ── Melody maker ────────────────────────────────────────────────────────────
+
+function MelodyMakerTool({ root, scaleId }: { root: string; scaleId: string }) {
+  const [melody, setMelody] = useState<Melody>(() => {
+    const m = createMelody('Practice melody', root, scaleId)
+    return m
+  })
+  const [engineId, setEngineId] = useState<AudioEngineId>(DEFAULT_AUDIO_ENGINE)
+
+  // Re-seed if the linked key/scale changes.
+  useEffect(() => {
+    setMelody(createMelody('Practice melody', root, scaleId))
+  }, [root, scaleId])
+
+  useEffect(() => {
+    let active = true
+    void loadDashboardState().then((s) => {
+      if (active && s?.audioEngine) setEngineId(coerceAudioEngineId(s.audioEngine))
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  return <MelodyMaker melody={melody} engineId={engineId} onChange={setMelody} />
 }

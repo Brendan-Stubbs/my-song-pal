@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>13 · Jungle Pals — My Song Pal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#ecfbef; --paper:#ffffff; --paper2:#f2faf0;
+  --ink:#1f3a2e; --muted:#5f7a6a; --faint:#93a99b;
+  --line:#d6ecd9; --line2:#e6f4e6;
+  --green:#2fb457; --coral:#ff6f5e; --yellow:#ffc933; --sky:#35b6e8;
+  --brand:#2fb457; --brand-soft:#d9f5e2;
+  --radius:24px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:
+  radial-gradient(900px 500px at 100% -10%, #fff2cf 0%, transparent 55%),
+  radial-gradient(800px 520px at -10% 110%, #d3f1ff 0%, transparent 55%),
+  var(--bg);color:var(--ink);font-family:'Baloo 2',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit;text-decoration:none;}
+.shell{max-width:1100px;margin:0 auto;padding:22px 26px 80px;}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:20px;padding:12px 18px;background:var(--paper);border:2px solid var(--line);border-radius:999px;box-shadow:0 14px 30px -20px rgba(47,180,87,.55);}
+.brand{white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:11px;font-weight:800;font-size:20px;letter-spacing:-.01em;}
+.logo{width:42px;height:42px;border-radius:50%;background:linear-gradient(150deg,var(--green),#7ad06a);display:grid;place-items:center;color:#fff;box-shadow:0 8px 16px -6px rgba(47,180,87,.8);}
+.logo svg{width:22px;height:22px;}
+nav{display:flex;gap:4px;margin-left:8px;}
+nav a{padding:9px 16px;border-radius:999px;font-size:15px;font-weight:600;color:var(--muted);}
+nav a.active{background:var(--brand-soft);color:#1c8a42;}
+nav a:hover:not(.active){color:var(--ink);}
+.spacer{flex:1;}
+.streak{display:flex;align-items:center;gap:8px;background:var(--yellow);border:2px solid #ffd766;padding:6px 8px 6px 12px;border-radius:999px;font-weight:800;font-size:14px;color:#7a5600;}
+.streak .lvl{background:#fff;border-radius:999px;padding:2px 9px;font-size:12px;color:#b07d16;}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(150deg,var(--coral),#ffa07a);color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 6px 14px -6px rgba(255,111,94,.8);}
+
+/* header */
+.pagehead{margin:34px 6px 22px;display:flex;align-items:center;gap:16px;}
+.mascot{width:64px;height:64px;border-radius:22px;background:linear-gradient(150deg,var(--green),#8ad678);display:grid;place-items:center;font-size:34px;box-shadow:0 12px 24px -12px rgba(47,180,87,.8);flex-shrink:0;transform:rotate(-4deg);}
+.pagehead .kicker{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:var(--coral);font-weight:600;}
+.pagehead h1{margin:6px 0 4px;font-size:44px;font-weight:800;letter-spacing:-.01em;}
+.pagehead p{margin:0;color:var(--muted);font-size:16px;font-weight:600;}
+
+.layout{display:grid;grid-template-columns:1.55fr 1fr;gap:22px;align-items:start;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}}
+
+.card{background:var(--paper);border:2px solid var(--line);border-radius:var(--radius);box-shadow:0 18px 36px -26px rgba(47,180,87,.5);}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 14px;}
+.card-h h2{font-size:23px;font-weight:800;margin:0;}
+.card-h .sub{font-size:14px;color:var(--faint);margin-top:2px;font-weight:600;}
+.pill{font-size:13px;font-weight:800;padding:6px 13px;border-radius:999px;background:var(--brand-soft);color:#1c8a42;}
+
+/* practice blocks = adventure steps */
+.blocks{padding:4px 14px 8px;}
+.block{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:18px;transition:background .15s;}
+.block:hover{background:var(--paper2);}
+.bnum{width:38px;height:38px;border-radius:50%;background:var(--brand-soft);border:2px solid #bfeccb;display:grid;place-items:center;font-weight:800;font-size:15px;color:#1c8a42;}
+.block:nth-child(2) .bnum{background:#d6eeff;border-color:#b6def5;color:#1583ba;}
+.block:nth-child(3) .bnum{background:#ffe2dd;border-color:#ffc7bd;color:#e0503f;}
+.binfo{flex:1;min-width:0;}
+.bname{font-weight:700;font-size:16.5px;}
+.bmeta{font-size:13px;color:var(--faint);margin-top:2px;display:flex;gap:8px;align-items:center;font-weight:600;}
+.chip{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#d6eeff;color:#1583ba;}
+.chip.metro{background:#ffe2dd;color:#e0503f;}
+.bdur{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap;background:var(--paper2);padding:4px 10px;border-radius:999px;}
+.star{color:var(--yellow);}
+.cardfoot{padding:16px 22px 22px;display:flex;gap:12px;align-items:center;}
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:16px;padding:13px 26px;border-radius:999px;display:inline-flex;align-items:center;gap:9px;transition:transform .12s,box-shadow .15s,background .15s;}
+.btn:active{transform:translateY(2px);}
+.btn-primary{background:var(--green);color:#fff;box-shadow:0 12px 22px -10px rgba(47,180,87,.95);}
+.btn-primary:hover{background:#28a44d;}
+.btn-ghost{background:var(--paper2);color:#1c8a42;border:2px solid var(--line);}
+.btn-ghost:hover{border-color:var(--green);}
+
+/* timeline = trail */
+.timeline{margin-top:22px;padding:18px 20px;}
+.timeline .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--faint);margin-bottom:12px;}
+.tl{display:flex;gap:8px;align-items:center;}
+.tl div{height:12px;border-radius:999px;background:var(--line2);}
+.tl .a{flex:2;background:var(--green);}
+.tl .b{flex:1;background:var(--sky);}
+.tl .c{flex:1;background:var(--coral);}
+
+/* sidebar */
+.side{display:flex;flex-direction:column;gap:22px;}
+.metro{padding:24px;text-align:center;}
+.metro .bpm{font-weight:800;font-size:70px;line-height:1;letter-spacing:-.03em;color:var(--green);}
+.metro .bpmlbl{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.2em;}
+.beatdots{display:flex;justify-content:center;gap:10px;margin:18px 0;}
+.beatdots span{width:14px;height:14px;border-radius:50%;background:var(--line);}
+.beatdots span.on{background:var(--green);box-shadow:0 0 0 5px var(--brand-soft);}
+.metrorow{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px;}
+.round{width:50px;height:50px;border-radius:50%;border:2px solid var(--line);background:var(--paper2);display:grid;place-items:center;cursor:pointer;color:#1c8a42;font-size:20px;font-weight:800;}
+.play{width:70px;height:70px;border-radius:50%;background:linear-gradient(150deg,var(--green),#7ad06a);color:#fff;display:grid;place-items:center;box-shadow:0 14px 26px -10px rgba(47,180,87,.95);cursor:pointer;}
+.sig{margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
+
+/* chord card */
+.chord{padding:20px 22px;}
+.chordtop{display:flex;justify-content:space-between;align-items:baseline;}
+.chordtop h3{font-size:20px;margin:0;font-weight:800;}
+.chordtop .q{font-size:12px;color:var(--faint);}
+.frets{margin:12px auto 4px;display:block;}
+.chordfoot{display:flex;gap:6px;margin-top:10px;}
+.vv{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px 0;border-radius:999px;background:var(--paper2);border:2px solid var(--line);color:var(--muted);}
+.vv.sel{background:var(--brand-soft);color:#1c8a42;border-color:#bfeccb;}
+
+/* stats = trophies */
+.stats{padding:20px 22px;}
+.statrow{display:flex;gap:12px;}
+.stat{flex:1;text-align:center;padding:16px 8px;border-radius:20px;}
+.stat:nth-child(1){background:var(--brand-soft);}
+.stat:nth-child(2){background:#d6eeff;}
+.stat:nth-child(3){background:#fff2cf;}
+.stat .v{font-weight:800;font-size:30px;}
+.stat:nth-child(1) .v{color:#1c8a42;}
+.stat:nth-child(2) .v{color:#1583ba;}
+.stat:nth-child(3) .v{color:#b07d16;}
+.stat .k{font-size:12px;color:var(--muted);margin-top:2px;font-weight:700;}
+
+/* tokens */
+.tokens{margin-top:34px;background:var(--paper);border:2px solid var(--line);border-radius:var(--radius);padding:24px;}
+.tokens h4{margin:0 0 16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);}
+.tokgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:24px;}
+.sw{display:flex;gap:8px;flex-wrap:wrap;}
+.sw i{width:44px;height:44px;border-radius:14px;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);}
+.typerow{display:flex;flex-direction:column;gap:6px;}
+.typerow .xl{font-weight:800;font-size:28px;}
+.typerow .md{font-weight:600;font-size:16px;}
+.typerow .sm{font-size:14px;color:var(--muted);font-weight:600;}
+.typerow .mn{font-family:'JetBrains Mono';font-size:12px;color:var(--green);}
+.btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></span>My Song Pal</div>
+    <nav>
+      <a class="active">Practice</a><a>Metronome</a><a>Chords</a><a>Exercises</a>
+    </nav>
+    <span class="spacer"></span>
+    <span class="streak">🔥 12-day streak <span class="lvl">Lv 4</span></span>
+    <span class="avatar">BS</span>
+  </div>
+
+  <div class="pagehead">
+    <div class="mascot">🦜</div>
+    <div>
+      <span class="kicker">Tuesday · Adventure time</span>
+      <h1>Today's practice</h1>
+      <p>Your quest for today: 20 minutes, three steps to clear.</p>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- MAIN -->
+    <div>
+      <div class="card">
+        <div class="card-h">
+          <div><h2>Morning Warm-Up</h2><div class="sub">Last played yesterday · 20 min total</div></div>
+          <span class="pill">3 steps</span>
+        </div>
+        <div class="blocks">
+          <div class="block">
+            <div class="bnum">1</div>
+            <div class="binfo"><div class="bname">Warm Up</div><div class="bmeta">Wiggly finger runs, relaxed hands <span class="chip">Notes</span></div></div>
+            <div class="bdur">10 min</div>
+          </div>
+          <div class="block">
+            <div class="bnum">2</div>
+            <div class="binfo"><div class="bname">A minor pentatonic</div><div class="bmeta"><span class="chip">Scale tool</span> Position 1</div></div>
+            <div class="bdur">5 min</div>
+          </div>
+          <div class="block">
+            <div class="bnum">3</div>
+            <div class="binfo"><div class="bname">C major @ 96 bpm</div><div class="bmeta"><span class="chip metro">Metronome loop</span></div></div>
+            <div class="bdur">5 min</div>
+          </div>
+        </div>
+        <div class="cardfoot">
+          <button class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor"><polygon points="2,1 12,7 2,13"/></svg> Start quest</button>
+          <button class="btn btn-ghost">Edit</button>
+        </div>
+      </div>
+
+      <div class="card timeline">
+        <div class="lbl">Session trail</div>
+        <div class="tl"><div class="a"></div><div class="b"></div><div class="c"></div></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="side">
+      <div class="card metro">
+        <div class="bpmlbl">Tempo</div>
+        <div class="bpm">120</div>
+        <div class="beatdots"><span class="on"></span><span></span><span></span><span></span></div>
+        <div class="metrorow">
+          <div class="round">–</div>
+          <div class="play"><svg width="24" height="24" viewBox="0 0 22 22" fill="currentColor"><polygon points="5,2 19,11 5,20"/></svg></div>
+          <div class="round">+</div>
+        </div>
+        <div class="sig">4 / 4 · tap tempo</div>
+      </div>
+
+      <div class="card chord">
+        <div class="chordtop"><h3>C major</h3><span class="q">open · x32010</span></div>
+        <svg class="frets" width="150" height="150" viewBox="0 0 150 150"></svg>
+        <div class="chordfoot"><span class="vv sel">Open</span><span class="vv">Barre A</span><span class="vv">Triad</span></div>
+      </div>
+
+      <div class="card stats">
+        <div class="statrow">
+          <div class="stat"><div class="v">12</div><div class="k">Day streak</div></div>
+          <div class="stat"><div class="v">4</div><div class="k">This week</div></div>
+          <div class="stat"><div class="v">210</div><div class="k">Minutes</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOKENS -->
+  <div class="tokens">
+    <h4>Design tokens</h4>
+    <div class="tokgrid">
+      <div>
+        <div class="sw">
+          <i style="background:#2fb457"></i><i style="background:#ff6f5e"></i><i style="background:#ffc933"></i>
+          <i style="background:#35b6e8"></i><i style="background:#1f3a2e"></i><i style="background:#d9f5e2"></i>
+          <i style="background:#ffffff"></i><i style="background:#ecfbef"></i>
+        </div>
+      </div>
+      <div class="typerow">
+        <span class="xl">Baloo 2 — chunky &amp; round</span>
+        <span class="md">Baloo 2 — interface &amp; body</span>
+        <span class="sm">Adventure vibes with badges, levels and a pal.</span>
+        <span class="mn">JetBrains Mono · 120 BPM</span>
+      </div>
+      <div>
+        <div class="btns">
+          <button class="btn btn-primary">Start quest</button>
+          <button class="btn btn-ghost">Secondary</button>
+          <span class="chip metro">Metronome</span>
+          <span class="chip">Scale</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// simple chord diagram renderer (C major: x32010)
+function drawChord(svg, frets, fingers){
+  const NS='http://www.w3.org/2000/svg', W=150, padX=22, padTop=26, gW=(W-padX*2), gH=100, strings=6, fretsN=4;
+  const sx=gW/(strings-1), fy=gH/fretsN;
+  function line(x1,y1,x2,y2,w,c){const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',c||'#d6ecd9');l.setAttribute('stroke-width',w||1);l.setAttribute('stroke-linecap','round');svg.appendChild(l);}
+  line(padX,padTop,padX+gW,padTop,5,'#1c8a42');
+  for(let f=1;f<=fretsN;f++) line(padX,padTop+fy*f,padX+gW,padTop+fy*f,2,'#cfe8d4');
+  for(let s=0;s<strings;s++) line(padX+sx*s,padTop,padX+sx*s,padTop+gH,2,'#cfe8d4');
+  frets.forEach((fr,i)=>{
+    const x=padX+sx*i;
+    if(fr===-1){const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',padTop-8);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','13');t.setAttribute('fill','#93a99b');t.textContent='×';svg.appendChild(t);}
+    else if(fr===0){const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',padTop-9);c.setAttribute('r',5);c.setAttribute('fill','none');c.setAttribute('stroke','#93a99b');c.setAttribute('stroke-width',1.8);svg.appendChild(c);}
+    else{const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',padTop+fy*fr-fy/2);c.setAttribute('r',10);c.setAttribute('fill','#2fb457');svg.appendChild(c);
+      const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',padTop+fy*fr-fy/2+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','12');t.setAttribute('fill','#fff');t.setAttribute('font-weight','700');t.textContent=fingers[i]||'';svg.appendChild(t);}
+  });
+}
+document.querySelectorAll('.frets').forEach(s=>drawChord(s,[-1,3,2,0,1,0],['','3','2','','1','']));
+</script>
+</body>
+</html>

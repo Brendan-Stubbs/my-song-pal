@@ -31,6 +31,21 @@ export function midiToFreq(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12)
 }
 
+/**
+ * Play several MIDI notes together as a chord. There's no true sustain in the
+ * engine layer, so "ringing" a chord just means a long `duration`. Notes fire
+ * simultaneously (no strum/rhythm).
+ */
+export function playChord(
+  instrument: Instrument,
+  midis: number[],
+  options: PlayNoteOptions = {},
+): void {
+  for (const midi of midis) {
+    instrument.playNote(midi, options)
+  }
+}
+
 export interface PlayNoteOptions {
   /** Seconds the note should sound for. */
   duration?: number

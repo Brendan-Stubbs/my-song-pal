@@ -16,6 +16,9 @@ interface BlockSpec {
   name: string
   minutes?: number
   notes?: string
+  /** Block-level tool (a block that is simply a configured exercise). */
+  link?: ExerciseLink
+  /** Optional subdivision into individually-timed exercises. */
   exercises?: ExerciseSpec[]
 }
 
@@ -42,6 +45,7 @@ function buildBlock(spec: BlockSpec): PracticeBlock {
     name: spec.name,
     durationMinutes: exercises?.length ? exerciseTotalMinutes(exercises) : spec.minutes ?? 5,
     notes: spec.notes ?? '',
+    link: exercises?.length ? undefined : spec.link,
     exercises,
   }
 }
@@ -68,13 +72,8 @@ export const PRACTICE_TEMPLATES: PracticeTemplate[] = [
         minutes: 5,
         notes: 'Slow chromatic runs (1-2-3-4). Relaxed hands, clean fretting, even tone.',
       },
-      {
-        name: 'Scales',
-        exercises: [
-          { name: 'A minor pentatonic', minutes: 5, link: { kind: 'scale', root: 'A', scaleId: 'pentatonic minor' } },
-          { name: 'C major', minutes: 5, link: { kind: 'scale', root: 'C', scaleId: 'major' } },
-        ],
-      },
+      { name: 'A minor pentatonic', minutes: 5, link: { kind: 'scale', root: 'A', scaleId: 'pentatonic minor' } },
+      { name: 'C major', minutes: 5, link: { kind: 'scale', root: 'C', scaleId: 'major' } },
     ],
   },
   {
@@ -88,19 +87,15 @@ export const PRACTICE_TEMPLATES: PracticeTemplate[] = [
         notes: 'Spider walks + string skipping. Metronome optional.',
       },
       {
+        // Subdivided to show the optional "break into exercises" mode.
         name: 'Scales & modes',
         exercises: [
           { name: 'C major', minutes: 8, link: { kind: 'scale', root: 'C', scaleId: 'major' } },
           { name: 'D dorian', minutes: 7, link: { kind: 'scale', root: 'D', scaleId: 'dorian' } },
         ],
       },
-      {
-        name: 'Ear training',
-        exercises: [
-          { name: 'Intervals', minutes: 5, link: { kind: 'ear-training', mode: 'intervals' } },
-          { name: 'Modes', minutes: 5, link: { kind: 'ear-training', mode: 'modes' } },
-        ],
-      },
+      { name: 'Interval training', minutes: 5, link: { kind: 'ear-training', mode: 'intervals' } },
+      { name: 'Mode training', minutes: 5, link: { kind: 'ear-training', mode: 'modes' } },
     ],
   },
   {
@@ -108,14 +103,8 @@ export const PRACTICE_TEMPLATES: PracticeTemplate[] = [
     name: 'Ear & Theory',
     description: '20 focused minutes of interval and mode recognition.',
     blocks: [
-      {
-        name: 'Intervals',
-        exercises: [{ name: 'Interval recognition', minutes: 10, link: { kind: 'ear-training', mode: 'intervals' } }],
-      },
-      {
-        name: 'Modes',
-        exercises: [{ name: 'Mode recognition', minutes: 10, link: { kind: 'ear-training', mode: 'modes' } }],
-      },
+      { name: 'Interval recognition', minutes: 10, link: { kind: 'ear-training', mode: 'intervals' } },
+      { name: 'Mode recognition', minutes: 10, link: { kind: 'ear-training', mode: 'modes' } },
     ],
   },
 ]

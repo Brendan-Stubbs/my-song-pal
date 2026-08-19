@@ -339,7 +339,7 @@ export default function TabEditor({
           <select
             value={tuningId}
             onChange={(e) => handleTuningChange(e.target.value)}
-            className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 cursor-pointer"
+            className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-surface text-gray-800 dark:text-gray-200 cursor-pointer"
           >
             {TUNINGS.map((t) => (
               <option key={t.id} value={t.id}>{t.name}</option>
@@ -414,7 +414,7 @@ export default function TabEditor({
                 key={d}
                 type="button"
                 onClick={() => keypadDigit(d)}
-                className="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm font-semibold hover:border-brand hover:text-brand transition-colors"
+                className="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-800 dark:text-gray-100 text-sm font-semibold hover:border-brand hover:text-brand transition-colors"
               >
                 {d}
               </button>
@@ -423,7 +423,7 @@ export default function TabEditor({
               type="button"
               onClick={() => removeAt(cursor)}
               title="Remove note"
-              className="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-500 hover:border-red-400 hover:text-red-500 transition-colors flex items-center justify-center"
+              className="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-500 hover:border-red-400 hover:text-red-500 transition-colors flex items-center justify-center"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M4 4.5l.6 8a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8" />
@@ -433,7 +433,7 @@ export default function TabEditor({
               type="button"
               onClick={() => toggleMuteAt(cursor)}
               title="Mute / unmute this note"
-              className="h-8 px-2 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-500 hover:border-brand hover:text-brand transition-colors flex items-center justify-center text-xs font-semibold"
+              className="h-8 px-2 rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-500 hover:border-brand hover:text-brand transition-colors flex items-center justify-center text-xs font-semibold"
             >
               Mute
             </button>

@@ -18,6 +18,7 @@ const KIND_ORDER: ExerciseLinkKind[] = [
   'chord-drill',
   'ear-training',
   'fretboard-trainer',
+  'melody-maker',
 ]
 
 function defaultLinkFor(kind: ExerciseLinkKind, loops: MetronomeLoop[]): ExerciseLink | undefined {
@@ -34,6 +35,8 @@ function defaultLinkFor(kind: ExerciseLinkKind, loops: MetronomeLoop[]): Exercis
       return { kind: 'ear-training', mode: 'intervals' }
     case 'fretboard-trainer':
       return { kind: 'fretboard-trainer' }
+    case 'melody-maker':
+      return { kind: 'melody-maker', root: 'A', scaleId: 'pentatonic minor' }
   }
 }
 
@@ -206,6 +209,35 @@ export default function ExerciseLinkConfig({ link, onChange, loops }: Props) {
 
       {link?.kind === 'fretboard-trainer' && (
         <p className="text-xs text-ink-muted">Note-finding drill will run during this exercise.</p>
+      )}
+
+      {/* Melody maker */}
+      {link?.kind === 'melody-maker' && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              aria-label="Melody key"
+              value={link.root}
+              onChange={(e) => onChange({ ...link, root: e.target.value })}
+              className={selectClass}
+            >
+              {keys.map((k) => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </select>
+            <select
+              aria-label="Melody scale"
+              value={link.scaleId}
+              onChange={(e) => onChange({ ...link, scaleId: e.target.value })}
+              className={selectClass}
+            >
+              {scales.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <p className="text-xs text-ink-muted">Opens a blank timeline seeded to this key & scale.</p>
+        </div>
       )}
     </div>
   )

@@ -216,9 +216,9 @@ export default function SongPanel({
 
                             {/* Variant picker popover */}
                             {isPickerOpen && (
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-3 min-w-[10rem]">
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1.5 z-50 bg-surface rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 p-3 min-w-[10rem]">
                                 {/* Small arrow */}
-                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-900 border-l border-t border-gray-200 dark:border-gray-600 rotate-45" />
+                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-surface border-l border-t border-gray-200 dark:border-gray-600 rotate-45" />
 
                                 <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
                                   Chord variant

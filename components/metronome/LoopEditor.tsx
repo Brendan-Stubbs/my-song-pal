@@ -71,7 +71,7 @@ export default function LoopEditor({ initial, onSave, onCancel, engineId }: Loop
 
   const labelCls = 'text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400'
   const selectCls =
-    'rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1.5 text-sm outline-none focus:border-brand'
+    'rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-900 dark:text-white px-2 py-1.5 text-sm outline-none focus:border-brand'
 
   return (
     <div className="space-y-6">
@@ -84,7 +84,7 @@ export default function LoopEditor({ initial, onSave, onCancel, engineId }: Loop
           value={loop.name}
           onChange={(e) => patch({ name: e.target.value })}
           placeholder="e.g. C# minor warmup"
-          className="w-full rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm outline-none focus:border-brand"
+          className="w-full rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-900 dark:text-white px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </div>
 
@@ -110,7 +110,7 @@ export default function LoopEditor({ initial, onSave, onCancel, engineId }: Loop
               onChange={(e) => setBpmInput(e.target.value)}
               onBlur={commitBpm}
               onKeyDown={(e) => { if (e.key === 'Enter') commitBpm() }}
-              className="w-16 text-center rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1.5 text-sm outline-none focus:border-brand"
+              className="w-16 text-center rounded-md border border-gray-200 dark:border-gray-600 bg-surface text-gray-900 dark:text-white px-2 py-1.5 text-sm outline-none focus:border-brand"
               aria-label="Target BPM"
             />
             <button

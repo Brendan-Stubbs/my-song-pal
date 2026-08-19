@@ -355,8 +355,9 @@ export default function PracticePlayer({ session, startBlockIndex, onEnd, onLogg
     ? getSegmentDisplayName(currentBlock, state.exerciseIndex)
     : currentBlock?.name
   const activeExercise = onExercise ? currentExercises[state.exerciseIndex] : undefined
-  const activeLink =
-    activeExercise?.link && activeExercise.link.kind !== 'free' ? activeExercise.link : undefined
+  // Prefer the exercise's tool when subdivided, otherwise the block's own tool.
+  const rawLink = onExercise ? activeExercise?.link : currentBlock?.link
+  const activeLink = rawLink && rawLink.kind !== 'free' ? rawLink : undefined
   const toolPaused = state.isPaused || state.blockEnded || state.exerciseTransitioning
 
   if (state.isComplete) {

@@ -24,7 +24,7 @@ function FormulaCard({ formula }: { formula: ChordFormula }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 overflow-hidden transition-shadow hover:shadow-md">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-surface overflow-hidden transition-shadow hover:shadow-md">
       {/* Header row */}
       <button
         type="button"

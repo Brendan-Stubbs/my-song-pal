@@ -8,3 +8,4 @@ const adapter = createTonalAdapter()
 export const getScaleInfo = adapter.getScaleInfo
 export const getAvailableScales = adapter.getAvailableScales
 export const getAvailableKeys = adapter.getAvailableKeys
+export const getChords = adapter.getChords

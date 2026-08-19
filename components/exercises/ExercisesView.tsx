@@ -4,10 +4,11 @@ import { useState } from 'react'
 import EarTrainingView from '@/components/ear-training/EarTrainingView'
 import FretboardTrainerView from '@/components/trainers/FretboardTrainerView'
 import ScaleBuilderExercise from './ScaleBuilderExercise'
+import MelodyMakerExercise from './MelodyMakerExercise'
 
 // ── Exercise registry ───────────────────────────────────────────────────────
 
-type ExerciseId = 'ear-training' | 'scale-builder' | 'fretboard-trainer'
+type ExerciseId = 'ear-training' | 'scale-builder' | 'fretboard-trainer' | 'melody-maker'
 
 interface ExerciseMeta {
   id: ExerciseId
@@ -63,6 +64,21 @@ const EXERCISES: ExerciseMeta[] = [
       </svg>
     ),
   },
+  {
+    id: 'melody-maker',
+    title: 'Melody Maker',
+    description:
+      'Pick a key and scale, then tap the notes to hear them. Drag notes onto a timeline to sketch a line and play it back.',
+    tags: ['Composition', 'Scales', 'Ear'],
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+        <path d="M9 9l12-2" />
+      </svg>
+    ),
+  },
 ]
 
 // ── Exercise card ───────────────────────────────────────────────────────────
@@ -77,7 +93,7 @@ function ExerciseCard({
   return (
     <button
       onClick={onSelect}
-      className="group text-left w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 hover:border-brand hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+      className="group text-left w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-surface p-5 hover:border-brand hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
     >
       <div className="flex items-start gap-4">
         <div className="shrink-0 w-12 h-12 rounded-lg bg-brand/10 dark:bg-brand/20 flex items-center justify-center text-brand group-hover:bg-brand group-hover:text-white transition-colors">
@@ -164,6 +180,15 @@ export default function ExercisesView() {
       <div>
         <BackButton onClick={() => setSelected(null)} />
         <FretboardTrainerView />
+      </div>
+    )
+  }
+
+  if (selected === 'melody-maker') {
+    return (
+      <div>
+        <BackButton onClick={() => setSelected(null)} />
+        <MelodyMakerExercise />
       </div>
     )
   }
