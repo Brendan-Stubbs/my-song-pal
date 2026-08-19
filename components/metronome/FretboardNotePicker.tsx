@@ -124,7 +124,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
   const panel = (
     <div
       ref={containerRef}
-      className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl p-3 space-y-2"
+      className="rounded-xl border border-gray-200 dark:border-gray-600 bg-surface shadow-xl p-3 space-y-2"
       style={portalStyle ?? { position: 'absolute', zIndex: 50, marginTop: 4, minWidth: svgW + 24 }}
     >
       {/* Header row 1: hint + controls */}
@@ -165,7 +165,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
         <select
           value={tuningId}
           onChange={(e) => handleTuningChange(e.target.value)}
-          className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 cursor-pointer"
+          className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-surface text-gray-800 dark:text-gray-200 cursor-pointer"
         >
           {TUNINGS.map((t) => (
             <option key={t.id} value={t.id}>

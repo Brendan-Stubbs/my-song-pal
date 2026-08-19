@@ -88,7 +88,7 @@ function NoteColumn({ letter, isOctave, accidental, result, onToggle }: NoteColu
       ? 'bg-green-50 dark:bg-green-900/20'
       : result === 'incorrect'
       ? 'bg-red-50 dark:bg-red-900/20'
-      : 'bg-white dark:bg-gray-800'
+      : 'bg-surface'
 
   return (
     <div className="flex flex-col items-center gap-1.5">

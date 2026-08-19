@@ -114,7 +114,7 @@ export default function GuitarProImportModal({ onClose, onImport }: GuitarProImp
   return createPortal(
     <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
       <div
-        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-800 shadow-2xl p-6 space-y-5"
+        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-surface shadow-2xl p-6 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -192,7 +192,7 @@ export default function GuitarProImportModal({ onClose, onImport }: GuitarProImp
                 <select
                   value={trackIndex}
                   onChange={(e) => setTrackIndex(Number(e.target.value))}
-                  className="block text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 max-w-[240px]"
+                  className="block text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-surface text-gray-800 dark:text-gray-200 max-w-[240px]"
                 >
                   {parsed.info.tracks.map((t) => (
                     <option key={t.index} value={t.index}>
@@ -210,7 +210,7 @@ export default function GuitarProImportModal({ onClose, onImport }: GuitarProImp
                   max={barCount}
                   value={safeStart}
                   onChange={(e) => setStartBar(Number(e.target.value))}
-                  className="block w-20 text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  className="block w-20 text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-surface text-gray-800 dark:text-gray-200"
                 />
               </label>
 
@@ -222,7 +222,7 @@ export default function GuitarProImportModal({ onClose, onImport }: GuitarProImp
                   max={barCount}
                   value={safeEnd}
                   onChange={(e) => setEndBar(Number(e.target.value))}
-                  className="block w-20 text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  className="block w-20 text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-surface text-gray-800 dark:text-gray-200"
                 />
                 <span className="block text-[10px] text-gray-400">of {barCount}</span>
               </label>

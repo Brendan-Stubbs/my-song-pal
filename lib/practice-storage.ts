@@ -7,20 +7,52 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import type { ChordQuality } from '@/data/open-chord-voicings'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Optional binding from a practice block to a real tool in the app. When present,
+ * the player renders that tool inline. `undefined` (or `kind: 'free'`) keeps the
+ * plain free-text-label behaviour, so existing sessions still parse.
+ */
+export type ExerciseLink =
+  | { kind: 'free' }
+  | {
+      kind: 'metronome'
+      loopId: string
+      /** Optional tempo ramp (% of the loop's target BPM) across the exercise. */
+      bpmRamp?: { fromPct: number; toPct: number }
+    }
+  | { kind: 'scale'; root: string; scaleId: string }
+  | { kind: 'chord-drill'; chords: { root: string; quality: ChordQuality }[]; changesPerMin: number }
+  | { kind: 'ear-training'; mode: 'intervals' | 'modes' }
+  | { kind: 'fretboard-trainer' }
+  | { kind: 'melody-maker'; root: string; scaleId: string }
+
+export type ExerciseLinkKind = ExerciseLink['kind']
 
 export interface PracticeExercise {
   id: string
   name: string
   durationMinutes: number
+  link?: ExerciseLink
 }
 
+/**
+ * A practice block is one timed segment of a session. The simple, primary path
+ * is that a block simply *is* a configured exercise via `link` (a metronome
+ * loop, a scale, a chord drill, …). Optionally, a block can be subdivided into
+ * several individually-timed `exercises`, each carrying its own link.
+ */
 export interface PracticeBlock {
   id: string
   name: string
   durationMinutes: number
   notes: string
+  /** Block-level tool. Ignored when the block is broken into `exercises`. */
+  link?: ExerciseLink
+  /** Optional subdivision of the block into individually-timed exercises. */
   exercises?: PracticeExercise[]
 }
 
@@ -36,6 +68,7 @@ export interface PracticeSession {
 
 const LS_KEY = 'mysongpal_practice_sessions'
 
+/** Older sessions used different keys for the subdivision list. */
 type StoredBlock = PracticeBlock & {
   subBlocks?: PracticeExercise[]
   activities?: PracticeExercise[]
@@ -47,6 +80,7 @@ function normalizeBlock(block: StoredBlock): PracticeBlock {
     const { subBlocks: _, activities: __, exercises: ___, ...rest } = block
     return rest
   }
+  // When subdivided, the block's own link is ignored — each exercise carries one.
   return {
     id: block.id,
     name: block.name,
@@ -186,7 +220,40 @@ export function exerciseTotalMinutes(exercises: PracticeExercise[]): number {
 }
 
 export function exerciseDisplayName(exercise: PracticeExercise, index: number): string {
-  return exercise.name.trim() || `Exercise ${index + 1}`
+  if (exercise.name.trim()) return exercise.name.trim()
+  const fromLink = exercise.link && exerciseLinkDefaultName(exercise.link)
+  return fromLink || `Exercise ${index + 1}`
+}
+
+export const EXERCISE_LINK_LABELS: Record<ExerciseLinkKind, string> = {
+  free: 'No tool',
+  metronome: 'Metronome loop',
+  scale: 'Scale',
+  'chord-drill': 'Chord drill',
+  'ear-training': 'Ear training',
+  'fretboard-trainer': 'Fretboard trainer',
+  'melody-maker': 'Melody maker',
+}
+
+/** A sensible auto-name for an exercise based on its attached tool. */
+export function exerciseLinkDefaultName(link: ExerciseLink): string {
+  switch (link.kind) {
+    case 'scale':
+      return `${link.root} ${link.scaleId}`
+    case 'chord-drill':
+      return link.chords.length ? `Chord drill (${link.chords.length})` : 'Chord drill'
+    case 'ear-training':
+      return link.mode === 'intervals' ? 'Interval training' : 'Mode training'
+    case 'fretboard-trainer':
+      return 'Fretboard trainer'
+    case 'melody-maker':
+      return `Melody maker (${link.root} ${link.scaleId})`
+    case 'metronome':
+      return 'Metronome loop'
+    case 'free':
+    default:
+      return ''
+  }
 }
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────

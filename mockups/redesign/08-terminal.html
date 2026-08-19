@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>08 · Terminal — My Song Pal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0b0f0b; --panel:#0f140f; --panel2:#141a13; --ink:#d7ffe6; --muted:#6fae86; --faint:#4a7a5c;
+  --green:#39ff88; --amber:#ffb000; --line:#1e2a1e; --line2:#28381f;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'JetBrains Mono',ui-monospace,monospace;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5;}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);z-index:50;mix-blend-mode:multiply;}
+a{color:inherit;text-decoration:none;}
+.shell{max-width:1000px;margin:0 auto;padding:22px 24px 80px;}
+
+.topbar{display:flex;align-items:center;gap:16px;padding:10px 14px;background:var(--panel);border:1px solid var(--line2);}
+.brand{white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;color:var(--green);}
+.brand::before{content:"$";color:var(--amber);}
+.logo{width:26px;height:26px;border:1px solid var(--green);display:grid;place-items:center;color:var(--green);}
+.logo svg{width:15px;height:15px;}
+nav{display:flex;gap:2px;margin-left:8px;}
+nav a{padding:6px 12px;font-size:12.5px;color:var(--muted);}
+nav a::before{content:"[";color:var(--faint);}
+nav a::after{content:"]";color:var(--faint);}
+nav a.active{color:var(--green);background:var(--panel2);}
+.spacer{flex:1;}
+.streak{color:var(--amber);font-size:12px;font-weight:700;}
+.avatar{width:28px;height:28px;border:1px solid var(--amber);color:var(--amber);display:grid;place-items:center;font-weight:800;font-size:11px;}
+
+.pagehead{margin:26px 2px 18px;}
+.pagehead .kicker{color:var(--faint);font-size:12px;}
+.pagehead .kicker b{color:var(--amber);font-weight:700;}
+.pagehead h1{margin:8px 0 6px;font-size:30px;font-weight:800;color:var(--green);letter-spacing:-.01em;}
+.pagehead h1::before{content:"# ";color:var(--faint);}
+.pagehead p{margin:0;color:var(--muted);font-size:13.5px;}
+.pagehead p::before{content:"// ";color:var(--faint);}
+
+.layout{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}}
+.card{background:var(--panel);border:1px solid var(--line2);}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel2);}
+.card-h h2{font-size:15px;font-weight:700;margin:0;color:var(--green);}
+.card-h h2::before{content:"● ";color:var(--green);}
+.card-h .sub{font-size:11px;color:var(--faint);margin-top:2px;}
+.pill{font-size:11px;font-weight:700;padding:3px 8px;border:1px solid var(--line2);color:var(--amber);}
+
+.blocks{padding:6px 8px;}
+.block{display:flex;align-items:center;gap:12px;padding:9px 8px;}
+.block:hover{background:var(--panel2);}
+.bnum{color:var(--faint);font-weight:700;font-size:13px;width:26px;}
+.bnum::before{content:"0";}
+.binfo{flex:1;min-width:0;}
+.bname{font-weight:600;font-size:14px;}
+.bname::before{content:"› ";color:var(--green);}
+.bmeta{font-size:11.5px;color:var(--faint);margin-top:1px;display:flex;gap:8px;align-items:center;}
+.chip{font-size:10.5px;font-weight:600;padding:1px 6px;border:1px solid var(--line2);color:var(--muted);}
+.chip.scale{color:var(--green);border-color:var(--line2);}
+.chip.metro{color:var(--amber);}
+.bdur{font-weight:700;font-size:12.5px;color:var(--muted);}
+.cardfoot{padding:12px 16px;display:flex;gap:10px;border-top:1px solid var(--line);}
+.btn{cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;padding:9px 18px;border:1px solid;display:inline-flex;align-items:center;gap:8px;background:transparent;}
+.btn-primary{border-color:var(--green);color:var(--green);}
+.btn-primary:hover{background:var(--green);color:#04120a;}
+.btn-primary::before{content:"▶ ";}
+.btn-ghost{border-color:var(--line2);color:var(--muted);}
+.btn-ghost:hover{color:var(--ink);border-color:var(--muted);}
+
+.timeline{margin-top:16px;padding:14px 16px;}
+.timeline .lbl{font-size:11px;color:var(--faint);margin-bottom:9px;}
+.timeline .lbl::before{content:"~ ";}
+.tl{display:flex;gap:3px;font-size:0;}
+.tl div{height:12px;}
+.tl .a{flex:2;background:var(--green);}
+.tl .b{flex:1;background:var(--line2);border:1px solid var(--faint);}
+.tl .c{flex:1;background:var(--line2);border:1px solid var(--faint);}
+
+.side{display:flex;flex-direction:column;gap:18px;}
+.metro{padding:18px 16px;text-align:center;}
+.metro .bpmlbl{font-size:11px;color:var(--faint);}
+.metro .bpm{font-size:56px;font-weight:800;line-height:1.1;color:var(--green);text-shadow:0 0 16px rgba(57,255,136,.5);}
+.metro .bpm::after{content:"_";animation:blink 1s steps(1) infinite;color:var(--green);}
+@keyframes blink{50%{opacity:0;}}
+.beatdots{display:flex;justify-content:center;gap:8px;margin:12px 0;font-size:0;}
+.beatdots span{width:14px;height:14px;border:1px solid var(--line2);}
+.beatdots span.on{background:var(--amber);border-color:var(--amber);box-shadow:0 0 10px rgba(255,176,0,.7);}
+.metrorow{display:flex;align-items:stretch;justify-content:center;gap:8px;}
+.round{width:44px;padding:11px 0;border:1px solid var(--line2);cursor:pointer;color:var(--muted);font-weight:800;font-size:16px;}
+.play{padding:11px 22px;border:1px solid var(--green);color:var(--green);cursor:pointer;display:grid;place-items:center;}
+.play:hover{background:var(--green);color:#04120a;}
+.sig{margin-top:12px;font-size:11.5px;color:var(--faint);}
+
+.chord{padding:16px;}
+.chordtop{display:flex;justify-content:space-between;align-items:baseline;}
+.chordtop h3{font-size:15px;margin:0;color:var(--green);}
+.chordtop h3::before{content:"● ";}
+.chordtop .q{font-size:11px;color:var(--faint);}
+.frets{margin:12px auto 4px;display:block;}
+.chordfoot{display:flex;gap:4px;margin-top:8px;}
+.vv{flex:1;text-align:center;font-size:10.5px;padding:6px 0;border:1px solid var(--line2);color:var(--muted);}
+.vv.sel{color:var(--green);border-color:var(--green);}
+
+.stats{padding:16px;}
+.statrow{display:flex;gap:8px;}
+.stat{flex:1;text-align:center;padding:12px 4px;border:1px solid var(--line2);}
+.stat .v{font-size:22px;font-weight:800;color:var(--amber);}
+.stat .k{font-size:10px;color:var(--faint);margin-top:3px;}
+
+.tokens{margin-top:26px;background:var(--panel);border:1px solid var(--line2);padding:20px;}
+.tokens h4{margin:0 0 14px;font-size:12px;color:var(--faint);}
+.tokens h4::before{content:"~/ ";}
+.tokgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:22px;}
+.sw{display:flex;gap:6px;flex-wrap:wrap;}
+.sw i{width:42px;height:42px;display:block;border:1px solid var(--line2);}
+.typerow{display:flex;flex-direction:column;gap:6px;}
+.typerow .xl{font-weight:800;font-size:22px;color:var(--green);}
+.typerow .md{font-weight:600;font-size:14px;}
+.typerow .sm{font-size:12.5px;color:var(--muted);}
+.typerow .mn{font-size:12px;color:var(--amber);}
+.btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></span>song-pal</div>
+    <nav><a class="active">practice</a><a>metronome</a><a>chords</a><a>exercises</a></nav>
+    <span class="spacer"></span>
+    <span class="streak">streak:12d</span>
+    <span class="avatar">BS</span>
+  </div>
+
+  <div class="pagehead">
+    <span class="kicker">tue 07:34 · user@<b>songpal</b></span>
+    <h1>today's practice</h1>
+    <p>1 routine queued — 3 blocks, 20 min total</p>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-h"><div><h2>morning_warm_up</h2><div class="sub">last_run=yesterday total=20m</div></div><span class="pill">3 blocks</span></div>
+        <div class="blocks">
+          <div class="block"><div class="bnum">1</div><div class="binfo"><div class="bname">Warm Up</div><div class="bmeta">chromatic runs <span class="chip">notes</span></div></div><div class="bdur">10m</div></div>
+          <div class="block"><div class="bnum">2</div><div class="binfo"><div class="bname">A minor pentatonic</div><div class="bmeta"><span class="chip scale">scale</span> pos_1</div></div><div class="bdur">05m</div></div>
+          <div class="block"><div class="bnum">3</div><div class="binfo"><div class="bname">C major @ 96bpm</div><div class="bmeta"><span class="chip metro">metronome</span></div></div><div class="bdur">05m</div></div>
+        </div>
+        <div class="cardfoot"><button class="btn btn-primary">start</button><button class="btn btn-ghost">edit</button></div>
+      </div>
+      <div class="card timeline"><div class="lbl">session timeline</div><div class="tl"><div class="a"></div><div class="b"></div><div class="c"></div></div></div>
+    </div>
+
+    <div class="side">
+      <div class="card metro">
+        <div class="bpmlbl">tempo.bpm =</div>
+        <div class="bpm">120</div>
+        <div class="beatdots"><span class="on"></span><span></span><span></span><span></span></div>
+        <div class="metrorow"><div class="round">-</div><div class="play"><svg width="20" height="20" viewBox="0 0 22 22" fill="currentColor"><polygon points="5,2 19,11 5,20"/></svg></div><div class="round">+</div></div>
+        <div class="sig">sig=4/4 · tap_tempo</div>
+      </div>
+      <div class="card chord">
+        <div class="chordtop"><h3>C_major</h3><span class="q">x32010</span></div>
+        <svg class="frets" width="150" height="150" viewBox="0 0 150 150"></svg>
+        <div class="chordfoot"><span class="vv sel">open</span><span class="vv">barre</span><span class="vv">triad</span></div>
+      </div>
+      <div class="card stats"><div class="statrow"><div class="stat"><div class="v">12</div><div class="k">streak</div></div><div class="stat"><div class="v">4</div><div class="k">this_wk</div></div><div class="stat"><div class="v">210</div><div class="k">min</div></div></div></div>
+    </div>
+  </div>
+
+  <div class="tokens">
+    <h4>tokens.conf</h4>
+    <div class="tokgrid">
+      <div class="sw"><i style="background:#39ff88"></i><i style="background:#ffb000"></i><i style="background:#6fae86"></i><i style="background:#28381f"></i><i style="background:#0f140f"></i></div>
+      <div class="typerow"><span class="xl">JetBrains Mono</span><span class="md">mono — everything</span><span class="sm">phosphor glow · CRT scanlines</span><span class="mn">amber accent · 120 bpm</span></div>
+      <div class="btns"><button class="btn btn-primary">start</button><button class="btn btn-ghost">edit</button><span class="chip metro">metronome</span></div>
+    </div>
+  </div>
+</div>
+<script>
+function drawChord(svg, frets, fingers){
+  const NS='http://www.w3.org/2000/svg', W=150, padX=22, padTop=26, gW=(W-padX*2), gH=100, strings=6, fretsN=4;
+  const sx=gW/(strings-1), fy=gH/fretsN, grid='#28381f', dot='#39ff88';
+  function line(x1,y1,x2,y2,w,c){const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',c||grid);l.setAttribute('stroke-width',w||1);svg.appendChild(l);}
+  line(padX,padTop,padX+gW,padTop,3,'#4a7a5c');
+  for(let f=1;f<=fretsN;f++) line(padX,padTop+fy*f,padX+gW,padTop+fy*f,1,grid);
+  for(let s=0;s<strings;s++) line(padX+sx*s,padTop,padX+sx*s,padTop+gH,1,grid);
+  frets.forEach((fr,i)=>{const x=padX+sx*i;
+    if(fr===-1){const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',padTop-8);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','12');t.setAttribute('fill','#4a7a5c');t.setAttribute('font-family','monospace');t.textContent='x';svg.appendChild(t);}
+    else if(fr===0){const c=document.createElementNS(NS,'rect');c.setAttribute('x',x-4.5);c.setAttribute('y',padTop-13);c.setAttribute('width',9);c.setAttribute('height',9);c.setAttribute('fill','none');c.setAttribute('stroke','#4a7a5c');c.setAttribute('stroke-width',1.3);svg.appendChild(c);}
+    else{const c=document.createElementNS(NS,'rect');c.setAttribute('x',x-8);c.setAttribute('y',padTop+fy*fr-fy/2-8);c.setAttribute('width',16);c.setAttribute('height',16);c.setAttribute('fill',dot);svg.appendChild(c);const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',padTop+fy*fr-fy/2+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');t.setAttribute('fill','#04120a');t.setAttribute('font-weight','800');t.setAttribute('font-family','monospace');t.textContent=fingers[i]||'';svg.appendChild(t);}
+  });
+}
+document.querySelectorAll('.frets').forEach(s=>drawChord(s,[-1,3,2,0,1,0],['','3','2','','1','']));
+</script>
+</body>
+</html>

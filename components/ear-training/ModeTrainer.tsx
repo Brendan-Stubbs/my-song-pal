@@ -215,7 +215,7 @@ export default function ModeTrainer() {
             value={settings.key}
             onChange={(e) => updateSettings({ key: e.target.value })}
             disabled={settings.randomKey}
-            className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-40"
+            className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-surface text-gray-900 dark:text-white disabled:opacity-40"
           >
             {ALL_KEYS.map((k) => (
               <option key={k} value={k}>
@@ -253,7 +253,7 @@ export default function ModeTrainer() {
               className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 on
                   ? 'bg-brand text-white border-brand'
-                  : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-brand hover:text-brand'
+                  : 'bg-surface text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-brand hover:text-brand'
               }`}
             >
               {m.name}

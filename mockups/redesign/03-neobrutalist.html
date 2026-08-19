@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>03 · Neobrutalist Riff — My Song Pal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Archivo:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#fdf3d8; --paper:#ffffff; --ink:#111111;
+  --red:#ff5a3c; --blue:#3d5afe; --yellow:#ffd23f; --green:#12c48b;
+  --sh:5px 5px 0 #111111; --sh-lg:8px 8px 0 #111111;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(#0000 1px, transparent 1px);}
+.display,h1,h2,h3{font-family:'Archivo','Space Grotesk',sans-serif;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit;text-decoration:none;}
+.shell{max-width:1100px;margin:0 auto;padding:24px 26px 80px;}
+
+.topbar{display:flex;align-items:center;gap:16px;padding:12px 16px;background:var(--paper);border:3px solid var(--ink);box-shadow:var(--sh);}
+.brand{white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:10px;font-family:'Archivo';font-weight:900;font-size:19px;text-transform:uppercase;}
+.logo{width:36px;height:36px;background:var(--red);border:3px solid var(--ink);display:grid;place-items:center;color:#fff;box-shadow:3px 3px 0 var(--ink);}
+.logo svg{width:19px;height:19px;}
+nav{display:flex;gap:0;margin-left:10px;}
+nav a{padding:8px 14px;font-weight:700;font-size:13px;text-transform:uppercase;border:3px solid transparent;}
+nav a.active{background:var(--yellow);border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);}
+.spacer{flex:1;}
+.streak{background:var(--blue);color:#fff;border:3px solid var(--ink);padding:6px 12px;font-weight:800;font-size:12px;box-shadow:3px 3px 0 var(--ink);text-transform:uppercase;}
+.avatar{width:36px;height:36px;background:var(--green);border:3px solid var(--ink);display:grid;place-items:center;font-weight:900;font-size:13px;box-shadow:3px 3px 0 var(--ink);}
+
+.pagehead{margin:34px 2px 22px;}
+.pagehead .kicker{font-family:'JetBrains Mono';font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:12px;background:var(--ink);color:var(--yellow);padding:4px 9px;display:inline-block;}
+.pagehead h1{margin:14px 0 6px;font-size:52px;line-height:.95;}
+.pagehead p{margin:0;font-weight:600;font-size:16px;}
+
+.layout{display:grid;grid-template-columns:1.55fr 1fr;gap:22px;align-items:start;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}}
+.card{background:var(--paper);border:3px solid var(--ink);box-shadow:var(--sh-lg);}
+.card-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:3px solid var(--ink);}
+.card-h h2{font-size:22px;margin:0;}
+.card-h .sub{font-size:12px;font-weight:600;margin-top:3px;text-transform:none;font-family:'JetBrains Mono';}
+.pill{font-family:'JetBrains Mono';font-size:12px;font-weight:700;padding:5px 10px;background:var(--red);color:#fff;border:2px solid var(--ink);}
+
+.blocks{padding:0;}
+.block{display:flex;align-items:center;gap:14px;padding:14px 18px;}
+.block+.block{border-top:2px dashed var(--ink);}
+.bnum{width:32px;height:32px;background:var(--yellow);border:2px solid var(--ink);display:grid;place-items:center;font-family:'Archivo';font-weight:900;font-size:15px;}
+.binfo{flex:1;min-width:0;}
+.bname{font-weight:700;font-size:16px;}
+.bmeta{font-size:12px;font-weight:600;margin-top:3px;display:flex;gap:8px;align-items:center;color:#444;}
+.chip{font-family:'JetBrains Mono';font-size:11px;font-weight:700;padding:2px 7px;background:var(--blue);color:#fff;border:2px solid var(--ink);text-transform:uppercase;}
+.chip.metro{background:var(--green);}
+.bdur{font-family:'JetBrains Mono';font-weight:700;font-size:14px;}
+.cardfoot{padding:16px 18px;display:flex;gap:12px;border-top:3px solid var(--ink);}
+.btn{cursor:pointer;font-family:'Archivo';font-weight:800;font-size:15px;text-transform:uppercase;padding:12px 22px;border:3px solid var(--ink);display:inline-flex;align-items:center;gap:9px;box-shadow:4px 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;}
+.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink);}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-ghost{background:var(--paper);color:var(--ink);}
+
+.timeline{margin-top:20px;padding:16px 18px;}
+.timeline .lbl{font-family:'JetBrains Mono';font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px;}
+.tl{display:flex;gap:6px;}
+.tl div{height:14px;border:2px solid var(--ink);}
+.tl .a{flex:2;background:var(--red);}
+.tl .b{flex:1;background:var(--yellow);}
+.tl .c{flex:1;background:var(--yellow);}
+
+.side{display:flex;flex-direction:column;gap:22px;}
+.metro{padding:20px;text-align:center;}
+.metro .bpmlbl{font-family:'JetBrains Mono';font-size:11px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;}
+.metro .bpm{font-family:'Archivo';font-weight:900;font-size:72px;line-height:.9;}
+.beatdots{display:flex;justify-content:center;gap:8px;margin:14px 0;}
+.beatdots span{width:16px;height:16px;background:var(--paper);border:2px solid var(--ink);}
+.beatdots span.on{background:var(--red);}
+.metrorow{display:flex;align-items:center;justify-content:center;gap:12px;}
+.round{width:46px;height:46px;background:var(--paper);border:3px solid var(--ink);display:grid;place-items:center;cursor:pointer;font-family:'Archivo';font-weight:900;font-size:20px;box-shadow:3px 3px 0 var(--ink);}
+.play{width:62px;height:62px;background:var(--green);border:3px solid var(--ink);display:grid;place-items:center;color:#fff;cursor:pointer;box-shadow:4px 4px 0 var(--ink);}
+.sig{margin-top:14px;font-family:'JetBrains Mono';font-size:12px;font-weight:700;}
+
+.chord{padding:18px;}
+.chordtop{display:flex;justify-content:space-between;align-items:baseline;}
+.chordtop h3{font-size:20px;margin:0;}
+.chordtop .q{font-family:'JetBrains Mono';font-size:11px;font-weight:600;}
+.frets{margin:12px auto 4px;display:block;}
+.chordfoot{display:flex;gap:6px;margin-top:10px;}
+.vv{flex:1;text-align:center;font-family:'JetBrains Mono';font-size:11px;font-weight:700;padding:6px 0;background:var(--paper);border:2px solid var(--ink);text-transform:uppercase;}
+.vv.sel{background:var(--yellow);}
+
+.stats{padding:18px;}
+.statrow{display:flex;gap:10px;}
+.stat{flex:1;text-align:center;padding:14px 6px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);}
+.stat:nth-child(1){background:var(--yellow);}
+.stat:nth-child(2){background:var(--blue);color:#fff;}
+.stat:nth-child(3){background:var(--green);color:#fff;}
+.stat .v{font-family:'Archivo';font-weight:900;font-size:28px;}
+.stat .k{font-size:11px;font-weight:700;text-transform:uppercase;margin-top:2px;}
+
+.tokens{margin-top:34px;background:var(--paper);border:3px solid var(--ink);box-shadow:var(--sh-lg);padding:24px;}
+.tokens h4{margin:0 0 16px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;}
+.tokgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:24px;}
+.sw{display:flex;gap:8px;flex-wrap:wrap;}
+.sw i{width:44px;height:44px;border:3px solid var(--ink);display:block;}
+.typerow{display:flex;flex-direction:column;gap:6px;}
+.typerow .xl{font-family:'Archivo';font-weight:900;font-size:26px;text-transform:uppercase;}
+.typerow .md{font-weight:700;font-size:15px;}
+.typerow .sm{font-size:13px;font-weight:600;}
+.typerow .mn{font-family:'JetBrains Mono';font-size:12px;font-weight:700;}
+.btns{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></span>Song Pal</div>
+    <nav><a class="active">Practice</a><a>Metronome</a><a>Chords</a><a>Exercises</a></nav>
+    <span class="spacer"></span>
+    <span class="streak">12 Day Streak</span>
+    <span class="avatar">BS</span>
+  </div>
+
+  <div class="pagehead">
+    <span class="kicker">Tuesday // AM</span>
+    <h1>Today's<br>Practice</h1>
+    <p>One routine. Three blocks. Twenty minutes. Go.</p>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-h"><div><h2>Morning Warm-Up</h2><div class="sub">last run: yesterday // 20 min</div></div><span class="pill">3 BLOCKS</span></div>
+        <div class="blocks">
+          <div class="block"><div class="bnum">1</div><div class="binfo"><div class="bname">Warm Up</div><div class="bmeta">Chromatic runs <span class="chip">Notes</span></div></div><div class="bdur">10m</div></div>
+          <div class="block"><div class="bnum">2</div><div class="binfo"><div class="bname">A minor pentatonic</div><div class="bmeta"><span class="chip">Scale</span> Position 1</div></div><div class="bdur">5m</div></div>
+          <div class="block"><div class="bnum">3</div><div class="binfo"><div class="bname">C major @ 96</div><div class="bmeta"><span class="chip metro">Metronome</span></div></div><div class="bdur">5m</div></div>
+        </div>
+        <div class="cardfoot"><button class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><polygon points="2,1 12,7 2,13"/></svg> Start</button><button class="btn btn-ghost">Edit</button></div>
+      </div>
+      <div class="card timeline"><div class="lbl">Session timeline</div><div class="tl"><div class="a"></div><div class="b"></div><div class="c"></div></div></div>
+    </div>
+
+    <div class="side">
+      <div class="card metro">
+        <div class="bpmlbl">Tempo BPM</div>
+        <div class="bpm">120</div>
+        <div class="beatdots"><span class="on"></span><span></span><span></span><span></span></div>
+        <div class="metrorow"><div class="round">–</div><div class="play"><svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><polygon points="5,2 19,11 5,20"/></svg></div><div class="round">+</div></div>
+        <div class="sig">4/4 · TAP TEMPO</div>
+      </div>
+      <div class="card chord">
+        <div class="chordtop"><h3>C Major</h3><span class="q">x32010</span></div>
+        <svg class="frets" width="150" height="150" viewBox="0 0 150 150"></svg>
+        <div class="chordfoot"><span class="vv sel">Open</span><span class="vv">Barre</span><span class="vv">Triad</span></div>
+      </div>
+      <div class="card stats"><div class="statrow"><div class="stat"><div class="v">12</div><div class="k">Streak</div></div><div class="stat"><div class="v">4</div><div class="k">This Wk</div></div><div class="stat"><div class="v">210</div><div class="k">Min</div></div></div></div>
+    </div>
+  </div>
+
+  <div class="tokens">
+    <h4>Design tokens</h4>
+    <div class="tokgrid">
+      <div class="sw"><i style="background:#ff5a3c"></i><i style="background:#3d5afe"></i><i style="background:#ffd23f"></i><i style="background:#12c48b"></i><i style="background:#111111"></i><i style="background:#ffffff"></i><i style="background:#fdf3d8"></i></div>
+      <div class="typerow"><span class="xl">Archivo Black</span><span class="md">Space Grotesk — body</span><span class="sm">Bold, blunt, confident copy.</span><span class="mn">JetBrains Mono · 120 BPM</span></div>
+      <div class="btns"><button class="btn btn-primary">Start</button><button class="btn btn-ghost">Edit</button><span class="chip metro">Metro</span></div>
+    </div>
+  </div>
+</div>
+<script>
+function drawChord(svg, frets, fingers){
+  const NS='http://www.w3.org/2000/svg', W=150, padX=22, padTop=26, gW=(W-padX*2), gH=100, strings=6, fretsN=4;
+  const sx=gW/(strings-1), fy=gH/fretsN, grid='#111', dot='#ff5a3c';
+  function line(x1,y1,x2,y2,w,c){const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',c||grid);l.setAttribute('stroke-width',w||2);svg.appendChild(l);}
+  line(padX,padTop,padX+gW,padTop,5,'#111');
+  for(let f=1;f<=fretsN;f++) line(padX,padTop+fy*f,padX+gW,padTop+fy*f,2,grid);
+  for(let s=0;s<strings;s++) line(padX+sx*s,padTop,padX+sx*s,padTop+gH,2,grid);
+  frets.forEach((fr,i)=>{const x=padX+sx*i;
+    if(fr===-1){const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',padTop-8);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','13');t.setAttribute('font-weight','900');t.setAttribute('fill','#111');t.textContent='×';svg.appendChild(t);}
+    else if(fr===0){const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',padTop-9);c.setAttribute('r',5);c.setAttribute('fill','none');c.setAttribute('stroke','#111');c.setAttribute('stroke-width',2);svg.appendChild(c);}
+    else{const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',padTop+fy*fr-fy/2);c.setAttribute('r',10);c.setAttribute('fill',dot);c.setAttribute('stroke','#111');c.setAttribute('stroke-width',2.5);svg.appendChild(c);const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',padTop+fy*fr-fy/2+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');t.setAttribute('fill','#fff');t.setAttribute('font-weight','900');t.textContent=fingers[i]||'';svg.appendChild(t);}
+  });
+}
+document.querySelectorAll('.frets').forEach(s=>drawChord(s,[-1,3,2,0,1,0],['','3','2','','1','']));
+</script>
+</body>
+</html>

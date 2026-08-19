@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Song Pal — Design System Explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #23201b;
+    --muted: #6f6a60;
+    --card: #fffdf8;
+    --line: #e4ddcf;
+    --accent: #d2691e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, #fbe9d6 0%, transparent 55%),
+      radial-gradient(900px 500px at -10% 110%, #e7efe6 0%, transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 64px 28px 96px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    text-transform: uppercase; letter-spacing: .28em; font-size: 12px;
+    color: var(--accent); font-weight: 600; margin: 0 0 14px;
+  }
+  h1 {
+    font-family: 'Bricolage Grotesque', 'Inter', sans-serif;
+    font-weight: 800; font-size: clamp(34px, 5vw, 56px); line-height: 1.02;
+    margin: 0 0 16px; letter-spacing: -0.02em;
+  }
+  .lede { font-size: 18px; color: var(--muted); max-width: 640px; line-height: 1.6; margin: 0 0 12px; }
+  .hint { font-size: 14px; color: var(--muted); margin: 0 0 44px; }
+  .hint b { color: var(--ink); }
+  .grid {
+    display: grid; gap: 22px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 18px 40px -28px rgba(60,40,10,.4);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 30px 60px -30px rgba(60,40,10,.5); border-color: var(--accent); }
+  .swatch { height: 130px; display: flex; align-items: flex-end; padding: 12px; gap: 6px; position: relative; }
+  .swatch .num {
+    position: absolute; top: 12px; left: 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,.75); color: #111; padding: 3px 8px; border-radius: 999px;
+  }
+  .dot { flex: 1; height: 34px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .meta { padding: 16px 18px 20px; }
+  .meta h3 { margin: 0 0 4px; font-size: 18px; font-family: 'Bricolage Grotesque','Inter',sans-serif; font-weight: 700; }
+  .meta p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 11px; font-family:'JetBrains Mono',monospace; color: var(--muted); border: 1px solid var(--line); padding: 3px 8px; border-radius: 999px; }
+  footer { margin-top: 56px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 22px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="eyebrow">My Song Pal · Redesign</p>
+    <h1>Ten design systems,<br />one guitar companion.</h1>
+    <p class="lede">Each mockup restyles the exact same app — today's practice session, the metronome, a chord card, and your streak — in a distinct visual identity. Everything is production-representative, not lorem ipsum.</p>
+    <p class="hint">Open any card to view the full mockup. Tell me the <b>number</b> you like best (or mix elements from a few) and I'll build it into the real app's design system.</p>
+
+    <div class="grid" id="grid"></div>
+
+    <footer>Standalone HTML · no build step · fonts loaded from Google Fonts (needs network to render type; layout works offline).</footer>
+  </div>
+
+<script>
+  const mockups = [
+    { n: 1, file: '01-warmwood.html', name: 'Warmwood', desc: 'A refined evolution of the current warm palette — cream paper, terracotta accents, confident editorial type.', colors: ['#f4efe4','#fffdf8','#d2691e','#7a5b3a','#2a251d'], tags: ['warm','editorial','Bricolage'] },
+    { n: 2, file: '02-midnight-studio.html', name: 'Midnight Studio', desc: 'Pro-audio hardware vibes. Deep charcoal, backlit dials, an electric lime accent and mono readouts.', colors: ['#14161a','#1d2026','#c6ff3a','#3ad1ff','#e7ecf2'], tags: ['dark','pro-audio','mono'] },
+    { n: 3, file: '03-neobrutalist.html', name: 'Neobrutalist Riff', desc: 'Loud and unmistakable. Thick black outlines, hard offset shadows, primary punch.', colors: ['#fdf3d8','#ffffff','#ff5a3c','#3d5afe','#111111'], tags: ['bold','high-contrast','flat'] },
+    { n: 4, file: '04-clay.html', name: 'Clay', desc: 'Soft, tactile neumorphism. Pillowy surfaces, gentle depth, calm violet-blue.', colors: ['#e8eaf2','#eef0f7','#7b6cf6','#4cc9c0','#2c3149'], tags: ['soft','tactile','calm'] },
+    { n: 5, file: '05-bauhaus.html', name: 'Bauhaus Swiss', desc: 'Grid-driven and rigorous. Primary red/blue/yellow, hard geometry, unapologetic type.', colors: ['#f2f0eb','#ffffff','#e5342a','#1246d3','#f2c200'], tags: ['grid','geometric','primary'] },
+    { n: 6, file: '06-cassette.html', name: 'Cassette', desc: '1970s analog warmth. Mustard, olive and rust, rounded tape-deck controls.', colors: ['#efe3c9','#f7efdd','#c8712b','#6f7b3f','#8a3d2b'], tags: ['retro','analog','warm'] },
+    { n: 7, file: '07-aurora-glass.html', name: 'Aurora Glass', desc: 'Frosted glass floating over an indigo→magenta aurora. Modern, dreamy, luminous.', colors: ['#171233','#241a4d','#8b7bff','#ff77c8','#eae6ff'], tags: ['glass','gradient','modern'] },
+    { n: 8, file: '08-terminal.html', name: 'Terminal', desc: 'Phosphor-glow monospace for the tinkerer. Near-black canvas, green and amber CRT.', colors: ['#0c0f0c','#12160f','#39ff88','#ffb000','#d7ffe6'], tags: ['mono','hacker','minimal'] },
+    { n: 9, file: '09-sunset-pop.html', name: 'Sunset Pop', desc: 'Energetic and friendly. Coral→violet gradients, big rounded shapes, playful motion cues.', colors: ['#fff5f0','#ffffff','#ff6b4a','#a855f7','#2a1e3a'], tags: ['playful','vibrant','rounded'] },
+    { n: 10, file: '10-nocturne-serif.html', name: 'Nocturne Serif', desc: 'Quiet luxury. Deep forest and charcoal with gold, elegant serif display type.', colors: ['#12140f','#1b1f16','#c8a04b','#e8e4d6','#8a9178'], tags: ['elegant','serif','luxury'] },
+    { n: 11, file: '11-bubblegum.html', name: 'Bubblegum', desc: 'Kid-friendly candy pop. Super-rounded shapes, bright pink/purple/teal, big chunky buttons.', colors: ['#fff0f7','#ffffff','#ff5fa2','#8b5cf6','#22c3b8'], tags: ['kids','playful','Fredoka'] },
+    { n: 12, file: '12-crayon.html', name: 'Crayon', desc: 'Kid-friendly storybook. Handwritten type, dashed outlines, crayon-box colours and gold stars.', colors: ['#fdf5e0','#fffdf5','#e5533c','#3b7dd8','#58a55c'], tags: ['kids','storybook','hand-drawn'] },
+    { n: 13, file: '13-jungle-pals.html', name: 'Jungle Pals', desc: 'Kid-friendly adventure. Gamified badges, levels and a mascot in jungle greens, coral and sunshine.', colors: ['#ecfbef','#ffffff','#2fb457','#ff6f5e','#ffc933'], tags: ['kids','gamified','mascot'] },
+  ];
+  const grid = document.getElementById('grid');
+  grid.innerHTML = mockups.map(m => `
+    <a class="card" href="${m.file}">
+      <div class="swatch" style="background:${m.colors[0]}">
+        <span class="num">${String(m.n).padStart(2,'0')}</span>
+        ${m.colors.map(c => `<span class="dot" style="background:${c}"></span>`).join('')}
+      </div>
+      <div class="meta">
+        <h3>${m.name}</h3>
+        <p>${m.desc}</p>
+        <div class="tags">${m.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    </a>
+  `).join('');
+</script>
+</body>
+</html>

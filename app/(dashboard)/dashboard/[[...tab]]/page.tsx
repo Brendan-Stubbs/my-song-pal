@@ -1,7 +1,7 @@
 import { createAuthService } from '@/services/auth/auth.service'
 import SignOutButton from '@/components/auth/SignOutButton'
 import DashboardContent from '@/components/DashboardContent'
-import ThemeToggle from '@/components/ui/ThemeToggle'
+import ThemePicker from '@/components/ui/ThemePicker'
 import { getUserAccess } from '@/lib/subscription'
 
 export default async function DashboardPage() {
@@ -17,7 +17,7 @@ export default async function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-brand tracking-tight">MySongPal</h1>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <ThemePicker />
             <SignOutButton />
           </div>
         </div>

@@ -232,7 +232,7 @@ export default function GuideNotesGrid({
           return (
             <div
               key={bar}
-              className="flex items-center rounded-md bg-white/50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700"
+              className="flex items-center rounded-md bg-surface/50 border border-gray-200 dark:border-gray-700"
               style={{ gap: BEAT_GAP, padding: BAR_PAD }}
             >
               {Array.from({ length: beatsPerBar }, (_, beati) => {
@@ -258,7 +258,7 @@ export default function GuideNotesGrid({
                                 ? 'bg-brand border border-brand shadow-sm hover:opacity-80'
                                 : 'bg-brand/20 border border-brand/50 hover:bg-brand/30'
                               : sub === 0
-                              ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-brand'
+                              ? 'bg-surface border border-gray-200 dark:border-gray-600 hover:border-brand'
                               : 'bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 hover:border-brand'
                           }`}
                           style={{ width: CELL, height: CELL }}
@@ -401,7 +401,7 @@ export default function GuideNotesGrid({
                         setAnchorRect(rect)
                         setPickerRow(pickerRow === row.id ? null : row.id)
                       }}
-                      className="w-full flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-mono hover:border-brand transition-colors"
+                      className="w-full flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-surface text-gray-900 dark:text-white text-xs font-mono hover:border-brand transition-colors"
                       title={
                         row.guitarString !== undefined && row.fret !== undefined
                           ? `String ${row.guitarString}, fret ${row.fret} (${row.note})`

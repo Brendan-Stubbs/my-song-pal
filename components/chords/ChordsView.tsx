@@ -8,6 +8,13 @@ import {
   addChordToBook,
   removeChordFromBook,
 } from '@/lib/chord-book-storage'
+import {
+  type MovableShape,
+  type ShapeGeometry,
+  loadMovableShapes,
+  addMovableShape,
+  removeMovableShape,
+} from '@/lib/movable-shape-storage'
 import ExploreTab from './ExploreTab'
 import ChordBookTab from './ChordBookTab'
 import PremiumGate, { PremiumBadge } from '@/components/premium/PremiumGate'
@@ -27,9 +34,11 @@ interface ChordsViewProps {
 export default function ChordsView({ isPremium }: ChordsViewProps) {
   const [subTab, setSubTab] = useState<SubTab>('explore')
   const [chordBook, setChordBook] = useState<SavedChord[]>([])
+  const [shapes, setShapes] = useState<MovableShape[]>([])
 
   useEffect(() => {
     loadChordBook().then(setChordBook).catch(() => setChordBook([]))
+    loadMovableShapes().then(setShapes).catch(() => setShapes([]))
   }, [])
 
   async function handleAdd(root: string, quality: ChordQuality) {
@@ -40,6 +49,16 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
   async function handleRemove(id: string) {
     const updated = await removeChordFromBook(chordBook, id)
     setChordBook(updated)
+  }
+
+  async function handleAddShape(name: string, geometry: ShapeGeometry) {
+    const updated = await addMovableShape(shapes, name, geometry)
+    setShapes(updated)
+  }
+
+  async function handleRemoveShape(id: string) {
+    const updated = await removeMovableShape(shapes, id)
+    setShapes(updated)
   }
 
   const chordBookFeature = PREMIUM_FEATURES.find((f) => f.key === 'chord_book')!
@@ -62,7 +81,7 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
           onClick={() => setSubTab('explore')}
           className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
             subTab === 'explore'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              ? 'bg-surface text-gray-900 dark:text-white shadow-sm'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
@@ -73,7 +92,7 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
           onClick={() => setSubTab('book')}
           className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
             subTab === 'book'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              ? 'bg-surface text-gray-900 dark:text-white shadow-sm'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
@@ -95,7 +114,7 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
           onClick={() => setSubTab('formulas')}
           className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
             subTab === 'formulas'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              ? 'bg-surface text-gray-900 dark:text-white shadow-sm'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
@@ -119,8 +138,11 @@ export default function ChordsView({ isPremium }: ChordsViewProps) {
           >
             <ChordBookTab
               chordBook={chordBook}
+              shapes={shapes}
               onRemove={handleRemove}
               onGoExplore={() => setSubTab('explore')}
+              onAddShape={handleAddShape}
+              onRemoveShape={handleRemoveShape}
             />
           </PremiumGate>
         )}

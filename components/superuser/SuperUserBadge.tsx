@@ -24,7 +24,7 @@ export default function SuperUserBadge() {
     <div ref={ref} className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
       {/* Popover */}
       {open && (
-        <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-2xl p-4 w-64 space-y-4">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-surface shadow-2xl p-4 w-64 space-y-4">
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-sm font-bold text-gray-900 dark:text-white">Super User Mode</p>

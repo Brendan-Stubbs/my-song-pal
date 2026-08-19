@@ -1,35 +1,207 @@
 @import "tailwindcss";
 
-/* Selector-based dark mode (toggled by adding `.dark` to <html>). */
+/* Dark-mode utilities (`dark:*`) are gated on the `.dark` class, which the
+   theme switcher adds for any theme whose `isDark` is true. This keeps the
+   ~1500 existing `dark:` utilities working across every dark theme. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── Raw palette values ──────────────────────────────────────────────────────
-   Warm, wood/amber-leaning tones so the app reads as a crafted guitar companion
-   rather than the default gray Tailwind look. Overridden under `.dark`. */
-:root {
-  --brand: #ff9933;
-  --brand-strong: #ef7f1a;
+/* ── Theming model ────────────────────────────────────────────────────────────
+   A single `data-theme` on <html> selects a complete look. Each theme sets:
+     • semantic tokens   (--page/--surface/--ink/--brand/…) used by newer UI
+     • the gray-* scale   (--g-50…950) so existing bg-gray/text-gray utilities
+                           re-tint per theme with zero component changes
+     • material tokens    (--radius, --shadow-card, --page-gradient, fonts)
+   Gray scale keeps normal semantics everywhere (50 = lightest, 900 = darkest);
+   the `.dark` class just decides which utilities apply. */
 
-  --page: #f0ece5;      /* app background */
-  --surface: #ffffff;   /* cards / panels */
-  --surface-2: #f5f2ec; /* inset sections */
-  --line: #e5e0d8;      /* borders / dividers */
-  --ink: #292524;       /* primary text (stone-800) */
-  --ink-muted: #78716c; /* secondary text (stone-500) */
+/* Default = Warmwood (light). */
+:root,
+[data-theme="warmwood"] {
+  --brand: #cf6a24;
+  --brand-strong: #bd5d1c;
+  --on-brand: #ffffff;
+
+  --page: #f2ede1;
+  --surface: #fffdf8;
+  --surface-2: #faf5ea;
+  --line: #e6ddcc;
+  --ink: #26221b;
+  --ink-muted: #7c7266;
+
+  --g-50: #fafaf9;
+  --g-100: #f5f2ec;
+  --g-200: #e6ddcc;
+  --g-300: #d8cdb8;
+  --g-400: #b0a48e;
+  --g-500: #7c7266;
+  --g-600: #5f574c;
+  --g-700: #4a443d;
+  --g-800: #302b27;
+  --g-900: #211e1b;
+  --g-950: #17130f;
+
+  --font-body: var(--font-inter);
+  --font-head: var(--font-bricolage);
+
+  --page-gradient: none;
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --surface-blur: none;
 }
 
-.dark {
-  --page: #211e1b;      /* soft warm charcoal (not near-black) */
-  --surface: #302b27;   /* cards — matches dark:bg-gray-800 */
-  --surface-2: #3a342f; /* inset / hover */
-  --line: #4a443d;      /* borders */
-  --ink: #f5f1ec;       /* warm off-white */
-  --ink-muted: #ada399;
+/* Midnight Studio — dark, cool, neon-lime accent. */
+[data-theme="midnight"] {
+  --brand: #c6ff3a;
+  --brand-strong: #b3ec2a;
+  --on-brand: #0e1408;
+
+  --page: #101216;
+  --surface: #181b21;
+  --surface-2: #1f232b;
+  --line: #2a2f39;
+  --ink: #e8edf4;
+  --ink-muted: #9aa4b2;
+
+  --g-50: #f7f9fc;
+  --g-100: #e8edf4;
+  --g-200: #ccd4df;
+  --g-300: #a6b0be;
+  --g-400: #7b8593;
+  --g-500: #6c7583;
+  --g-600: #4b5462;
+  --g-700: #2a2f39;
+  --g-800: #1f232b;
+  --g-900: #141821;
+  --g-950: #0e1116;
+
+  --font-body: var(--font-inter);
+  --font-head: var(--font-inter);
+
+  --page-gradient:
+    radial-gradient(900px 500px at 100% -10%, rgba(58, 209, 255, 0.08), transparent 60%),
+    radial-gradient(700px 400px at -10% 110%, rgba(198, 255, 58, 0.06), transparent 60%);
+  --shadow-card: 0 24px 60px -40px rgba(0, 0, 0, 0.8);
+  --surface-blur: none;
 }
 
-/* ── Theme tokens exposed to Tailwind utilities ───────────────────────────────
-   e.g. bg-surface, text-ink, border-line, text-brand. The warm-* aliases keep
-   existing markup working while views are migrated to the new tokens. */
+/* Nocturne Serif — dark forest + gold, serif headings, sharp corners. */
+[data-theme="nocturne"] {
+  --brand: #c8a04b;
+  --brand-strong: #b58e3a;
+  --on-brand: #12140f;
+
+  --page: #12140f;
+  --surface: #1a1e15;
+  --surface-2: #20261b;
+  --line: #2a2f22;
+  --ink: #eae4d3;
+  --ink-muted: #a6a390;
+
+  --g-50: #f6f3ea;
+  --g-100: #eae4d3;
+  --g-200: #d2cbb6;
+  --g-300: #b0a98f;
+  --g-400: #8a8770;
+  --g-500: #77775f;
+  --g-600: #565640;
+  --g-700: #353c29;
+  --g-800: #20261b;
+  --g-900: #12140f;
+  --g-950: #0c0d09;
+
+  --font-body: var(--font-inter);
+  --font-head: var(--font-playfair);
+
+  --page-gradient:
+    radial-gradient(1000px 500px at 80% -10%, rgba(200, 160, 75, 0.06), transparent 60%);
+  --shadow-card: 0 24px 60px -40px rgba(0, 0, 0, 0.75);
+  --surface-blur: none;
+
+  --radius-lg: 0.3rem;
+  --radius-xl: 0.4rem;
+  --radius-2xl: 0.5rem;
+}
+
+/* Aurora Glass — luminous gradient behind translucent frosted surfaces. */
+[data-theme="aurora"] {
+  --brand: #8b7bff;
+  --brand-strong: #7a6af0;
+  --on-brand: #ffffff;
+
+  --page: #140f2e;
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-2: rgba(255, 255, 255, 0.11);
+  --line: rgba(255, 255, 255, 0.16);
+  --ink: #f0ecff;
+  --ink-muted: #b8b0e0;
+
+  --g-50: #f8f6ff;
+  --g-100: #f0ecff;
+  --g-200: #d8d2f2;
+  --g-300: #b8b0e0;
+  --g-400: #9a92c8;
+  --g-500: #8981b8;
+  --g-600: #6b6498;
+  --g-700: rgba(255, 255, 255, 0.14);
+  --g-800: rgba(255, 255, 255, 0.08);
+  --g-900: #140f2e;
+  --g-950: #0e0a22;
+
+  --font-body: var(--font-sora);
+  --font-head: var(--font-sora);
+
+  --page-gradient:
+    radial-gradient(600px 500px at 15% 10%, rgba(139, 123, 255, 0.55), transparent 60%),
+    radial-gradient(700px 600px at 90% 20%, rgba(255, 119, 200, 0.4), transparent 60%),
+    radial-gradient(700px 600px at 70% 100%, rgba(99, 230, 255, 0.35), transparent 60%),
+    radial-gradient(500px 400px at 10% 90%, rgba(139, 123, 255, 0.4), transparent 60%);
+  --shadow-card: 0 20px 50px -30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --surface-blur: blur(16px) saturate(140%);
+
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+}
+
+/* Clay — soft light neumorphism; surfaces share the page colour + dual shadows. */
+[data-theme="clay"] {
+  --brand: #7b6cf6;
+  --brand-strong: #6a5bf0;
+  --on-brand: #ffffff;
+
+  --page: #e7eaf3;
+  --surface: #e7eaf3;
+  --surface-2: #e7eaf3;
+  --line: rgba(160, 170, 200, 0.22);
+  --ink: #2c3149;
+  --ink-muted: #7c84a0;
+
+  --g-50: #f3f5fa;
+  --g-100: #e7eaf3;
+  --g-200: #d4d9e8;
+  --g-300: #c4c9db;
+  --g-400: #a2aac2;
+  --g-500: #7c84a0;
+  --g-600: #5c6480;
+  --g-700: #454b63;
+  --g-800: #2c3149;
+  --g-900: #1e2236;
+  --g-950: #141626;
+
+  --font-body: var(--font-nunito);
+  --font-head: var(--font-nunito);
+
+  --page-gradient: none;
+  --shadow-card: 8px 8px 18px #c4c9db, -8px -8px 18px #ffffff;
+  --surface-blur: none;
+
+  --radius-lg: 1rem;
+  --radius-xl: 1.4rem;
+  --radius-2xl: 1.75rem;
+}
+
+/* ── Tokens exposed to Tailwind utilities ─────────────────────────────────────
+   `inline` inlines the referenced var into each utility, so overriding the
+   underlying gray, brand, and other vars per [data-theme] retints utilities live. */
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
@@ -48,34 +220,64 @@
   --color-warm-page: var(--page);
   --color-warm-panel: var(--surface);
 
-  /* Remap Tailwind's cool gray scale to warm "stone" so every existing
-     gray-* utility (bg/text/border, incl. dark:) reads warm app-wide with
-     no per-component migration. Same lightness steps → contrast preserved. */
-  --color-gray-50: #fafaf9;
-  --color-gray-100: #f5f5f4;
-  --color-gray-200: #e7e5e4;
-  --color-gray-300: #d6d3d1;
-  --color-gray-400: #a8a29e;
-  --color-gray-500: #78716c;
-  --color-gray-600: #57534e;
-  --color-gray-700: #4a443d;
-  --color-gray-800: #302b27;
-  --color-gray-900: #211e1b;
-  --color-gray-950: #17130f;
+  /* Tailwind gray scale → per-theme vars (see notes above). */
+  --color-gray-50: var(--g-50);
+  --color-gray-100: var(--g-100);
+  --color-gray-200: var(--g-200);
+  --color-gray-300: var(--g-300);
+  --color-gray-400: var(--g-400);
+  --color-gray-500: var(--g-500);
+  --color-gray-600: var(--g-600);
+  --color-gray-700: var(--g-700);
+  --color-gray-800: var(--g-800);
+  --color-gray-900: var(--g-900);
+  --color-gray-950: var(--g-950);
 
-  --font-sans: var(--font-inter);
-  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-head);
   --font-mono: var(--font-jetbrains);
 }
 
 body {
-  background: var(--page);
+  background-color: var(--page);
   color: var(--ink);
-  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* Headings use the display face for a distinctive, editorial feel. */
+/* Full-page background colour + optional gradient wash for gradient themes.
+   Applied to .bg-page so the top-level page wrapper shows the theme's gradient
+   (a plain background-color utility would otherwise paint over the body). */
+.bg-page {
+  background-image: var(--page-gradient, none);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Headings use the theme's display face for a distinctive feel. */
 h1, h2, h3, h4, h5 {
-  font-family: var(--font-bricolage), var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-head), var(--font-body), system-ui, sans-serif;
   letter-spacing: -0.011em;
+}
+
+/* Solid-fill brand controls: pick a legible text colour per theme (white on
+   dark accents, dark on bright accents like Midnight's lime). Element+class
+   specificity wins over a bare `text-white`, so no button markup changes. */
+button.bg-brand,
+a.bg-brand,
+[role="button"].bg-brand {
+  color: var(--on-brand);
+}
+
+/* Frosted glass for translucent themes (Aurora). Targets migrated surfaces. */
+.bg-surface,
+.bg-surface-2 {
+  backdrop-filter: var(--surface-blur, none);
+  -webkit-backdrop-filter: var(--surface-blur, none);
+}
+
+/* Neumorphic elevation for Clay: soft dual shadow on container surfaces only
+   (not inputs/buttons/selects, which would look heavy with a big shadow). */
+[data-theme="clay"] :is(div, section, article, header, main, aside, nav).bg-surface {
+  box-shadow: var(--shadow-card);
+  border-color: transparent;
 }
