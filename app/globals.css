@@ -46,6 +46,17 @@
   --page-gradient: none;
   --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --surface-blur: none;
+
+  /* Scale / fretboard diagram palette. Root dots + octave marks use --brand;
+     the rest are neutral and flip with light/dark (see the .dark block below). */
+  --diagram-bg: #faf9f7;
+  --diagram-open: #e8e3db;
+  --diagram-string: #a8a29e;
+  --diagram-fret: #d6d3d1;
+  --diagram-nut: #44403c;
+  --diagram-muted: #78716c;
+  --diagram-note: #44403c;
+  --diagram-note-text: #ffffff;
 }
 
 /* Midnight Studio — dark, cool, neon-lime accent. */
@@ -81,6 +92,8 @@
     radial-gradient(700px 400px at -10% 110%, rgba(198, 255, 58, 0.06), transparent 60%);
   --shadow-card: 0 24px 60px -40px rgba(0, 0, 0, 0.8);
   --surface-blur: none;
+
+  --diagram-bg: #1b1e24;
 }
 
 /* Nocturne Serif — dark forest + gold, serif headings, sharp corners. */
@@ -119,6 +132,8 @@
   --radius-lg: 0.3rem;
   --radius-xl: 0.4rem;
   --radius-2xl: 0.5rem;
+
+  --diagram-bg: #1b2016;
 }
 
 /* Aurora Glass — luminous gradient behind translucent frosted surfaces. */
@@ -160,6 +175,8 @@
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
+
+  --diagram-bg: #201a42;
 }
 
 /* Clay — soft light neumorphism; surfaces share the page colour + dual shadows. */
@@ -197,6 +214,63 @@
   --radius-lg: 1rem;
   --radius-xl: 1.4rem;
   --radius-2xl: 1.75rem;
+
+  --diagram-bg: #eef0f7;
+  --diagram-open: #e2e6f0;
+}
+
+/* Jungle Pals — friendly, kid-oriented light theme; jungle green + rounded. */
+[data-theme="jungle"] {
+  --brand: #2fb457;
+  --brand-strong: #28a44d;
+  --on-brand: #ffffff;
+
+  --page: #ecfbef;
+  --surface: #ffffff;
+  --surface-2: #f2faf0;
+  --line: #d6ecd9;
+  --ink: #1f3a2e;
+  --ink-muted: #5f7a6a;
+
+  --g-50: #f3faf4;
+  --g-100: #e8f5eb;
+  --g-200: #d6ecd9;
+  --g-300: #bfe0c6;
+  --g-400: #93a99b;
+  --g-500: #5f7a6a;
+  --g-600: #4a6154;
+  --g-700: #3a4d43;
+  --g-800: #283730;
+  --g-900: #1f3a2e;
+  --g-950: #142720;
+
+  --font-body: var(--font-baloo);
+  --font-head: var(--font-baloo);
+
+  --page-gradient:
+    radial-gradient(900px 500px at 100% -10%, rgba(255, 201, 51, 0.14), transparent 55%),
+    radial-gradient(800px 520px at -10% 110%, rgba(53, 182, 232, 0.12), transparent 55%);
+  --shadow-card: 0 18px 36px -26px rgba(47, 180, 87, 0.5);
+  --surface-blur: none;
+
+  --radius-lg: 1rem;
+  --radius-xl: 1.35rem;
+  --radius-2xl: 1.6rem;
+
+  --diagram-bg: #f3faf4;
+  --diagram-open: #e3f2e6;
+}
+
+/* Diagram neutrals for dark themes. The accent (--brand) and board background
+   (--diagram-bg) come from each theme; only the neutral scaffolding flips here. */
+.dark {
+  --diagram-open: #2b2f38;
+  --diagram-string: #6b6560;
+  --diagram-fret: #43403b;
+  --diagram-nut: #9c948b;
+  --diagram-muted: #9a938b;
+  --diagram-note: #57534e;
+  --diagram-note-text: #ffffff;
 }
 
 /* ── Tokens exposed to Tailwind utilities ─────────────────────────────────────

@@ -55,10 +55,10 @@ describe('CagedPositionDiagram', () => {
     expect(rootDots[0]).toHaveAttribute('data-root', 'true')
   })
 
-  it('root notes are filled with the brand color', () => {
+  it('root notes are filled with the theme brand color', () => {
     render(<CagedPositionDiagram position={MOCK_POSITION} />)
     const rootDot = screen.getByTestId('root-dot')
-    expect(rootDot).toHaveAttribute('fill', '#ff9933')
+    expect(rootDot.style.fill).toBe('var(--brand)')
   })
 
   it('non-root notes do not have data-root attribute', () => {
@@ -82,13 +82,13 @@ describe('CagedPositionDiagram', () => {
     // The degree label '1' in dot should be white (#ffffff) fill — check it exists
     const allOnes = screen.getAllByText('1')
     expect(allOnes.length).toBeGreaterThanOrEqual(1)
-    // At least one should be a dot label (white fill)
-    const dotLabel = allOnes.find((el) => el.getAttribute('fill') === '#ffffff')
+    // The root dot label uses the accent's on-brand colour.
+    const dotLabel = allOnes.find((el) => el.style.fill === 'var(--on-brand)')
     expect(dotLabel).toBeDefined()
 
     const allThrees = screen.getAllByText('3')
     expect(allThrees.length).toBeGreaterThanOrEqual(1)
-    const dotLabel3 = allThrees.find((el) => el.getAttribute('fill') === '#ffffff')
+    const dotLabel3 = allThrees.find((el) => el.style.fill === 'var(--diagram-note-text)')
     expect(dotLabel3).toBeDefined()
 
     expect(screen.getAllByText('5').length).toBeGreaterThanOrEqual(1)

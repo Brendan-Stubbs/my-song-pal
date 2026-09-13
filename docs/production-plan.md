@@ -1,4 +1,4 @@
-# My Song Pal — Pre-Production Plan
+# Fret Friend — Pre-Production Plan
 
 > Living document. Assessed against the real codebase (Next.js 16 App Router, React 19,
 > Tailwind v4, Supabase auth + DB, Zod). Check items off as they land.

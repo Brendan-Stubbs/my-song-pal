@@ -33,7 +33,6 @@ const CONFIG = {
 const NUM_STRINGS = 6
 const NUM_FRETS = 5
 
-const BRAND = '#ff9933'
 const DARK_DOT = '#44403c'
 const WHITE = '#ffffff'
 const MUTED_COLOR = '#a8a29e'
@@ -163,7 +162,7 @@ function ChordSVG({
         width={x2 - x1}
         height={halfH}
         rx={halfH / 2}
-        fill={BRAND}
+        style={{ fill: 'var(--brand)' }}
         opacity={0.9}
       />
     )

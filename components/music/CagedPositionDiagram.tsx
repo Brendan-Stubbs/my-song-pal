@@ -1,4 +1,5 @@
 import type { CagedPosition } from '@/types/music'
+import { DIAGRAM as C } from '@/lib/diagram-colors'
 
 export interface CagedPositionDiagramProps {
   position: CagedPosition
@@ -14,10 +15,6 @@ const PAD_BOTTOM = 24
 const PAD_RIGHT = 8
 const NUM_STRINGS = 6
 const DOT_RADIUS = 10
-
-const BRAND_COLOR = '#ff9933'
-const DOT_COLOR_LIGHT = '#44403c'   // stone-700
-const TEXT_COLOR = '#ffffff'
 
 export default function CagedPositionDiagram({
   position,
@@ -58,8 +55,7 @@ export default function CagedPositionDiagram({
         aria-label={`Position ${positionNumber} at fret ${rootFret}`}
       >
         {/* Background */}
-        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
+        <rect width={svgWidth} height={svgHeight} style={{ fill: C.bg }} />
 
         {/* Position title */}
         <text
@@ -68,7 +64,7 @@ export default function CagedPositionDiagram({
           textAnchor="middle"
           fontSize={12}
           fontWeight="bold"
-          fill={BRAND_COLOR}
+          style={{ fill: C.brand }}
         >
           Position {positionNumber}
         </text>
@@ -84,7 +80,7 @@ export default function CagedPositionDiagram({
               y1={y}
               x2={svgWidth - PAD_RIGHT}
               y2={y}
-              stroke="#d6d3d1"
+              style={{ stroke: C.string }}
               strokeWidth={1}
             />
           )
@@ -101,7 +97,7 @@ export default function CagedPositionDiagram({
               y1={PAD_TOP}
               x2={x}
               y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-              stroke={isNut ? '#44403c' : '#d6d3d1'}
+              style={{ stroke: isNut ? C.nut : C.fret }}
               strokeWidth={isNut ? 3 : 1}
             />
           )
@@ -111,7 +107,6 @@ export default function CagedPositionDiagram({
         {notes.map((note, idx) => {
           const cx = fretX(note.fret)
           const cy = stringY(note.string)
-          const fill = note.isRoot ? BRAND_COLOR : DOT_COLOR_LIGHT
           const label = showDegrees ? note.degreeLabel : note.note
 
           return (
@@ -120,7 +115,7 @@ export default function CagedPositionDiagram({
                 cx={cx}
                 cy={cy}
                 r={DOT_RADIUS}
-                fill={fill}
+                style={{ fill: note.isRoot ? C.brand : C.note }}
                 data-root={note.isRoot ? 'true' : undefined}
                 data-testid={note.isRoot ? 'root-dot' : 'scale-dot'}
               />
@@ -130,7 +125,7 @@ export default function CagedPositionDiagram({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={8}
-                fill={TEXT_COLOR}
+                style={{ fill: note.isRoot ? C.onBrand : C.noteText }}
                 fontWeight="600"
               >
                 {label}
@@ -150,7 +145,7 @@ export default function CagedPositionDiagram({
               y={y}
               textAnchor="middle"
               fontSize={9}
-              fill="#78716c"
+              style={{ fill: C.muted }}
             >
               {fretNum}
             </text>

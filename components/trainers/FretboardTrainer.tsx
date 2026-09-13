@@ -22,6 +22,8 @@ import {
   type FretPosition,
 } from '@/lib/fretboard-trainer'
 import FretboardStatsPanel from './FretboardStatsPanel'
+import { DIAGRAM as C } from '@/lib/diagram-colors'
+import HowToPlay from '@/components/exercises/HowToPlay'
 
 const CORRECT_DELAY_MS = 900
 const WRONG_DELAY_MS = 1600
@@ -34,7 +36,6 @@ const PAD_BOTTOM = 24
 const PAD_RIGHT = 12
 const NUM_STRINGS = 6
 const DOT_RADIUS = 11
-const BRAND_COLOR = '#ff9933'
 const OCTAVE_FRETS = [12, 24]
 
 const STRING_NAMES: Record<number, string> = {
@@ -99,24 +100,14 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
         role="img"
         aria-label="Interactive fretboard"
       >
-        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
+        <rect width={svgWidth} height={svgHeight} style={{ fill: C.bg }} />
 
         <rect
           x={PAD_LEFT}
           y={PAD_TOP}
           width={CELL_WIDTH}
           height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-          fill="#e8e3db"
-          className="dark:hidden"
-        />
-        <rect
-          x={PAD_LEFT}
-          y={PAD_TOP}
-          width={CELL_WIDTH}
-          height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-          fill="#57534e"
-          className="hidden dark:block"
+          style={{ fill: C.open }}
         />
 
         {OCTAVE_FRETS.filter((f) => f <= fretCount).map((f) => (
@@ -126,7 +117,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
             y={PAD_TOP}
             width={CELL_WIDTH}
             height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-            fill={BRAND_COLOR}
+            style={{ fill: C.brand }}
             opacity={0.12}
           />
         ))}
@@ -140,7 +131,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               y1={stringY(s)}
               x2={svgWidth - PAD_RIGHT}
               y2={stringY(s)}
-              stroke="#a8a29e"
+              style={{ stroke: C.string }}
               strokeWidth={STRING_STROKE[s]}
             />
           )
@@ -153,7 +144,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
             y1={PAD_TOP}
             x2={PAD_LEFT + i * CELL_WIDTH}
             y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-            stroke={i === 0 ? '#44403c' : '#d6d3d1'}
+            style={{ stroke: i === 0 ? C.nut : C.fret }}
             strokeWidth={i === 0 ? 3 : 1}
           />
         ))}
@@ -169,7 +160,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               dominantBaseline="central"
               fontSize={9}
               fontWeight="600"
-              fill="#78716c"
+              style={{ fill: C.muted }}
             >
               {STRING_NAMES[s]}
             </text>
@@ -213,13 +204,10 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               cx={fretX(round.target.fret)}
               cy={stringY(round.target.string)}
               r={DOT_RADIUS}
-              fill={
-                round.answered === false
-                  ? '#22c55e'
-                  : round.answered === true
-                    ? '#22c55e'
-                    : BRAND_COLOR
-              }
+              style={{
+                fill:
+                  round.answered === null ? C.brand : '#22c55e',
+              }}
             />
             {(round.mode === 'find-the-note' ||
               (round.mode === 'name-the-note' && round.answered !== null)) && (
@@ -229,7 +217,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={9}
-                fill="#ffffff"
+                style={{ fill: round.answered === null ? C.onBrand : '#ffffff' }}
                 fontWeight="600"
               >
                 {round.pitchClass}
@@ -248,7 +236,7 @@ function ClickableFretboard({ fretCount, round, onPick, disabled }: ClickableFre
               textAnchor="middle"
               fontSize={10}
               fontWeight={isOctave ? 700 : 400}
-              fill={isOctave ? BRAND_COLOR : '#78716c'}
+              style={{ fill: isOctave ? C.brand : C.muted }}
             >
               {i}
             </text>
@@ -433,6 +421,14 @@ export default function FretboardTrainer() {
   if (phase === 'idle') {
     return (
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-6 space-y-6">
+        <HowToPlay
+          steps={[
+            <>Press <strong>Start training</strong> — the settings below already work.</>,
+            'A spot lights up on the guitar neck, or you\u2019re asked to find a note.',
+            'Tap your answer. Green means correct!',
+          ]}
+        />
+
         <FretboardStatsPanel stats={lifetimeStats} />
 
         <div>

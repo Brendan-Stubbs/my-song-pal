@@ -122,11 +122,10 @@ function CircularTimer({ progress, size = 220 }: { progress: number; size?: numb
         cx={cx} cy={cx} r={r}
         fill="none"
         strokeWidth={strokeWidth}
-        stroke="#ff9933"
         strokeDasharray={circumference}
         strokeDashoffset={dashOffset}
         strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 0.95s linear' }}
+        style={{ stroke: 'var(--brand)', transition: 'stroke-dashoffset 0.95s linear' }}
       />
     </svg>
   )

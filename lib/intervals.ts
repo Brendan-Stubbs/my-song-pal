@@ -37,3 +37,36 @@ export const TIMER_OPTIONS: { label: string; seconds: number | null }[] = [
   { label: '2 min', seconds: 120 },
   { label: 'No timer', seconds: null },
 ]
+
+// ── Target-spotting mode ──────────────────────────────────────────────────────
+
+/**
+ * How often the target interval is actually played in "spot the interval"
+ * rounds. Left to pure chance a specific target would only turn up 1 round in
+ * 12, which makes for a dull game and rewards answering "no" every time. At
+ * 1-in-3 the target is common enough to stay engaging while still punishing a
+ * reflexive "yes" (which would score ~33%).
+ */
+export const TARGET_HIT_PROBABILITY = 1 / 3
+
+/**
+ * Pick the interval for a spotting round: `target` with probability
+ * `hitProbability`, otherwise one of the other enabled intervals drawn evenly.
+ *
+ * `pool` is the decoy set the player chose to include; it may or may not
+ * contain the target. If no decoys are available the target is returned, since
+ * a round has to play something.
+ *
+ * `rng` is injectable so the distribution can be tested deterministically.
+ */
+export function pickSpottingInterval(
+  target: Interval,
+  pool: Interval[],
+  hitProbability: number = TARGET_HIT_PROBABILITY,
+  rng: () => number = Math.random
+): Interval {
+  const decoys = pool.filter((i) => i.semitones !== target.semitones)
+  if (decoys.length === 0) return target
+  if (rng() < hitProbability) return target
+  return decoys[Math.floor(rng() * decoys.length)] ?? decoys[decoys.length - 1]
+}

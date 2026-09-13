@@ -1,4 +1,5 @@
 import type { FretboardNote } from '@/types/music'
+import { DIAGRAM as C } from '@/lib/diagram-colors'
 
 export interface FretboardDiagramProps {
   notes: FretboardNote[]
@@ -16,12 +17,6 @@ const PAD_BOTTOM = 24
 const PAD_RIGHT = 12
 const NUM_STRINGS = 6
 const DOT_RADIUS = 11
-
-const BRAND_COLOR = '#ff9933'
-const DOT_COLOR_LIGHT = '#44403c' // stone-700
-const TEXT_COLOR = '#ffffff'
-const OPEN_FRET_FILL_LIGHT = '#e8e3db'
-const OPEN_FRET_FILL_DARK = '#57534e' // stone-600
 
 // Frets that mark an octave — highlighted subtly so they're easy to locate
 const OCTAVE_FRETS = [12, 24]
@@ -67,12 +62,10 @@ export default function FretboardDiagram({
         role="img"
         aria-label={`Fretboard showing scale notes for ${numFrets} frets`}
       >
-        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
+        <rect width={svgWidth} height={svgHeight} style={{ fill: C.bg }} />
 
         {/* Open fret column (nut area) */}
-        <rect x={PAD_LEFT} y={PAD_TOP} width={CELL_WIDTH} height={(NUM_STRINGS - 1) * CELL_HEIGHT} fill={OPEN_FRET_FILL_LIGHT} className="dark:hidden" />
-        <rect x={PAD_LEFT} y={PAD_TOP} width={CELL_WIDTH} height={(NUM_STRINGS - 1) * CELL_HEIGHT} fill={OPEN_FRET_FILL_DARK} className="hidden dark:block" />
+        <rect x={PAD_LEFT} y={PAD_TOP} width={CELL_WIDTH} height={(NUM_STRINGS - 1) * CELL_HEIGHT} style={{ fill: C.open }} />
 
         {/* Octave fret highlight (12 / 24) — subtle band so the octave is easy to spot */}
         {OCTAVE_FRETS.filter((f) => f <= fretCount).map((f) => (
@@ -82,7 +75,7 @@ export default function FretboardDiagram({
             y={PAD_TOP}
             width={CELL_WIDTH}
             height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-            fill={BRAND_COLOR}
+            style={{ fill: C.brand }}
             opacity={0.12}
           />
         ))}
@@ -95,7 +88,7 @@ export default function FretboardDiagram({
               key={`string-${s}`}
               x1={PAD_LEFT} y1={stringY(s)}
               x2={svgWidth - PAD_RIGHT} y2={stringY(s)}
-              stroke="#a8a29e"
+              style={{ stroke: C.string }}
               strokeWidth={STRING_STROKE[s]}
             />
           )
@@ -107,7 +100,7 @@ export default function FretboardDiagram({
             key={`fret-${i}`}
             x1={PAD_LEFT + i * CELL_WIDTH} y1={PAD_TOP}
             x2={PAD_LEFT + i * CELL_WIDTH} y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-            stroke={i === 0 ? '#44403c' : '#d6d3d1'}
+            style={{ stroke: i === 0 ? C.nut : C.fret }}
             strokeWidth={i === 0 ? 3 : 1}
           />
         ))}
@@ -124,7 +117,7 @@ export default function FretboardDiagram({
               dominantBaseline="central"
               fontSize={9}
               fontWeight="600"
-              fill="#78716c"
+              style={{ fill: C.muted }}
             >
               {STRING_NAMES[s]}
             </text>
@@ -135,15 +128,16 @@ export default function FretboardDiagram({
         {notes.map((note, idx) => {
           const cx = fretX(note.fret)
           const cy = stringY(note.string)
-          const fill = note.isRoot ? BRAND_COLOR : DOT_COLOR_LIGHT
           const label = showDegrees ? note.degreeLabel : note.note
           return (
             <g key={idx}>
-              <circle cx={cx} cy={cy} r={DOT_RADIUS} fill={fill}
+              <circle cx={cx} cy={cy} r={DOT_RADIUS}
+                style={{ fill: note.isRoot ? C.brand : C.note }}
                 data-root={note.isRoot ? 'true' : undefined}
                 data-testid={note.isRoot ? 'root-dot' : 'scale-dot'} />
               <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central"
-                fontSize={9} fill={TEXT_COLOR} fontWeight="600">
+                fontSize={9} fontWeight="600"
+                style={{ fill: note.isRoot ? C.onBrand : C.noteText }}>
                 {label}
               </text>
             </g>
@@ -161,7 +155,7 @@ export default function FretboardDiagram({
               textAnchor="middle"
               fontSize={10}
               fontWeight={isOctave ? 700 : 400}
-              fill={isOctave ? BRAND_COLOR : '#78716c'}
+              style={{ fill: isOctave ? C.brand : C.muted }}
             >
               {i}
             </text>

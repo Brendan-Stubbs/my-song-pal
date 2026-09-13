@@ -381,8 +381,8 @@ export default function PracticeView() {
       {/* Empty state */}
       {sessions.length === 0 ? (
         <div className="bg-warm-panel dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-16 text-center">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#ff9933" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-brand/10 flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ stroke: 'var(--brand)' }} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="16" cy="16" r="13" />
               <line x1="16" y1="8" x2="16" y2="16" />
               <line x1="16" y1="16" x2="21" y2="21" />

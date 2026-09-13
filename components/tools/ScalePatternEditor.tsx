@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Scale, Note } from 'tonal';
 import type { ScalePatternCell } from '@/data/scale-patterns';
+import { DIAGRAM as C } from '@/lib/diagram-colors';
 
 const NUM_STRINGS = 6;
 const MIN_FRETS = 4;
@@ -130,10 +131,6 @@ const PAD_BOTTOM = 28;
 const PAD_RIGHT = 12;
 const DOT_RADIUS = 11;
 const HIT_RADIUS = 16;
-const BRAND_COLOR = '#ff9933';
-const DOT_COLOR = '#44403c';
-const OPEN_FRET_FILL_LIGHT = '#e8e3db';
-const OPEN_FRET_FILL_DARK = '#57534e';
 
 /** Row 0 = string 1 (high e), row 5 = string 6 (low E) */
 const STRING_LABELS = ['e', 'B', 'G', 'D', 'A', 'E'] as const;
@@ -456,14 +453,7 @@ export default function ScalePatternEditor() {
             <rect
               width={svgWidth}
               height={svgHeight}
-              fill="#faf9f7"
-              className="dark:hidden"
-            />
-            <rect
-              width={svgWidth}
-              height={svgHeight}
-              fill="#211e1b"
-              className="hidden dark:block"
+              style={{ fill: C.bg }}
             />
 
             <rect
@@ -471,16 +461,7 @@ export default function ScalePatternEditor() {
               y={PAD_TOP}
               width={CELL_WIDTH}
               height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-              fill={OPEN_FRET_FILL_LIGHT}
-              className="dark:hidden"
-            />
-            <rect
-              x={PAD_LEFT}
-              y={PAD_TOP}
-              width={CELL_WIDTH}
-              height={(NUM_STRINGS - 1) * CELL_HEIGHT}
-              fill={OPEN_FRET_FILL_DARK}
-              className="hidden dark:block"
+              style={{ fill: C.open }}
             />
 
             {Array.from({ length: NUM_STRINGS }, (_, stringIndex) => {
@@ -492,7 +473,7 @@ export default function ScalePatternEditor() {
                   y1={stringY(stringIndex)}
                   x2={svgWidth - PAD_RIGHT}
                   y2={stringY(stringIndex)}
-                  stroke="#a8a29e"
+                  style={{ stroke: C.string }}
                   strokeWidth={STRING_STROKE[stringNumber]}
                 />
               );
@@ -505,13 +486,8 @@ export default function ScalePatternEditor() {
                 y1={PAD_TOP}
                 x2={PAD_LEFT + fretLine * CELL_WIDTH}
                 y2={PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT}
-                stroke={fretLine === 0 ? '#44403c' : '#d6d3d1'}
+                style={{ stroke: fretLine === 0 ? C.nut : C.fret }}
                 strokeWidth={fretLine === 0 ? 3 : 1}
-                className={
-                  fretLine === 0
-                    ? 'dark:stroke-gray-300'
-                    : 'dark:stroke-gray-600'
-                }
               />
             ))}
 
@@ -524,7 +500,7 @@ export default function ScalePatternEditor() {
                 dominantBaseline="central"
                 fontSize={9}
                 fontWeight="600"
-                fill="#78716c"
+                style={{ fill: C.muted }}
               >
                 {label}
               </text>
@@ -537,7 +513,7 @@ export default function ScalePatternEditor() {
                 y={svgHeight - 8}
                 textAnchor="middle"
                 fontSize={10}
-                fill="#78716c"
+                style={{ fill: C.muted }}
               >
                 {fretIndex}
               </text>
@@ -550,8 +526,8 @@ export default function ScalePatternEditor() {
                 const dotFill = isInvalid
                   ? '#ef4444'
                   : cell === 'R'
-                    ? BRAND_COLOR
-                    : DOT_COLOR;
+                    ? C.brand
+                    : C.note;
                 return (
                   <g key={`cell-${stringIndex}-${fretIndex}`}>
                     <circle
@@ -567,12 +543,7 @@ export default function ScalePatternEditor() {
                         cx={fretX(fretIndex)}
                         cy={stringY(stringIndex)}
                         r={DOT_RADIUS}
-                        fill={dotFill}
-                        className={
-                          !isInvalid && cell === 'x'
-                            ? 'dark:fill-gray-300'
-                            : undefined
-                        }
+                        style={{ fill: dotFill }}
                         pointerEvents="none"
                       />
                     )}

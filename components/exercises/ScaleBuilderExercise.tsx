@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Scale } from 'tonal'
+import HowToPlay from '@/components/exercises/HowToPlay'
 
 // ── Music helpers ──────────────────────────────────────────────────────────
 
@@ -209,7 +210,7 @@ export default function ScaleBuilderExercise() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Scale Builder</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Apply the correct sharps and flats to spell the major scale.
+            Add the right sharps (♯) and flats (♭) to build the major scale.
           </p>
         </div>
         {streak > 0 && (
@@ -219,6 +220,14 @@ export default function ScaleBuilderExercise() {
           </div>
         )}
       </div>
+
+      <HowToPlay
+        steps={[
+          <>You get a key, like <strong>G major</strong>.</>,
+          <>Tap <strong>♯</strong> or <strong>♭</strong> above a note to change it. Tap again to undo.</>,
+          <>When it looks right, press <strong>Check answer</strong>.</>,
+        ]}
+      />
 
       {/* Key display */}
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">

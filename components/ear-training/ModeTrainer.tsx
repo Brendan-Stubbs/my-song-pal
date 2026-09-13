@@ -11,6 +11,7 @@ import {
   type ModeTrainerSettings,
 } from '@/lib/mode-trainer-storage'
 import { loadDashboardState } from '@/lib/dashboard-storage'
+import HowToPlay from '@/components/exercises/HowToPlay'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -207,6 +208,14 @@ export default function ModeTrainer() {
 
   return (
     <div className="space-y-5">
+      <HowToPlay
+        steps={[
+          <>Press <strong>Start</strong> to hear a scale played.</>,
+          <>Press <strong>Replay</strong> to listen again.</>,
+          <>Tap the name of the scale you think you heard.</>,
+        ]}
+      />
+
       {/* ── Settings row ── */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">

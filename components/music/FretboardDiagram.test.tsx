@@ -40,9 +40,11 @@ describe('FretboardDiagram', () => {
   it('shows degree labels when showDegrees is true', () => {
     render(<FretboardDiagram notes={MOCK_NOTES} fretCount={12} showDegrees />)
     const allOnes = screen.getAllByText('1')
-    const dotLabel = allOnes.find((el) => el.getAttribute('fill') === '#ffffff')
+    // Root degree label is painted with the theme accent's on-brand colour.
+    const dotLabel = allOnes.find((el) => el.style.fill === 'var(--on-brand)')
     expect(dotLabel).toBeDefined()
-    expect(screen.getAllByText('3').some((el) => el.getAttribute('fill') === '#ffffff')).toBe(true)
-    expect(screen.getAllByText('5').some((el) => el.getAttribute('fill') === '#ffffff')).toBe(true)
+    // Non-root degree labels use the diagram note-text token.
+    expect(screen.getAllByText('3').some((el) => el.style.fill === 'var(--diagram-note-text)')).toBe(true)
+    expect(screen.getAllByText('5').some((el) => el.style.fill === 'var(--diagram-note-text)')).toBe(true)
   })
 })

@@ -2,6 +2,7 @@
 
 import IntervalTrainer from './IntervalTrainer'
 import ModeTrainer from './ModeTrainer'
+import TargetIntervalTrainer from './TargetIntervalTrainer'
 
 export default function EarTrainingView() {
   return (
@@ -11,7 +12,7 @@ export default function EarTrainingView() {
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Interval Training</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Hear a root note and an interval, then name it. Beat your high score against the clock.
+            Listen to two notes and name the gap between them. Race the clock to beat your best score.
           </p>
         </div>
         <IntervalTrainer />
@@ -24,11 +25,25 @@ export default function EarTrainingView() {
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mode Identification</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            A scale is played — identify which of the seven diatonic modes it is. Pick which modes
-            to drill, choose a fixed key or go random.
+            Listen to a scale and pick which one it was. Choose which scales to practise, and set a
+            key or go random.
           </p>
         </div>
         <ModeTrainer />
+      </section>
+
+      <hr className="border-gray-200 dark:border-gray-700" />
+
+      {/* ── Spot the Interval ── */}
+      <section>
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Spot the Interval</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Pick one interval to hunt for, then answer yes or no to each pair you hear. It
+            shows up about a third of the time, so you have to actually listen.
+          </p>
+        </div>
+        <TargetIntervalTrainer />
       </section>
     </div>
   )

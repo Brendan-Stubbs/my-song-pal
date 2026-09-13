@@ -6,7 +6,13 @@
  * `.dark` class so the app's existing `dark:` utilities resolve correctly.
  */
 
-export type ThemeId = 'warmwood' | 'midnight' | 'nocturne' | 'aurora' | 'clay'
+export type ThemeId =
+  | 'warmwood'
+  | 'midnight'
+  | 'nocturne'
+  | 'aurora'
+  | 'clay'
+  | 'jungle'
 
 export interface ThemeMeta {
   id: ThemeId
@@ -31,6 +37,13 @@ export const THEMES: ThemeMeta[] = [
     description: 'Soft neumorphic lavender.',
     isDark: false,
     swatch: ['#e7eaf3', '#dfe3ef', '#7b6cf6'],
+  },
+  {
+    id: 'jungle',
+    label: 'Jungle Pals',
+    description: 'Playful, kid-friendly jungle green.',
+    isDark: false,
+    swatch: ['#ecfbef', '#ffffff', '#2fb457'],
   },
   {
     id: 'midnight',

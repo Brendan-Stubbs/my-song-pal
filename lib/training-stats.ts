@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type TrainerKey = 'intervals' | 'fretboard'
+export type TrainerKey = 'intervals' | 'interval-spotting' | 'fretboard'
 
 export interface CategoryStats {
   correct: number

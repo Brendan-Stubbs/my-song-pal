@@ -7,7 +7,7 @@ export default function SignUpPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h1 className="text-center text-3xl font-extrabold text-gray-900">
-            MySongPal
+            Fret Friend
           </h1>
           <h2 className="mt-2 text-center text-xl text-gray-600">
             Create your account

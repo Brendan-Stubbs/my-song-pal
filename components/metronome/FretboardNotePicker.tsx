@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Note } from 'tonal'
 import { TUNINGS, loadTuningId, saveTuningId } from '@/lib/guitar-tuning'
-
-const BRAND = '#ff9933'
+import { DIAGRAM as C } from '@/lib/diagram-colors'
 
 // Single-dot inlays on a standard guitar (both octaves)
 const INLAY_SINGLE = new Set([3, 5, 7, 9, 15, 17, 19, 21])
@@ -195,7 +194,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
               textAnchor="middle"
               fontSize={9}
               fontWeight={INLAY_DOUBLE.has(fret) ? 700 : 400}
-              fill={INLAY_DOUBLE.has(fret) ? BRAND : '#a8a29e'}
+              style={{ fill: INLAY_DOUBLE.has(fret) ? C.brand : '#a8a29e' }}
             >
               {fret}
             </text>
@@ -290,7 +289,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
                     cx={fretCX(fret)}
                     cy={stringY(stringIdx)}
                     r={11}
-                    fill={BRAND}
+                    style={{ fill: C.brand }}
                     opacity={0.9}
                   />
                 )}
@@ -302,8 +301,7 @@ export default function FretboardNotePicker({ onPick, onClose, anchorRect }: Fre
                     dominantBaseline="central"
                     fontSize={8}
                     fontWeight="700"
-                    fill="#fff"
-                    style={{ pointerEvents: 'none' }}
+                    style={{ fill: C.onBrand, pointerEvents: 'none' }}
                   >
                     {note}
                   </text>

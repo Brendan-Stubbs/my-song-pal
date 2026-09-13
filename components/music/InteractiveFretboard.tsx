@@ -1,6 +1,7 @@
 'use client'
 
 import { getPitchClassAt } from '@/lib/scale-finder'
+import { DIAGRAM as C } from '@/lib/diagram-colors'
 
 // ─── SVG layout constants (match FretboardDiagram proportions) ───────────────
 
@@ -17,9 +18,6 @@ const DOT_R = 11
 // Y-positions for fret labels and inlay markers (within bottom padding)
 const INLAY_Y_OFFSET = 10   // px below the last string line
 const FRET_NUM_B_OFFSET = 26 // px below the last string line
-
-const BRAND = '#ff9933'
-const DOT_FILLED_TEXT = '#ffffff'
 
 // Fret position inlay markers (standard guitar dots)
 const FRET_MARKERS: number[] = [3, 5, 7, 9]
@@ -78,9 +76,8 @@ export default function InteractiveFretboard({
         role="img"
         style={{ display: 'block' }}
       >
-        {/* Light/dark backgrounds */}
-        <rect width={svgWidth} height={svgHeight} fill="#faf9f7" className="dark:hidden" />
-        <rect width={svgWidth} height={svgHeight} fill="#211e1b" className="hidden dark:block" />
+        {/* Board background */}
+        <rect width={svgWidth} height={svgHeight} style={{ fill: C.bg }} />
 
         {/* Open string column shading */}
         <rect
@@ -88,18 +85,7 @@ export default function InteractiveFretboard({
           y={PAD_T}
           width={CELL_W}
           height={(NUM_STRINGS - 1) * CELL_H}
-          fill="#e8e3db"
-          className="dark:hidden"
-          opacity={0.6}
-        />
-        <rect
-          x={PAD_L}
-          y={PAD_T}
-          width={CELL_W}
-          height={(NUM_STRINGS - 1) * CELL_H}
-          fill="#44403c"
-          className="hidden dark:block"
-          opacity={0.5}
+          style={{ fill: C.open }}
         />
 
         {/* String lines */}
@@ -111,7 +97,7 @@ export default function InteractiveFretboard({
               key={`str-${s}`}
               x1={PAD_L} y1={y}
               x2={svgWidth - PAD_R} y2={y}
-              stroke="#d6d3d1" strokeWidth={1}
+              style={{ stroke: C.string }} strokeWidth={1}
             />
           )
         })}
@@ -125,7 +111,7 @@ export default function InteractiveFretboard({
               key={`fret-line-${i}`}
               x1={x} y1={PAD_T}
               x2={x} y2={PAD_T + (NUM_STRINGS - 1) * CELL_H}
-              stroke={isNut ? '#44403c' : '#d6d3d1'}
+              style={{ stroke: isNut ? C.nut : C.fret }}
               strokeWidth={isNut ? 3 : 1}
             />
           )
@@ -142,7 +128,7 @@ export default function InteractiveFretboard({
               dominantBaseline="auto"
               fontSize={10}
               fontWeight="500"
-              fill="#78716c"
+              style={{ fill: C.muted }}
             >
               {f}
             </text>
@@ -154,7 +140,7 @@ export default function InteractiveFretboard({
               dominantBaseline="auto"
               fontSize={10}
               fontWeight="500"
-              fill="#78716c"
+              style={{ fill: C.muted }}
             >
               {f}
             </text>
@@ -173,7 +159,7 @@ export default function InteractiveFretboard({
               dominantBaseline="central"
               fontSize={9}
               fontWeight="600"
-              fill="#78716c"
+              style={{ fill: C.muted }}
             >
               {STRING_NAMES[s]}
             </text>
@@ -187,13 +173,13 @@ export default function InteractiveFretboard({
             cx={fretX(f)}
             cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET}
             r={3}
-            fill="#a8a29e"
+            style={{ fill: C.string }}
           />
         ))}
         {DOUBLE_MARKERS.map((f) => (
           <g key={`dbl-${f}`}>
-            <circle cx={fretX(f) - 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} fill="#a8a29e" />
-            <circle cx={fretX(f) + 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} fill="#a8a29e" />
+            <circle cx={fretX(f) - 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} style={{ fill: C.string }} />
+            <circle cx={fretX(f) + 5} cy={PAD_T + (NUM_STRINGS - 1) * CELL_H + INLAY_Y_OFFSET} r={3} style={{ fill: C.string }} />
           </g>
         ))}
 
@@ -221,13 +207,12 @@ export default function InteractiveFretboard({
                 fill="transparent"
               />
               {/* Background circle — covers string/fret lines so dot looks clean */}
-              <circle cx={cx} cy={cy} r={DOT_R} fill="#faf9f7" className="dark:hidden" />
-              <circle cx={cx} cy={cy} r={DOT_R} fill="#211e1b" className="hidden dark:block" />
+              <circle cx={cx} cy={cy} r={DOT_R} style={{ fill: C.bg }} />
               {/* Visible dot */}
               {selected ? (
-                <circle cx={cx} cy={cy} r={DOT_R} fill={BRAND} />
+                <circle cx={cx} cy={cy} r={DOT_R} style={{ fill: C.brand }} />
               ) : (
-                <circle cx={cx} cy={cy} r={DOT_R} fill="none" stroke="#57534e" strokeWidth={1.5} />
+                <circle cx={cx} cy={cy} r={DOT_R} fill="none" style={{ stroke: C.note }} strokeWidth={1.5} />
               )}
               <text
                 x={cx}
@@ -236,8 +221,7 @@ export default function InteractiveFretboard({
                 dominantBaseline="central"
                 fontSize={9}
                 fontWeight={selected ? '700' : '400'}
-                fill={selected ? DOT_FILLED_TEXT : '#78716c'}
-                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                style={{ fill: selected ? C.onBrand : C.muted, pointerEvents: 'none', userSelect: 'none' }}
               >
                 {pc}
               </text>

@@ -11,6 +11,7 @@ import {
 import { loadDashboardState } from '@/lib/dashboard-storage'
 import { coerceAudioEngineId, DEFAULT_AUDIO_ENGINE, type AudioEngineId } from '@/lib/instrument'
 import MelodyMaker from '@/components/melody/MelodyMaker'
+import HowToPlay from '@/components/exercises/HowToPlay'
 
 type View = 'list' | 'edit'
 
@@ -109,6 +110,14 @@ export default function MelodyMakerExercise() {
             </button>
           </div>
         </div>
+
+        <HowToPlay
+          steps={[
+            <>Pick a <strong>key</strong> and <strong>scale</strong> at the top.</>,
+            'Tap any note to hear how it sounds.',
+            <>Drag a note down onto the timeline, then press <strong>Play</strong> to hear your tune.</>,
+          ]}
+        />
 
         <MelodyMaker
           melody={draft}
