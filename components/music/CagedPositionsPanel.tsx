@@ -11,6 +11,8 @@ export interface CagedPositionsPanelProps {
   selectedScale: string;
   tuning: string[];
   isStandardTuning?: boolean;
+  /** Fired with the hovered/focused position, or null when the pointer leaves. */
+  onHoverPosition?: (position: CagedPosition | null) => void;
 }
 
 export default function CagedPositionsPanel({
@@ -18,6 +20,7 @@ export default function CagedPositionsPanel({
   selectedScale,
   tuning,
   isStandardTuning = true,
+  onHoverPosition,
 }: CagedPositionsPanelProps) {
   const [showDegrees, setShowDegrees] = useState(false);
   const [variant, setVariant] = useState<ScalePatternVariant>('default');
@@ -123,6 +126,7 @@ export default function CagedPositionsPanel({
               key={`${position.position}-${position.rootFret}`}
               position={position}
               showDegrees={showDegrees}
+              onHoverChange={(hovering) => onHoverPosition?.(hovering ? position : null)}
             />
           ))}
         </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Note } from 'tonal'
-import type { ChordInfo, ProgressionSection } from '@/types/music'
+import type { CagedPosition, ChordInfo, ProgressionSection } from '@/types/music'
 import { getKeySpelling } from '@/lib/scales'
 import {
   loadDashboardState,
@@ -226,6 +226,8 @@ export default function MusicDashboard() {
   const [showScaleNotes, setShowScaleNotes] = useState(false)
   const [audioEngine, setAudioEngine] = useState<AudioEngineId>(DEFAULT_AUDIO_ENGINE)
   const [panels, setPanels] = useState<DashboardPanel[]>(DEFAULT_PANELS)
+  // Position currently hovered in the Scale Positions panel — mirrored on the main fretboard.
+  const [hoveredPosition, setHoveredPosition] = useState<CagedPosition | null>(null)
 
   const [sections, setSections] = useState<ProgressionSection[]>([
     { id: crypto.randomUUID(), name: 'Verse', chords: [] },
@@ -399,6 +401,7 @@ export default function MusicDashboard() {
             selectedKey={selectedKey}
             selectedScale={selectedScale}
             tuning={tuning}
+            highlightNotes={hoveredPosition?.notes ?? null}
           />
         )
       case 'caged':
@@ -409,6 +412,7 @@ export default function MusicDashboard() {
             selectedScale={selectedScale}
             tuning={tuning}
             isStandardTuning={isStandardTuning}
+            onHoverPosition={setHoveredPosition}
           />
         )
       case 'chordProgressions':

@@ -4,6 +4,8 @@ import { DIAGRAM as C } from '@/lib/diagram-colors'
 export interface CagedPositionDiagramProps {
   position: CagedPosition
   showDegrees?: boolean
+  /** Called on pointer enter/leave and keyboard focus/blur, so the main fretboard can mirror this position. */
+  onHoverChange?: (hovering: boolean) => void
 }
 
 // Layout constants
@@ -16,9 +18,15 @@ const PAD_RIGHT = 8
 const NUM_STRINGS = 6
 const DOT_RADIUS = 10
 
+// Stroke widths by string number (thicker = lower-pitched), matching the main fretboard
+const STRING_STROKE: Record<number, number> = {
+  6: 2.5, 5: 2.0, 4: 1.6, 3: 1.3, 2: 1.0, 1: 0.75,
+}
+
 export default function CagedPositionDiagram({
   position,
   showDegrees = false,
+  onHoverChange,
 }: CagedPositionDiagramProps) {
   const { position: positionNumber, rootFret, notes } = position
   const showNut = rootFret === 0
@@ -45,8 +53,21 @@ export default function CagedPositionDiagram({
     return PAD_LEFT + (fret - rootFret) * CELL_WIDTH + CELL_WIDTH / 2
   }
 
+  const interactive = Boolean(onHoverChange)
+
   return (
-    <div className="flex flex-col items-center">
+    <div
+      className={`flex flex-col items-center rounded-md transition-shadow ${
+        interactive
+          ? 'cursor-pointer hover:ring-2 hover:ring-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
+          : ''
+      }`}
+      tabIndex={interactive ? 0 : undefined}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
+      onFocus={() => onHoverChange?.(true)}
+      onBlur={() => onHoverChange?.(false)}
+    >
       <svg
         width={svgWidth}
         height={svgHeight}
@@ -81,7 +102,7 @@ export default function CagedPositionDiagram({
               x2={svgWidth - PAD_RIGHT}
               y2={y}
               style={{ stroke: C.string }}
-              strokeWidth={1}
+              strokeWidth={STRING_STROKE[stringNum]}
             />
           )
         })}

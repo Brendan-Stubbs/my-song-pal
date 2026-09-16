@@ -7,6 +7,8 @@ export interface FretboardDiagramProps {
   showDegrees?: boolean
   /** When true: high e (string 1) at top. When false (default): low E (string 6) at top — guitar orientation. */
   highEAtTop?: boolean
+  /** Subset of notes to spotlight — everything else dims. Null/empty means no spotlight. */
+  highlightNotes?: FretboardNote[] | null
 }
 
 const CELL_WIDTH = 42
@@ -36,8 +38,20 @@ export default function FretboardDiagram({
   fretCount,
   showDegrees = false,
   highEAtTop = false,
+  highlightNotes = null,
 }: FretboardDiagramProps) {
   const numFrets = fretCount + 1
+
+  // Spotlight: keys of the notes to keep bright, plus the fret span to band behind them.
+  const hasHighlight = Boolean(highlightNotes && highlightNotes.length > 0)
+  const highlightKeys = new Set(
+    (highlightNotes ?? []).map((n) => `${n.string}-${n.fret}`),
+  )
+  const highlightFrets = (highlightNotes ?? [])
+    .map((n) => n.fret)
+    .filter((f) => f <= fretCount)
+  const bandStart = highlightFrets.length > 0 ? Math.min(...highlightFrets) : 0
+  const bandEnd = highlightFrets.length > 0 ? Math.max(...highlightFrets) : 0
 
   const svgWidth = PAD_LEFT + numFrets * CELL_WIDTH + PAD_RIGHT
   const svgHeight = PAD_TOP + (NUM_STRINGS - 1) * CELL_HEIGHT + PAD_BOTTOM
@@ -79,6 +93,20 @@ export default function FretboardDiagram({
             opacity={0.12}
           />
         ))}
+
+        {/* Hovered-position band — spans the frets the position covers */}
+        {hasHighlight && highlightFrets.length > 0 && (
+          <rect
+            x={PAD_LEFT + bandStart * CELL_WIDTH}
+            y={PAD_TOP}
+            width={(bandEnd - bandStart + 1) * CELL_WIDTH}
+            height={(NUM_STRINGS - 1) * CELL_HEIGHT}
+            style={{ fill: C.brand, stroke: C.brand }}
+            strokeWidth={1.5}
+            opacity={0.18}
+            data-testid="highlight-band"
+          />
+        )}
 
         {/* String lines with varying thickness */}
         {Array.from({ length: NUM_STRINGS }, (_, i) => {
@@ -129,10 +157,15 @@ export default function FretboardDiagram({
           const cx = fretX(note.fret)
           const cy = stringY(note.string)
           const label = showDegrees ? note.degreeLabel : note.note
+          const isHighlighted = !hasHighlight || highlightKeys.has(`${note.string}-${note.fret}`)
           return (
-            <g key={idx}>
+            <g key={idx} opacity={isHighlighted ? 1 : 0.18} data-highlighted={hasHighlight && isHighlighted ? 'true' : undefined}>
               <circle cx={cx} cy={cy} r={DOT_RADIUS}
-                style={{ fill: note.isRoot ? C.brand : C.note }}
+                style={{
+                  fill: note.isRoot ? C.brand : C.note,
+                  stroke: hasHighlight && isHighlighted ? C.brand : undefined,
+                }}
+                strokeWidth={hasHighlight && isHighlighted ? 2 : 0}
                 data-root={note.isRoot ? 'true' : undefined}
                 data-testid={note.isRoot ? 'root-dot' : 'scale-dot'} />
               <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central"

@@ -12,12 +12,15 @@ export interface FretboardPanelProps {
   selectedKey: string;
   selectedScale: string;
   tuning: string[];
+  /** Notes to spotlight (everything else dims) — e.g. a hovered scale position. */
+  highlightNotes?: FretboardNote[] | null;
 }
 
 export default function FretboardPanel({
   selectedKey,
   selectedScale,
   tuning,
+  highlightNotes = null,
 }: FretboardPanelProps) {
   const [showDegrees, setShowDegrees] = useState(false);
   const [highEAtTop, setHighEAtTop] = useState(false);
@@ -91,6 +94,7 @@ export default function FretboardPanel({
           fretCount={fretCount}
           showDegrees={showDegrees}
           highEAtTop={highEAtTop}
+          highlightNotes={highlightNotes}
         />
       )}
     </div>
