@@ -14,6 +14,7 @@ import { createTonalAdapter } from './tonal.adapter'
 
 const mockScaleInfo: ScaleInfo = {
   key: 'C',
+  tonic: 'C',
   scale: 'major',
   notes: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
   intervals: ['1P', '2M', '3M', '4P', '5P', '6M', '7M'],

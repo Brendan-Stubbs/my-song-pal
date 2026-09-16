@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { ChordInfo } from '@/types/music'
+import { getKeySpelling } from '@/lib/scales'
 import {
   type ChordQuality,
   getChordVoicing,
@@ -123,7 +124,7 @@ export default function OpenChordsPanel({
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Diatonic chords in{' '}
             <span className="font-medium text-gray-700 dark:text-gray-300">
-              {selectedKey} {selectedScale}
+              {getKeySpelling(selectedKey, selectedScale)} {selectedScale}
             </span>
           </p>
         </div>

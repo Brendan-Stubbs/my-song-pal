@@ -1,16 +1,16 @@
 import { redirect } from 'next/navigation'
 import { createAuthService } from '@/services/auth/auth.service'
-import { getUserAccess } from '@/lib/subscription'
+import { isSuperUser } from '@/lib/super-user.server'
 import ScalePatternEditor from '@/components/tools/ScalePatternEditor'
 
 export default async function CreateScalePatternPage() {
   const authService = await createAuthService()
   const user = await authService.getUser()
-  const access = user
-    ? await getUserAccess(user.id)
-    : { hasPremiumAccess: false }
 
-  if (!access.hasPremiumAccess) redirect('/dashboard')
+  // Authoring scale patterns writes data the whole app reads, so it is gated on
+  // super-user status rather than on a paid plan.
+  if (!user) redirect('/sign-in')
+  if (!(await isSuperUser(user.id))) redirect('/dashboard')
 
   return (
     <div className="min-h-screen bg-warm-page dark:bg-gray-900">

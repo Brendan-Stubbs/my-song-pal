@@ -30,6 +30,32 @@ describe("TonalAdapter", () => {
       const info = adapter.getScaleInfo("C", "major");
       expect(info.intervals).toHaveLength(7);
     });
+
+    // ── Spelling ────────────────────────────────────────────────────────────
+    // A scale uses each letter name once, so F harmonic minor is
+    // F G Ab Bb C Db E — not F G G# A# C C# E.
+
+    it("spells a scale with one of each letter rather than all sharps", () => {
+      expect(adapter.getScaleInfo("F", "harmonic minor").notes).toEqual([
+        "F", "G", "Ab", "Bb", "C", "Db", "E",
+      ]);
+      expect(adapter.getScaleInfo("F", "major").notes).toEqual([
+        "F", "G", "A", "Bb", "C", "D", "E",
+      ]);
+    });
+
+    it("respells a sharp key identifier when flats read better", () => {
+      const info = adapter.getScaleInfo("A#", "major");
+      expect(info.key).toBe("A#");      // the identifier the caller passed in
+      expect(info.tonic).toBe("Bb");    // how it is written for this scale
+      expect(info.notes).toEqual(["Bb", "C", "D", "Eb", "F", "G", "A"]);
+    });
+
+    it("leaves sharp keys alone when sharps are the natural spelling", () => {
+      const info = adapter.getScaleInfo("F#", "major");
+      expect(info.tonic).toBe("F#");
+      expect(info.notes).toEqual(["F#", "G#", "A#", "B", "C#", "D#", "E#"]);
+    });
   });
 
   // ── getFretboardNotes ─────────────────────────────────────────────────────
@@ -91,6 +117,19 @@ describe("TonalAdapter", () => {
   // ── getChords ─────────────────────────────────────────────────────────────
 
   describe("getChords", () => {
+    it("spells chord roots from the key, not from the sharp identifier", () => {
+      const chords = adapter.getChords("F", "major");
+      expect(chords.map((c) => c.symbol)).toEqual([
+        "F", "Gm", "Am", "Bb", "C", "Dm", "Edim",
+      ]);
+    });
+
+    it("spells the chords of a respelled key", () => {
+      const chords = adapter.getChords("A#", "major");
+      expect(chords[0].symbol).toBe("Bb");
+      expect(chords[0].notes).toEqual(["Bb", "D", "F"]);
+    });
+
     it("C major returns 7 chords", () => {
       const chords = adapter.getChords("C", "major");
       expect(chords).toHaveLength(7);
@@ -153,6 +192,44 @@ describe("TonalAdapter", () => {
       const chords = adapter.getChords("C", "major");
       expect(chords[0].root).toBe("C");
       expect(chords[0].notes).toEqual(["C", "E", "G"]);
+    });
+  });
+
+  // ── Fretboard spelling ────────────────────────────────────────────────────
+  // A fret is named after the scale degree it plays, so the same fret is A♭ in
+  // F minor and G♯ in E major.
+
+  describe("fretboard note names follow the key", () => {
+    it("names the flat 3rd of F minor Ab, never G#", () => {
+      const notes = adapter.getFretboardNotes("F", "minor", DEFAULT_TUNING, FRET_COUNT);
+      const thirds = notes.filter((n) => n.degree === 3);
+      expect(thirds.length).toBeGreaterThan(0);
+      thirds.forEach((n) => expect(n.note).toBe("Ab"));
+      expect(notes.some((n) => n.note === "G#")).toBe(false);
+    });
+
+    it("names the same fret G# in E major", () => {
+      const notes = adapter.getFretboardNotes("E", "major", DEFAULT_TUNING, FRET_COUNT);
+      expect(notes.some((n) => n.note === "G#")).toBe(true);
+      expect(notes.some((n) => n.note === "Ab")).toBe(false);
+    });
+
+    it("carries the key's spelling into CAGED positions", () => {
+      const positions = adapter.getCagedPositions("F", "minor", DEFAULT_TUNING);
+      const names = new Set(positions.flatMap((p) => p.notes.map((n) => n.note)));
+      expect(names).toEqual(new Set(["F", "G", "Ab", "Bb", "C", "Db", "Eb"]));
+    });
+
+    it("still locates positions for a key whose spelling is flipped to flats", () => {
+      // "A#" is respelled Bb, so root frets have to be matched by pitch rather
+      // than by note name.
+      const positions = adapter.getCagedPositions("A#", "major", DEFAULT_TUNING);
+      expect(positions).toHaveLength(5);
+      positions.forEach((p) => {
+        const roots = p.notes.filter((n) => n.isRoot);
+        expect(roots.length).toBeGreaterThan(0);
+        roots.forEach((n) => expect(n.note).toBe("Bb"));
+      });
     });
   });
 

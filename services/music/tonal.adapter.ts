@@ -8,26 +8,34 @@ import type {
   ScalePatternVariant,
 } from '@/types/music'
 import { SCALE_PATTERNS, SCALE_PATTERNS_3NPS } from '@/data/scale-patterns'
+import { spellTonic } from '@/lib/note-spelling'
 
-/** Get pitch class at (string, fret) from tuning. tuning[0]=string 6, tuning[5]=string 1 */
+/**
+ * Pitch class sounding at (string, fret). tuning[0]=string 6, tuning[5]=string 1.
+ * Spelled with sharps because it comes off the fretboard, not out of a scale —
+ * callers name it from the scale before showing it to anyone.
+ */
 function getNoteAt(stringNumber: number, fret: number, tuning: string[]): string {
   const openNote = tuning[6 - stringNumber]
   if (!openNote) return ''
   const midi = Note.midi(openNote)
   if (midi == null) return ''
-  return toSharp(pitchClass(Note.fromMidi(midi + fret)))
+  return pitchClass(Note.fromMidi(midi + fret))
 }
 
-/** Frets 0–24 that produce the key on this string */
+/**
+ * Frets 0–24 that produce the key on this string. Compares pitch rather than
+ * note name so a key spelled "B♭" still matches the fret tonal calls "A♯".
+ */
 function fretsForKeyOnString(
   stringNumber: number,
   key: string,
   tuning: string[],
 ): number[] {
-  const keyPc = toSharp(pitchClass(key))
+  const keyChroma = Note.chroma(pitchClass(key))
   const out: number[] = []
   for (let f = 0; f <= 24; f++) {
-    if (getNoteAt(stringNumber, f, tuning) === keyPc) out.push(f)
+    if (Note.chroma(getNoteAt(stringNumber, f, tuning)) === keyChroma) out.push(f)
   }
   return out
 }
@@ -72,19 +80,6 @@ function toTonalScaleName(scale: string): string {
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 
 /**
- * Normalise a pitch class to always use sharps (e.g. "Db" → "C#").
- * Tonal's Note.enharmonic gives the enharmonic, so we only call it when
- * the note name contains a flat.
- */
-function toSharp(note: string): string {
-  if (note.includes('b')) {
-    const enh = Note.enharmonic(note)
-    return enh && enh !== '' ? enh : note
-  }
-  return note
-}
-
-/**
  * Strip the octave number from a note with octave (e.g. "C3" → "C").
  */
 function pitchClass(note: string): string {
@@ -119,18 +114,23 @@ function degreeLabel(index: number, intervals: string[]): string {
 
 export function createTonalAdapter(): IMusicTheoryService {
   function getScaleInfo(key: string, scale: string): ScaleInfo {
-    const scaleResult = Scale.get(`${key} ${toTonalScaleName(scale)}`)
+    const tonalScale = toTonalScaleName(scale)
+    // The caller's key is one of the twelve sharp identifiers; respell it so the
+    // scale reads with one of each letter (A♯ major → B♭ major).
+    const tonic = spellTonic(key, tonalScale)
+    const scaleResult = Scale.get(`${tonic} ${tonalScale}`)
 
     if (!scaleResult || scaleResult.empty || scaleResult.notes.length === 0) {
       throw new Error(`Unknown scale: "${key} ${scale}"`)
     }
 
-    const notes = scaleResult.notes.map(toSharp)
+    const notes = scaleResult.notes
     const intervals = scaleResult.intervals
     const degrees = intervals.map((_, i) => degreeLabel(i, intervals))
 
     return {
       key,
+      tonic,
       scale,
       notes,
       intervals,
@@ -153,7 +153,7 @@ export function createTonalAdapter(): IMusicTheoryService {
     fretCount: number,
   ): FretboardNote[] {
     const scaleInfo = getScaleInfo(key, scale)
-    const scaleNotes = scaleInfo.notes  // already normalised to sharps
+    const scaleNotes = scaleInfo.notes
 
     const results: FretboardNote[] = []
 
@@ -165,12 +165,14 @@ export function createTonalAdapter(): IMusicTheoryService {
 
       for (let fret = 0; fret <= fretCount; fret++) {
         const midi = openMidi + fret
-        const noteWithOctave = Note.fromMidi(midi)
-        const pc = toSharp(pitchClass(noteWithOctave))
+        const pc = pitchClass(Note.fromMidi(midi))
 
         const degreeIndex = scaleNotes.findIndex((n) => Note.chroma(n) === Note.chroma(pc))
         if (degreeIndex === -1) continue
 
+        // Label the fret with the scale's spelling — in F minor this fret is
+        // A♭, the flat 3rd, not G♯.
+        const noteName = scaleNotes[degreeIndex]
         const degree = degreeIndex + 1
         const label = degreeLabel(degreeIndex, scaleInfo.intervals)
         const isRoot = degree === 1
@@ -178,7 +180,7 @@ export function createTonalAdapter(): IMusicTheoryService {
         results.push({
           string: stringNumber,
           fret,
-          note: pc,
+          note: noteName,
           degree,
           degreeLabel: label,
           isRoot,
@@ -227,9 +229,9 @@ export function createTonalAdapter(): IMusicTheoryService {
 
           const stringNumber = rowIdx + 1
           const fret = rootFret + fo
-          const note = getNoteAt(stringNumber, fret, tuning)
+          const sounding = getNoteAt(stringNumber, fret, tuning)
 
-          const degreeIndex = scaleNotes.findIndex((n) => Note.chroma(n) === Note.chroma(note))
+          const degreeIndex = scaleNotes.findIndex((n) => Note.chroma(n) === Note.chroma(sounding))
           if (degreeIndex === -1) continue
 
           const degree = degreeIndex + 1
@@ -238,7 +240,7 @@ export function createTonalAdapter(): IMusicTheoryService {
           notes.push({
             string: stringNumber,
             fret,
-            note,
+            note: scaleNotes[degreeIndex],
             degree,
             degreeLabel,
             isRoot: cell === 'R',

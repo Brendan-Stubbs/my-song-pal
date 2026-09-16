@@ -1,10 +1,17 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useSuperUser } from '@/contexts/SuperUserContext'
 
+/** Super-user-only tools reachable from the badge popover. */
+const TOOLS: { href: string; label: string }[] = [
+  { href: '/create-scale-pattern', label: 'Create Scale Pattern' },
+]
+
 export default function SuperUserBadge() {
-  const { isSuperUser, viewingAsStandard, toggleViewAsStandard } = useSuperUser()
+  const { isSuperUser, viewingAsStandard, toggleViewAsStandard, canSeeSuperUserFeatures } =
+    useSuperUser()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -69,6 +76,33 @@ export default function SuperUserBadge() {
           >
             {isStandardMode ? 'Switch to Super User View' : 'Switch to Standard View'}
           </button>
+
+          {/* Tools — hidden in standard view, along with every other
+              super-user-only feature. */}
+          {canSeeSuperUserFeatures && (
+            <div className="border-t border-gray-200 dark:border-gray-600 pt-3 space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Tools
+              </p>
+              {TOOLS.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <svg
+                    width="13" height="13" viewBox="0 0 14 14" fill="none"
+                    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                    className="shrink-0"
+                  >
+                    <path d="M7 2.5v9M2.5 7h9" />
+                  </svg>
+                  {tool.label}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

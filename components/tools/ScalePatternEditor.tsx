@@ -4,6 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { Scale, Note } from 'tonal';
 import type { ScalePatternCell } from '@/data/scale-patterns';
 import { DIAGRAM as C } from '@/lib/diagram-colors';
+import { Modal } from '@/components/ui/Modal';
+
+/** Row 0 = string 1 (high e), row 5 = string 6 (low E) */
+const STRING_LABELS = ['e', 'B', 'G', 'D', 'A', 'E'] as const;
 
 const NUM_STRINGS = 6;
 const MIN_FRETS = 4;
@@ -90,37 +94,95 @@ function resolveRootFret(grid: ScalePatternCell[][]): number | null {
   return best;
 }
 
+export interface PatternValidation {
+  /** Cell keys ("rowIndex-colIndex") to flag in the diagram. */
+  invalid: Set<string>;
+  /** One line per R cell that does not land on the root note. */
+  rootErrors: string[];
+  /** Count of marked cells outside the selected scale. */
+  outOfScaleCount: number;
+  /**
+   * Every cell in the grid that sounds the root note once the pattern is
+   * anchored — including ones not yet marked R.
+   */
+  rootPositions: Set<string>;
+  /** False when the grid has no R cell, so nothing can be anchored. */
+  hasRoot: boolean;
+  /** True when a scale was selected and its notes were checked. */
+  scaleChecked: boolean;
+}
+
 /**
- * Returns the set of invalid cell keys ("stringIndex-fretIndex") for cells
- * that are non-zero but whose note is outside the given scale.
- * Returns null if validation cannot run (no scale selected or no R cell).
+ * Check a grid against the reference key.
+ *
+ * Two independent checks. Every R cell must land on the root — that holds for
+ * any scale, so it runs whether or not a scale is selected, and it is what
+ * catches a movable shape whose roots disagree with each other. Marked cells
+ * additionally have to be in the scale, which only applies once one is chosen.
  */
-function computeInvalidCells(
+function validatePattern(
   grid: ScalePatternCell[][],
   scale: AvailableScale | null,
-): Set<string> | null {
-  if (!scale) return null;
-  const rootFret = resolveRootFret(grid);
-  if (rootFret == null) return null;
-
-  const scaleNotes = Scale.get(`${VALIDATION_KEY} ${scale}`).notes.map(toSharp);
-  const rootNote = toSharp(Note.pitchClass(VALIDATION_KEY));
+): PatternValidation {
   const invalid = new Set<string>();
+  const rootErrors: string[] = [];
+  const rootFret = resolveRootFret(grid);
+
+  if (rootFret == null) {
+    return {
+      invalid,
+      rootErrors,
+      rootPositions: new Set<string>(),
+      outOfScaleCount: 0,
+      hasRoot: false,
+      scaleChecked: false,
+    };
+  }
+
+  const rootNote = toSharp(Note.pitchClass(VALIDATION_KEY));
+  const scaleNotes = scale
+    ? Scale.get(`${VALIDATION_KEY} ${scale}`).notes.map(toSharp)
+    : null;
+  const rootPositions = new Set<string>();
+  let outOfScaleCount = 0;
 
   for (let ri = 0; ri < grid.length; ri++) {
     const stringNum = ri + 1;
     for (let fi = 0; fi < grid[ri].length; fi++) {
       const cell = grid[ri][fi];
+      const note = getNoteAtFret(stringNum, rootFret + fi);
+
+      // Once one R anchors the shape the rest of the roots are fixed, so show
+      // where they fall whether or not they have been marked yet.
+      if (note === rootNote) rootPositions.add(`${ri}-${fi}`);
+
       if (cell === 0) continue;
-      const fret = rootFret + fi;
-      const note = getNoteAtFret(stringNum, fret);
-      // R cells must produce the root note; x cells must be in the scale
-      const isInvalid =
-        cell === 'R' ? note !== rootNote : !scaleNotes.includes(note);
-      if (isInvalid) invalid.add(`${ri}-${fi}`);
+
+      if (cell === 'R') {
+        if (note !== rootNote) {
+          invalid.add(`${ri}-${fi}`);
+          rootErrors.push(
+            `String ${stringNum} (${STRING_LABELS[ri]}) plays ${note} here, not ${rootNote}`,
+          );
+        }
+        continue;
+      }
+
+      if (scaleNotes && !scaleNotes.includes(note)) {
+        invalid.add(`${ri}-${fi}`);
+        outOfScaleCount++;
+      }
     }
   }
-  return invalid;
+
+  return {
+    invalid,
+    rootErrors,
+    rootPositions,
+    outOfScaleCount,
+    hasRoot: true,
+    scaleChecked: scaleNotes !== null,
+  };
 }
 
 const CELL_WIDTH = 42;
@@ -131,9 +193,6 @@ const PAD_BOTTOM = 28;
 const PAD_RIGHT = 12;
 const DOT_RADIUS = 11;
 const HIT_RADIUS = 16;
-
-/** Row 0 = string 1 (high e), row 5 = string 6 (low E) */
-const STRING_LABELS = ['e', 'B', 'G', 'D', 'A', 'E'] as const;
 
 const STRING_STROKE: Record<number, number> = {
   6: 2.5,
@@ -249,29 +308,74 @@ export default function ScalePatternEditor() {
   );
   const [parseError, setParseError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showTrimPrompt, setShowTrimPrompt] = useState(false);
   const [selectedScale, setSelectedScale] = useState<AvailableScale | null>(
     null,
   );
 
-  const invalidCells = useMemo(
-    () => computeInvalidCells(grid, selectedScale),
+  const validation = useMemo(
+    () => validatePattern(grid, selectedScale),
     [grid, selectedScale],
   );
+  const invalidCells = validation.invalid;
+  const rootPositions = validation.rootPositions;
+
+  /**
+   * True when no string plays anything at the pattern's first fret, which
+   * leaves a dead column on the left of every diagram drawn from it.
+   */
+  const hasEmptyFirstColumn = useMemo(
+    () => grid.length > 0 && grid.every((row) => row[0] === 0),
+    [grid],
+  );
+
+  /** Only worth offering the trim if the result is still a legal width. */
+  const canTrimFirstColumn =
+    hasEmptyFirstColumn && !parseError && fretCount > MIN_FRETS;
 
   const validationSummary = useMemo(() => {
-    if (!selectedScale) return null;
-    if (invalidCells === null)
+    const { rootErrors, outOfScaleCount, hasRoot, scaleChecked } = validation;
+
+    if (!hasRoot) {
       return {
         type: 'info' as const,
-        message: 'Add an R cell to enable note validation.',
+        message: 'Add an R cell to enable validation.',
+        detail: [] as string[],
       };
-    if (invalidCells.size === 0)
-      return { type: 'success' as const, message: 'All notes are in scale.' };
+    }
+
+    // Disagreeing roots break the shape at every position on the neck, so they
+    // outrank an out-of-scale note.
+    if (rootErrors.length > 0) {
+      const n = rootErrors.length;
+      return {
+        type: 'error' as const,
+        message: `${n} root cell${n === 1 ? '' : 's'} not on the root note — this shape cannot be moved.`,
+        detail: rootErrors,
+      };
+    }
+
+    if (!scaleChecked) {
+      return {
+        type: 'success' as const,
+        message: 'All root cells agree. Pick a scale to check the other notes.',
+        detail: [] as string[],
+      };
+    }
+
+    if (outOfScaleCount === 0)
+      return {
+        type: 'success' as const,
+        message: 'All notes are in scale.',
+        detail: [] as string[],
+      };
+
     return {
       type: 'error' as const,
-      message: `${invalidCells.size} cell${invalidCells.size === 1 ? '' : 's'} out of scale.`,
+      message: `${outOfScaleCount} cell${outOfScaleCount === 1 ? '' : 's'} out of scale.`,
+      detail: [] as string[],
     };
-  }, [selectedScale, invalidCells]);
+  }, [validation]);
 
   const applyGrid = useCallback((nextGrid: ScalePatternCell[][]) => {
     setGrid(nextGrid);
@@ -341,15 +445,37 @@ export default function ScalePatternEditor() {
     }
   }, []);
 
-  const handleCopy = useCallback(async () => {
+  const copyToClipboard = useCallback(async (text: string) => {
     try {
-      await navigator.clipboard.writeText(outputText);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
     }
-  }, [outputText]);
+  }, []);
+
+  const handleCopy = useCallback(() => {
+    // Catch the dead leading column here rather than after it has been pasted
+    // into the scale data, where it silently shifts the whole pattern.
+    if (canTrimFirstColumn) {
+      setShowTrimPrompt(true);
+      return;
+    }
+    void copyToClipboard(outputText);
+  }, [canTrimFirstColumn, copyToClipboard, outputText]);
+
+  const handleTrimAndCopy = useCallback(() => {
+    const trimmed = grid.map((row) => row.slice(1));
+    applyGrid(trimmed);
+    setShowTrimPrompt(false);
+    void copyToClipboard(formatPattern(trimmed));
+  }, [grid, applyGrid, copyToClipboard]);
+
+  const handleCopyAsIs = useCallback(() => {
+    setShowTrimPrompt(false);
+    void copyToClipboard(outputText);
+  }, [copyToClipboard, outputText]);
 
   return (
     <div className="space-y-8">
@@ -521,8 +647,10 @@ export default function ScalePatternEditor() {
 
             {grid.map((row, stringIndex) =>
               row.map((cell, fretIndex) => {
-                const isInvalid =
-                  invalidCells?.has(`${stringIndex}-${fretIndex}`) ?? false;
+                const key = `${stringIndex}-${fretIndex}`;
+                const isInvalid = invalidCells.has(key);
+                // A root the shape lands on that has not been marked R yet.
+                const isUnmarkedRoot = rootPositions.has(key) && cell !== 'R';
                 const dotFill = isInvalid
                   ? '#ef4444'
                   : cell === 'R'
@@ -538,6 +666,21 @@ export default function ScalePatternEditor() {
                       className="cursor-pointer"
                       onClick={() => handleCellClick(stringIndex, fretIndex)}
                     />
+                    {isUnmarkedRoot && (
+                      <circle
+                        data-testid={`root-hint-${stringIndex}-${fretIndex}`}
+                        cx={fretX(fretIndex)}
+                        cy={stringY(stringIndex)}
+                        r={DOT_RADIUS + 3}
+                        fill="none"
+                        style={{ stroke: C.brand }}
+                        strokeWidth={1.5}
+                        strokeDasharray="3 2.5"
+                        pointerEvents="none"
+                      >
+                        <title>Root note here — click to mark as R</title>
+                      </circle>
+                    )}
                     {cell !== 0 && (
                       <circle
                         cx={fretX(fretIndex)}
@@ -567,6 +710,11 @@ export default function ScalePatternEditor() {
             role={validationSummary.type === 'error' ? 'alert' : undefined}
           >
             {validationSummary.message}
+            {validationSummary.detail.map((line) => (
+              <span key={line} className="block font-normal mt-0.5">
+                {line}
+              </span>
+            ))}
           </p>
         )}
       </section>
@@ -604,6 +752,42 @@ export default function ScalePatternEditor() {
           </p>
         )}
       </section>
+
+      {showTrimPrompt && (
+        <Modal
+          onClose={() => setShowTrimPrompt(false)}
+          aria-label="Empty first column"
+          className="max-w-md"
+        >
+          <div className="p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Remove the empty first column?
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              No string plays a note at the first fret of this pattern, so the
+              leftmost column is empty on all six strings. Removing it makes the
+              pattern {fretCount - 1} frets wide instead of {fretCount} and
+              shifts every note one fret left.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCopyAsIs}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Copy as is
+              </button>
+              <button
+                type="button"
+                onClick={handleTrimAndCopy}
+                className="px-4 py-2 rounded-lg bg-brand text-white text-sm font-semibold hover:opacity-90"
+              >
+                Remove and copy
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

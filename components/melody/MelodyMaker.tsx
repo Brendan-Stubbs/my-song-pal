@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { Melody, MelodyNote } from '@/types/melody'
-import { getAvailableKeys, getAvailableScales } from '@/lib/scales'
+import { getAvailableKeys, getAvailableScales, getKeySpelling } from '@/lib/scales'
 import { buildPitchRows } from '@/lib/melody-theory'
 import {
   getEngine,
@@ -172,7 +172,7 @@ export default function MelodyMaker({
             className={selectClass}
           >
             {keys.map((k) => (
-              <option key={k} value={k}>{k}</option>
+              <option key={k} value={k}>{getKeySpelling(k, melody.scaleId)}</option>
             ))}
           </select>
         </Field>

@@ -279,6 +279,7 @@
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
+  --color-on-brand: var(--on-brand);
 
   --color-page: var(--page);
   --color-surface: var(--surface);

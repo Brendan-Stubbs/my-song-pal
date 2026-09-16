@@ -36,7 +36,8 @@ export interface ProgressionSection {
 
 // The full scale info for a given key + scale
 export interface ScaleInfo {
-  key: string          // e.g. "C"
+  key: string          // the requested key identifier, e.g. "A#"
+  tonic: string        // how that key is spelled for this scale, e.g. "Bb"
   scale: string        // e.g. "major"
   notes: string[]      // all notes in the scale
   intervals: string[]  // e.g. ["1P", "2M", "3M", "4P", "5P", "6M", "7M"]

@@ -6,7 +6,7 @@ import { EXERCISE_LINK_LABELS } from '@/lib/practice-storage'
 import type { MetronomeLoop } from '@/types/metronome-loop'
 import type { ChordQuality } from '@/data/open-chord-voicings'
 import { buildChordSymbol, qualityLabel } from '@/data/open-chord-voicings'
-import { getAvailableKeys, getAvailableScales } from '@/lib/scales'
+import { getAvailableKeys, getAvailableScales, getKeySpelling } from '@/lib/scales'
 import { Segmented } from '@/components/ui/Segmented'
 
 const CHORD_QUALITIES: ChordQuality[] = ['major', 'minor', '7', 'maj7', 'min7', 'sus2', 'sus4', 'dim']
@@ -135,7 +135,7 @@ export default function ExerciseLinkConfig({ link, onChange, loops }: Props) {
             className={selectClass}
           >
             {keys.map((k) => (
-              <option key={k} value={k}>{k}</option>
+              <option key={k} value={k}>{getKeySpelling(k, link.scaleId)}</option>
             ))}
           </select>
           <select

@@ -9,6 +9,7 @@ import { loadDashboardState } from '@/lib/dashboard-storage'
 import { DEFAULT_AUDIO_ENGINE, coerceAudioEngineId, type AudioEngineId } from '@/lib/instrument'
 import FretboardDiagram from '@/components/music/FretboardDiagram'
 import { getFretboardNotes } from '@/lib/fretboard'
+import { getKeySpelling } from '@/lib/scales'
 import ChordDiagramCard from '@/components/music/ChordDiagramCard'
 import { getChordVoicing, buildChordSymbol } from '@/data/open-chord-voicings'
 import IntervalTrainer from '@/components/ear-training/IntervalTrainer'
@@ -203,7 +204,7 @@ function ScaleTool({ root, scaleId }: { root: string; scaleId: string }) {
   return (
     <div className="rounded-xl border border-line bg-surface p-4 sm:p-5">
       <p className="text-sm font-semibold text-ink mb-3 capitalize">
-        {root} {scaleId}
+        {getKeySpelling(root, scaleId)} {scaleId}
       </p>
       <div className="overflow-x-auto">
         <FretboardDiagram notes={notes} fretCount={15} showDegrees />

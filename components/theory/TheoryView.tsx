@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import ChordFormulasTab from './ChordFormulasTab'
+import KeyChartTab from './KeyChartTab'
 
 // ── Sub-tab registry — add future theory sections here ────────────────────────
 
-type SubTab = 'chords'
+type SubTab = 'chords' | 'key-chart'
 
 const SUB_TABS: { id: SubTab; label: string }[] = [
   { id: 'chords', label: 'Chord Formulas' },
+  { id: 'key-chart', label: 'Chords in a Key' },
   // Coming soon:
   // { id: 'intervals', label: 'Intervals' },
   // { id: 'scales',    label: 'Scale Formulas' },
@@ -50,6 +52,7 @@ export default function TheoryView() {
       {/* Tab content */}
       <div className="bg-warm-panel dark:bg-gray-800 rounded-xl shadow p-6">
         {subTab === 'chords' && <ChordFormulasTab />}
+        {subTab === 'key-chart' && <KeyChartTab />}
       </div>
     </div>
   )

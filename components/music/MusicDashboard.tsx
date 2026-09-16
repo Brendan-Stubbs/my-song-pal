@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Note } from 'tonal'
 import type { ChordInfo, ProgressionSection } from '@/types/music'
+import { getKeySpelling } from '@/lib/scales'
 import {
   loadDashboardState,
   saveDashboardState,
@@ -454,7 +455,7 @@ export default function MusicDashboard() {
             className={selectClass}
           >
             {AVAILABLE_KEYS.map((k) => (
-              <option key={k} value={k}>{k}</option>
+              <option key={k} value={k}>{getKeySpelling(k, selectedScale)}</option>
             ))}
           </select>
         </div>

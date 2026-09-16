@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import MusicDashboard from './music/MusicDashboard'
 import PracticeView from './practice/PracticeView'
 import ChordsView from './chords/ChordsView'
+import TheoryView from './theory/TheoryView'
 import MetronomeView from './metronome/MetronomeView'
 import ExercisesView from './exercises/ExercisesView'
 import TrialBanner from './premium/TrialBanner'
@@ -12,7 +13,7 @@ import { SuperUserProvider } from '@/contexts/SuperUserContext'
 import SuperUserBadge from './superuser/SuperUserBadge'
 import type { AccessLevel } from '@/types/subscription'
 
-type Tab = 'music' | 'chords' | 'metronome' | 'exercises' | 'practice'
+type Tab = 'music' | 'chords' | 'theory' | 'metronome' | 'exercises' | 'practice'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
@@ -36,6 +37,16 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
         <line x1="5" y1="2.5" x2="5" y2="12.5" />
         <line x1="10" y1="2.5" x2="10" y2="12.5" />
         <line x1="1.5" y1="7.5" x2="13.5" y2="7.5" />
+      </svg>
+    ),
+  },
+  {
+    id: 'theory',
+    label: 'Theory',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 2.5h4a2 2 0 0 1 1.5.7A2 2 0 0 1 9 2.5h4v9H9a2 2 0 0 0-1.5.7A2 2 0 0 0 6 11.5H2z" />
+        <path d="M7.5 3.2v8.3" />
       </svg>
     ),
   },
@@ -143,6 +154,7 @@ export default function DashboardContent({
           </>
         )}
         {activeTab === 'chords' && <ChordsView isPremium={isPremium} />}
+        {activeTab === 'theory' && <TheoryView />}
         {activeTab === 'metronome' && <MetronomeView isPremium={isPremium} />}
         {activeTab === 'exercises' && <ExercisesView isPremium={isPremium} />}
         {activeTab === 'practice' && <PracticeView />}

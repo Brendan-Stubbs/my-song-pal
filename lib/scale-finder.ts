@@ -2,7 +2,8 @@
  * Client-side scale analysis utilities.
  * Uses tonal directly — no server round-trips needed.
  */
-import { Scale, Note } from 'tonal'
+import { Note } from 'tonal'
+import { spellScaleNotes, spellTonic } from '@/lib/note-spelling'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -60,11 +61,12 @@ export function getPitchClassAt(
 // ─── Scale match types ────────────────────────────────────────────────────────
 
 export interface ScaleMatch {
+  /** Sharp key identifier, e.g. "A#" — what the rest of the app is keyed on. */
   key: string
   scaleName: string
-  /** Human-readable name, e.g. "C Major" */
+  /** Human-readable name using the key's own spelling, e.g. "Bb Major" */
   displayName: string
-  /** All pitch classes in the scale (sharp notation, ordered) */
+  /** All notes in the scale, spelled with one of each letter name, ordered */
   scaleNotes: string[]
   /** The scale notes that overlap with the selection */
   matchedNotes: string[]
@@ -97,23 +99,26 @@ export function findMatchingScales(
     if (normRoot && key !== normRoot) continue
 
     for (const scaleName of SCALE_NAMES) {
-      const scaleData = Scale.get(`${key} ${scaleName}`)
-      if (scaleData.empty || scaleData.notes.length === 0) continue
+      // Show the scale in its own spelling (F harmonic minor reads
+      // F G Ab Bb C Db E) but compare pitch classes as sharps, since that is
+      // how the fretboard selection arrives.
+      const scaleNotes = spellScaleNotes(key, scaleName)
+      if (scaleNotes.length === 0) continue
 
-      const scaleNotes = scaleData.notes.map(toSharp)
-      const scaleSet = new Set(scaleNotes)
+      const asSharps = scaleNotes.map(toSharp)
+      const scaleSet = new Set(asSharps)
 
       // Only include the scale if it contains ALL selected notes
       const allContained = [...selected].every((n) => scaleSet.has(n))
       if (!allContained) continue
 
-      const extraNotes = scaleNotes.filter((n) => !selected.has(n))
-      const matchedNotes = scaleNotes.filter((n) => selected.has(n))
+      const extraNotes = scaleNotes.filter((_, i) => !selected.has(asSharps[i]))
+      const matchedNotes = scaleNotes.filter((_, i) => selected.has(asSharps[i]))
 
       results.push({
         key,
         scaleName,
-        displayName: `${key} ${scaleName.charAt(0).toUpperCase() + scaleName.slice(1)}`,
+        displayName: `${spellTonic(key, scaleName)} ${scaleName.charAt(0).toUpperCase() + scaleName.slice(1)}`,
         scaleNotes,
         matchedNotes,
         extraNotes,
